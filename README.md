@@ -14,7 +14,7 @@ A tailored application is only as good as what the system **actually knows** abo
 
 ## How it works
 
-1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped.
+1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly and records a show/fix/don't-link verdict per asset — what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped.
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line. Posting in (URL or pasted text) → requirement breakdown → ATS keyword check *before writing anything* → company research → two sub-agents in parallel (**cv-tailor**, **cover-letter-writer**) → the **application-verifier** gate, looped fix→re-verify until CLEAN → tracker updated.
 
@@ -27,6 +27,7 @@ knowledge/
 ├── constraints.md         # hard rules (e.g. protected-title wording) — always read
 ├── goals.md               # search targets
 ├── interview_progress.md  # the interview's save-game file
+├── portfolio.md           # asset register: per clickable asset, a verdict — showcase / fix first / don't link
 ├── roles/<company>.md     # one per position: stack, verified achievements, STAR stories
 ├── projects/<name>.md
 └── skills.md              # exact tool names with depth + provenance

@@ -12,7 +12,7 @@ that your input files don't contain.
 ## Inputs (required in the invoking prompt)
 
 - **jd.md path** — the requirement breakdown for this posting
-- **KB file paths** — the selected knowledge-base files (roles, skills, profile, constraints, goals)
+- **KB file paths** — the selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means no portfolio links in the CV)
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `templates/cv_template.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cv.md` and `cv_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application

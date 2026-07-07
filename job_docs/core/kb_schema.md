@@ -16,6 +16,8 @@ knowledge/
 ├── goals.md                 # search targets: titles, seniority, locations, remote policy,
 │                            #   salary target — written and updated by the job-goals skill
 ├── interview_progress.md    # the intake interview's save-game file (see below)
+├── portfolio.md             # asset register: every public artifact a recruiter can click,
+│                            #   with an assessment and a show/fix/don't-link verdict (see below)
 ├── roles/<company>.md       # one file per past position
 ├── projects/<name>.md       # one file per side project / notable non-employment work
 └── skills.md                # skill inventory with depth and provenance
@@ -73,6 +75,24 @@ Every achievement records **the user's part explicitly** ("designed and built X"
 
 One section per skill area; each named tool gets: depth (`deep` / `working` / `used` / `ramping`), where it was used (link the role file), and last used when. Exact tool names only — "testing frameworks" is not a skill entry, `pytest` is.
 
+## `portfolio.md` — the asset register
+
+Everything public a recruiter can click: GitHub profile, personal website, presentations, published work. One entry per asset:
+
+```markdown
+## <Asset name> — <URL>
+**Demonstrates:** <what it actually shows — honestly, not aspirationally>
+**Condition:** <what a visitor sees today: last activity, broken demos, README quality> (assessed <date>)
+**Verdict:** showcase | fix first | don't link
+**Cite when:** <which posting types this helps — and which it would hurt>
+```
+
+Rules:
+- **The register stores the assessment, not the content.** Substantial pieces mined from a portfolio get their own `projects/<name>.md`; repo contents go stale on the next push, so only the verdict and its date live here.
+- An artifact proves the *work exists*, not the *user's part in it* — authorship still goes through the interview's verification gauntlet (`core/interview_protocol.md`). Once confirmed, the URL is recorded as provenance: inspectable evidence beats interview-only testimony.
+- **Verdicts drive links.** Generated documents may only link assets marked `showcase` (see `standards/cv_rules.md`); the `application-verifier` enforces this.
+- Re-assess after any meaningful change to an asset — a stale verdict misleads exactly like a stale index.
+
 ## `interview_progress.md` — the save-game file
 
 The intake interview is deliberately too large for one session. This file makes it resumable:
@@ -85,6 +105,7 @@ The intake interview is deliberately too large for one session. This file makes 
 | Seeding from CV | done | cv from 2026-05, 14 claims seeded |
 | Role: <company A> | done | |
 | Role: <company B> | in progress | achievements verified; stories pending |
+| Portfolio review | done | GitHub + site assessed; 1 repo marked fix-first |
 | Skills inventory | not started | |
 | Education & certifications | done | |
 | Admin facts (permit, notice, languages) | done | |
