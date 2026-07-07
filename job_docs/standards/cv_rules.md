@@ -8,6 +8,7 @@ Read together with `standards/ats_rules.md` (machine pass) and, for the German-s
 - **Metrics wherever the KB has them; honesty where it doesn't.** Use the verified numbers from the knowledge base. If a KB entry has no number, a concrete qualifier is fine ("cut manual steps from 7 to 2"); an invented number is never fine.
 - **Attribution stays accurate.** The KB records the person's part vs the team's; the CV keeps that distinction ("Designed and built X" ≠ "Contributed to X").
 - **Every claim traces.** Each bullet maps to a KB entry (or a user-directed override) in the trace file — see `core/tailoring_method.md`.
+- **Each position gets a one-line company descriptor** — type, domain, rough scale ("B2B SaaS for logistics, ~200 people"), pulled from the role file's **Context** line. Readers rarely know the employer; without it the bullets float context-free. Emphasize the facet closest to the target company's own type, and note that domain terms (ecommerce, SaaS, fintech, marketplace) are ATS keywords in their own right.
 
 ## Voice
 

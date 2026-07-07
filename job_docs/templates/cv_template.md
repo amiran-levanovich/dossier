@@ -16,12 +16,14 @@ Career-change applications: this is the bridge.>
 
 ### <Title> — <Company>, <City or Remote>
 <MM/YYYY> – <MM/YYYY or "present">
+*<one-line company descriptor: type + domain + scale — e.g. "B2B SaaS for hotel operations, ~80 people">*
 
 - <outcome bullet: verb + what + metric — most relevant to this posting first>
 - <3–5 bullets for recent/relevant roles; 1–2 for old or less relevant ones>
 
 ### <Title> — <Company>, <City>
 <MM/YYYY> – <MM/YYYY>
+*<company descriptor>*
 
 - <...>
 
@@ -49,4 +51,7 @@ Rules baked into the shape:
 - One column, standard headings, no tables/images/footers — the parser pass.
 - Experience before skills (recruiters read experience first); a one-line stack summary may appear in the headline area for technical roles.
 - Reverse-chronological, both dates always present, consistent `MM/YYYY`.
+- Every position carries its one-line company descriptor (from the role file's
+  **Context** line) — recruiters rarely know the employer, and domain terms
+  (SaaS, ecommerce, fintech…) double as ATS keywords.
 - Every bullet that asserts experience or an outcome has a line in `cv_trace.md`.
