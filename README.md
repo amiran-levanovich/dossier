@@ -40,32 +40,32 @@ knowledge/
 
 ## Skills
 
-| Skill | When it triggers |
-|---|---|
+| Skill        | When it triggers                                              |
+| :----------- | :------------------------------------------------------------ |
 | `job-intake` | Building/extending the knowledge base; resuming the interview |
-| `job-goals` | Setting or revising search targets |
-| `job-apply` | A posting arrives — the full tailoring pipeline |
+| `job-goals`  | Setting or revising search targets                            |
+| `job-apply`  | A posting arrives — the full tailoring pipeline               |
 
 ## Agents
 
-| Agent | Role |
-|---|---|
-| `cv-tailor` | Tailored ATS-safe `cv.md` + `cv_trace.md` from selected KB files |
-| `cover-letter-writer` | 6-part, <300-word, company-specific `cover.md` + trace |
+| Agent                  | Role                                                                    |
+| :--------------------- | :---------------------------------------------------------------------- |
+| `cv-tailor`            | Tailored ATS-safe `cv.md` + `cv_trace.md` from selected KB files        |
+| `cover-letter-writer`  | 6-part, <300-word, company-specific `cover.md` + trace                  |
 | `application-verifier` | The gate: traceability, ATS, standards — CLEAN or findings; never edits |
 
 ## The docs layer (`job_docs/`)
 
-| Doc | What it holds |
-|---|---|
-| `core/job_workflow.md` | The kernel: folder contract, session start/close, routing, quality model |
-| `core/kb_schema.md` | Knowledge base layout, INDEX contract, verification markers |
-| `core/interview_protocol.md` | The extensive interview: phases, verification gauntlet, ecosystem expansion |
-| `core/tailoring_method.md` | The per-application pipeline, agent dispatch, verifier loop, override protocol |
-| `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor |
-| `standards/` | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering` |
-| `lifecycle/` | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) |
-| `templates/cv_template.md` | The ATS-safe single-column skeleton |
+| Doc                                          | What it holds                                                                       |
+| :------------------------------------------- | :---------------------------------------------------------------------------------- |
+| `core/job_workflow.md`                       | The kernel: folder contract, session start/close, routing, quality model            |
+| `core/kb_schema.md`                          | Knowledge base layout, INDEX contract, verification markers                         |
+| `core/interview_protocol.md`                 | The extensive interview: phases, verification gauntlet, ecosystem expansion         |
+| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop, override protocol      |
+| `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                             |
+| `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`  |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) |
+| `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                 |
 
 ## European / DACH specifics
 

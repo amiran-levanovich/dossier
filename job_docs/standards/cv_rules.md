@@ -25,16 +25,16 @@ Read together with `standards/ats_rules.md` (machine pass) and, for the German-s
 
 ## Emphasis by field
 
-| Field | Lead with |
-| :--- | :--- |
-| Software / technical | Stack (exact names), scale, performance/reliability outcomes, what was designed vs maintained |
-| Business / operations | Cost savings, revenue, efficiency gains, team size |
-| Marketing | Campaign results, audience growth, conversion rates, channels owned |
-| Finance | Portfolio size, accuracy, compliance, process improvements |
-| Sales | Revenue closed, quota attainment, deal size |
-| HR / people | Hiring volume, retention, programmes built |
-| Creative / design | Portfolio link — it outranks any bullet |
-| Research / academia | Publications, grants, methods; teaching only if relevant |
+| Field                 | Lead with                                                                                     |
+| :-------------------- | :-------------------------------------------------------------------------------------------- |
+| Software / technical  | Stack (exact names), scale, performance/reliability outcomes, what was designed vs maintained |
+| Business / operations | Cost savings, revenue, efficiency gains, team size                                            |
+| Marketing             | Campaign results, audience growth, conversion rates, channels owned                           |
+| Finance               | Portfolio size, accuracy, compliance, process improvements                                    |
+| Sales                 | Revenue closed, quota attainment, deal size                                                   |
+| HR / people           | Hiring volume, retention, programmes built                                                    |
+| Creative / design     | Portfolio link — it outranks any bullet                                                       |
+| Research / academia   | Publications, grants, methods; teaching only if relevant                                      |
 
 ## Titles
 

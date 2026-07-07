@@ -4,12 +4,12 @@
 
 ## Options, in order of preference
 
-| Option | When | Notes |
-| :--- | :--- | :--- |
-| **`pdf` skill** (if available) | Default render path for single-column documents | Clean Markdown → PDF; satisfies every `ats_rules.md` format constraint by construction |
-| **`pandoc`** (if on the system) | Same, without the skill | `pandoc cv.md -o CV_<Name>_<Company>.pdf` (add `--pdf-engine=xelatex` for non-Latin text); `-o .docx` for portals that demand Word |
-| **`docx` skill** | Portal requires Word format | Same single-column content |
-| **External CV builder** (e.g. rxresu.me) | User wants a designed, two-column, photo layout — commonly for DACH-market applications (see `standards/dach_conventions.md`) | Manual step: produce a **transfer block** (below), the user pastes it into the builder and exports |
+| Option                                   | When                                                                                                                          | Notes                                                                                                                              |
+| :--------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| **`pdf` skill** (if available)           | Default render path for single-column documents                                                                               | Clean Markdown → PDF; satisfies every `ats_rules.md` format constraint by construction                                             |
+| **`pandoc`** (if on the system)          | Same, without the skill                                                                                                       | `pandoc cv.md -o CV_<Name>_<Company>.pdf` (add `--pdf-engine=xelatex` for non-Latin text); `-o .docx` for portals that demand Word |
+| **`docx` skill**                         | Portal requires Word format                                                                                                   | Same single-column content                                                                                                         |
+| **External CV builder** (e.g. rxresu.me) | User wants a designed, two-column, photo layout — commonly for DACH-market applications (see `standards/dach_conventions.md`) | Manual step: produce a **transfer block** (below), the user pastes it into the builder and exports                                 |
 
 ## The transfer block (external-builder path)
 

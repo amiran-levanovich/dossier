@@ -6,12 +6,12 @@ Most mid-size and large employers run applications through an Applicant Tracking
 
 Name the exact tool, credential, or phrase the posting uses. **Equivalency language is invisible to the machine:**
 
-| Written on the CV | What the ATS finds |
-| :--- | :--- |
-| "pytest-equivalent testing discipline" | no pytest |
-| "Alembic-style migrations" | no Alembic |
-| "experience with similar CRM tools" | no Salesforce |
-| "familiar with NoSQL patterns" | no MongoDB |
+| Written on the CV                      | What the ATS finds |
+| :------------------------------------- | :----------------- |
+| "pytest-equivalent testing discipline" | no pytest          |
+| "Alembic-style migrations"             | no Alembic         |
+| "experience with similar CRM tools"    | no Salesforce      |
+| "familiar with NoSQL patterns"         | no MongoDB         |
 
 **Correct patterns:**
 

@@ -19,11 +19,11 @@ Re-read in this order, stopping as soon as you're oriented: **this file → `kno
 
 ## Minimum read set by task
 
-| Task | Read |
-| :--- | :--- |
-| Intake interview | `core/interview_protocol.md` + `core/kb_schema.md` |
-| Setting goals | `core/kb_schema.md` (goals/constraints sections) |
-| New application | `core/tailoring_method.md` + `standards/ats_rules.md` |
-| Rejection came in | `lifecycle/postmortem.md` + `lifecycle/tracking.md` |
-| Interview booked | `lifecycle/interview_prep.md` |
-| Rendering request | `standards/rendering.md` |
+| Task              | Read                                                  |
+| :---------------- | :---------------------------------------------------- |
+| Intake interview  | `core/interview_protocol.md` + `core/kb_schema.md`    |
+| Setting goals     | `core/kb_schema.md` (goals/constraints sections)      |
+| New application   | `core/tailoring_method.md` + `standards/ats_rules.md` |
+| Rejection came in | `lifecycle/postmortem.md` + `lifecycle/tracking.md`   |
+| Interview booked  | `lifecycle/interview_prep.md`                         |
+| Rendering request | `standards/rendering.md`                              |

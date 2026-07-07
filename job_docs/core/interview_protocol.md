@@ -39,16 +39,16 @@ One past role at a time, most recent first. For each role, work through:
 
 When the user names a technology, **drill into its ecosystem** — these adjacent tools are exactly the keywords ATS filters match on, and users reliably forget to mention them:
 
-| Named | Probe for (examples, not exhaustive) |
-| :--- | :--- |
-| Python | pytest, ruff/flake8, Django, FastAPI, Flask, Celery, SQLAlchemy, Alembic, pydantic, poetry/uv |
-| Ruby | Rails, RSpec, RuboCop, Sidekiq, ActiveRecord, Capistrano |
-| JavaScript/TS | Node, React/Vue, Next.js, Jest/Vitest, ESLint, webpack/Vite |
-| Java | Spring (Boot), Maven/Gradle, JUnit, Hibernate |
-| Databases | PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch — plus migrations tooling, replication, tuning |
-| Cloud/infra | AWS/GCP/Azure (which services *by name*), Docker, Kubernetes, Terraform, CI system by name |
-| Data/ML | pandas, NumPy, scikit-learn, PyTorch, Airflow, dbt, Spark |
-| Non-tech fields | the field's named tools: Salesforce/HubSpot, SAP, Excel (to what depth), Figma, Jira, GA4… |
+| Named           | Probe for (examples, not exhaustive)                                                            |
+| :-------------- | :---------------------------------------------------------------------------------------------- |
+| Python          | pytest, ruff/flake8, Django, FastAPI, Flask, Celery, SQLAlchemy, Alembic, pydantic, poetry/uv   |
+| Ruby            | Rails, RSpec, RuboCop, Sidekiq, ActiveRecord, Capistrano                                        |
+| JavaScript/TS   | Node, React/Vue, Next.js, Jest/Vitest, ESLint, webpack/Vite                                     |
+| Java            | Spring (Boot), Maven/Gradle, JUnit, Hibernate                                                   |
+| Databases       | PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch — plus migrations tooling, replication, tuning |
+| Cloud/infra     | AWS/GCP/Azure (which services *by name*), Docker, Kubernetes, Terraform, CI system by name      |
+| Data/ML         | pandas, NumPy, scikit-learn, PyTorch, Airflow, dbt, Spark                                       |
+| Non-tech fields | the field's named tools: Salesforce/HubSpot, SAP, Excel (to what depth), Figma, Jira, GA4…      |
 
 For a stack not in this table, construct the expansion on the fly: ask what the user used for *testing, linting, background jobs, deployment, monitoring, and collaboration* in that role — every named answer is a KB skill entry and a future ATS keyword. Each confirmed tool goes into `skills.md` with depth and provenance.
 

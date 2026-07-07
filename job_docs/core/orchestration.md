@@ -11,12 +11,12 @@ This plugin assumes **nothing is installed**. The workflow runs end-to-end with 
 
 ## Built-in (always available)
 
-| Tool | Role |
-| :--- | :--- |
-| `WebFetch` | Pull the full text of a job posting from its URL (Step 1 of `core/tailoring_method.md`) |
-| `WebSearch` | Company research before writing (Step 3); salary benchmarks; market checks |
-| `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), override confirmation, judgment calls |
-| Agent tool | Dispatch `cv-tailor`, `cover-letter-writer`, `application-verifier`; `general-purpose` for multi-step company research |
+| Tool              | Role                                                                                                                   |
+| :---------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| `WebFetch`        | Pull the full text of a job posting from its URL (Step 1 of `core/tailoring_method.md`)                                |
+| `WebSearch`       | Company research before writing (Step 3); salary benchmarks; market checks                                             |
+| `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), override confirmation, judgment calls                              |
+| Agent tool        | Dispatch `cv-tailor`, `cover-letter-writer`, `application-verifier`; `general-purpose` for multi-step company research |
 
 ## Advised skills
 

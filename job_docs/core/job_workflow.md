@@ -41,14 +41,14 @@ Gather context silently before responding; never ask for what a file can answer.
 
 ## ROUTING — which skill runs
 
-| State / request | Route |
-| :--- | :--- |
-| No `knowledge/` yet, or the interview is unfinished (`knowledge/interview_progress.md` has open areas) | `job-intake` |
-| Knowledge base exists but `goals.md` is missing or stale; or the user wants to change targets | `job-goals` |
-| The user brings a job posting (URL or pasted text) | `job-apply` |
-| A rejection came in | update tracker, then `lifecycle/postmortem.md` |
-| An interview got booked | update tracker, then `lifecycle/interview_prep.md` |
-| Status changes, follow-ups, "where do things stand?" | `lifecycle/tracking.md` |
+| State / request                                                                                        | Route                                              |
+| :----------------------------------------------------------------------------------------------------- | :------------------------------------------------- |
+| No `knowledge/` yet, or the interview is unfinished (`knowledge/interview_progress.md` has open areas) | `job-intake`                                       |
+| Knowledge base exists but `goals.md` is missing or stale; or the user wants to change targets          | `job-goals`                                        |
+| The user brings a job posting (URL or pasted text)                                                     | `job-apply`                                        |
+| A rejection came in                                                                                    | update tracker, then `lifecycle/postmortem.md`     |
+| An interview got booked                                                                                | update tracker, then `lifecycle/interview_prep.md` |
+| Status changes, follow-ups, "where do things stand?"                                                   | `lifecycle/tracking.md`                            |
 
 **Order is not optional:** `job-apply` requires a knowledge base with verified content and a signed-off `goals.md`. If either is missing, say so and route to the missing step first — a tailored CV built on an empty or unverified knowledge base is the exact failure this workflow exists to prevent.
 
