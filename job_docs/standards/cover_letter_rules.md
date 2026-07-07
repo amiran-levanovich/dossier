@@ -24,7 +24,7 @@ Open with substance: why this role, concretely, in one sentence.
 2. **Pitch** — 2–3 sentences: who the person is, what they do, with a concrete example matched to the company's type (B2B SaaS, fintech, agency, public sector…).
 3. **Value proposition** — the letter's core: pick the posting's *hardest or most central requirement*, and answer it with direct experience and a concrete result from the KB. One focused argument, not a CV summary. Name the exact thing — no "transferable skills".
 4. **Broader coverage** — 1–2 sentences showing the baseline requirements are met.
-5. **Portfolio / work samples** — one line with the link, if applicable.
+5. **Portfolio / work samples** — one line with the link, if applicable; only an asset `knowledge/portfolio.md` marks `showcase` and whose **Cite when** guidance fits this posting. No qualifying asset → skip the part entirely.
 6. **Logistics close** — location, work permit status, notice period / availability, languages, invitation to talk. (In DACH applications the permit + notice period are expected here — never omit them; see `standards/dach_conventions.md`.)
 
 ## Tone

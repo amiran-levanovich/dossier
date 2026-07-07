@@ -14,7 +14,7 @@ the research notes or jd.md.
 
 - **jd.md path** — requirement breakdown, including posting language and tone signals
 - **notes.md path** — company research (what they do, size, news, tone)
-- **KB file paths** — selected knowledge-base files (roles, skills, profile, constraints, goals)
+- **KB file paths** — selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means the portfolio line is omitted)
 - **Standards paths** — `cover_letter_rules.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cover.md` and `cover_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application

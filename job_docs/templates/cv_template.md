@@ -54,4 +54,7 @@ Rules baked into the shape:
 - Every position carries its one-line company descriptor (from the role file's
   **Context** line) — recruiters rarely know the employer, and domain terms
   (SaaS, ecommerce, fintech…) double as ATS keywords.
+- The header's GitHub/portfolio link and every Projects entry point only at assets
+  the portfolio register (`knowledge/portfolio.md`) marks `showcase` for this kind
+  of posting.
 - Every bullet that asserts experience or an outcome has a line in `cv_trace.md`.

@@ -23,6 +23,7 @@ Read together with `standards/ats_rules.md` (machine pass) and, for the German-s
 - **Summary is tailored, not generic.** It mirrors the posting's framing of the role using the candidate's verified strengths. For a stretch or career-change application, it is the bridge — two sentences connecting background to this role.
 - **Cut what doesn't serve this application.** Tailoring is selection: reorder bullets so the most relevant experience leads, drop bullets that add length but no signal for *this* posting.
 - No objective statement (career-changers get the bridging summary instead), no references, no "References available on request".
+- **Links follow the portfolio register.** A header link or Projects entry may only point at an asset `knowledge/portfolio.md` marks `showcase`, and only where its **Cite when** guidance fits this posting — a link to a stale or weak asset costs more than no link.
 
 ## Emphasis by field
 

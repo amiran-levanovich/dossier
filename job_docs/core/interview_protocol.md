@@ -52,6 +52,15 @@ When the user names a technology, **drill into its ecosystem** — these adjacen
 
 For a stack not in this table, construct the expansion on the fly: ask what the user used for *testing, linting, background jobs, deployment, monitoring, and collaboration* in that role — every named answer is a KB skill entry and a future ATS keyword. Each confirmed tool goes into `skills.md` with depth and provenance.
 
+## Phase 2b — Portfolio review (only if public assets exist)
+
+Anything a recruiter can click: GitHub profile, personal website, presentations, published work. This is the one interview area where evidence can be inspected directly — **fetch each asset** (WebFetch the site, the profile page, pinned repos) rather than taking the user's description of it. Two passes per asset:
+
+1. **Mine it.** Extract substantial pieces into `projects/<name>.md` and demonstrated tools into `skills.md`. A public artifact proves the *work exists*, not the *user's part in it* — forks, team projects, and tutorial-following all look like authorship from outside. Run the Phase 2 gauntlet (attribution, scope) before clearing `[unverified]`; once confirmed, record the URL as provenance.
+2. **Assess it as a recruiter would.** Judge what a visitor sees on click: last activity, broken demos, README quality, whether the visible work supports the CV's seniority story. Write the entry into `knowledge/portfolio.md` per the register format in `core/kb_schema.md`, with a verdict — `showcase`, `fix first`, or `don't link` — and citation guidance. Deliver the verdict to the user plainly; a flattering wrong verdict costs real applications.
+
+No portfolio → mark the area `done — none` in `interview_progress.md` and move on. If the user later creates or overhauls an asset, this phase re-runs for it.
+
 ## Phase 3 — Cross-cutting inventory
 
 - **Skills consolidation:** walk `skills.md` once — depth rating per tool, catch anything the role passes missed.

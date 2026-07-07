@@ -47,6 +47,8 @@ Quick WebSearch: what the company does, size, recent news, product, tone of thei
 
 Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Do not pass the whole KB to the agents; targeted context is what makes tailoring sharp.
 
+If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies — and leave it out (so no link appears) when none does.
+
 ## Step 5 — Dispatch the writers (parallel)
 
 Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: the `jd.md` path, the selected KB file paths, `notes.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies, `templates/cv_template.md` for the CV), the output paths, and `overrides.md` if it exists. Each agent writes its document **plus a trace file** mapping every claim to its source.

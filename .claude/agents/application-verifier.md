@@ -14,7 +14,8 @@ findings to end the loop.
 
 - **Package paths** — `cv.md`, `cv_trace.md`, `cover.md`, `cover_trace.md`, `jd.md`;
   `overrides.md` if it exists
-- **KB file paths** — the same knowledge-base files the writers received
+- **KB file paths** — the same knowledge-base files the writers received;
+  `knowledge/portfolio.md` if it exists
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `cover_letter_rules.md`;
   plus `dach_conventions.md` when the market applies
 
@@ -42,7 +43,10 @@ If any input is missing, name it and stop. Never verify against files you guesse
    cover_letter_rules: 6 parts in order, <300 words, banned openers, a real
    company-specific reference, correct language and register; dach_conventions when
    applicable: logistics close completeness (permit, notice period), protected titles,
-   salutation, user's recorded photo/data choices not contradicted.
+   salutation, user's recorded photo/data choices not contradicted;
+   **portfolio links**: every URL in cv.md/cover.md beyond profile.md contact facts
+   appears in `knowledge/portfolio.md` with a `showcase` verdict — a link to an asset
+   marked `fix first`/`don't link`, or to one the register doesn't list, is a MAJOR.
 
 ## Output contract
 
@@ -55,7 +59,8 @@ Return exactly one of:
 
 Severity: BLOCKER = untraceable/unverified/inflated claim, constraint or protected-title
 violation, missing mandatory DACH logistics; MAJOR = covered must-have keyword absent,
-equivalency language, banned opener, >300 words, format-constraint break; MINOR = style
+equivalency language, banned opener, >300 words, format-constraint break, non-showcase
+portfolio link; MINOR = style
 drift, weak phrasing, suboptimal ordering.
 
 If a check cannot be completed (missing file, unreadable trace), report that explicitly.
