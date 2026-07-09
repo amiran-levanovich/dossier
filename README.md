@@ -18,6 +18,8 @@ A tailored application is only as good as what the system **actually knows** abo
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line. Posting in (URL or pasted text) → requirement breakdown → ATS keyword check *before writing anything* → company research → two sub-agents in parallel (**cv-tailor**, **cover-letter-writer**) → the **application-verifier** gate, looped fix→re-verify until CLEAN → tracker updated.
 
+When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly.
+
 The knowledge base it builds (in *your* job folder — the plugin ships zero personal data):
 
 ```
@@ -49,11 +51,12 @@ knowledge/
 
 ## Agents
 
-| Agent                  | Role                                                                    |
-| :--------------------- | :---------------------------------------------------------------------- |
-| `cv-tailor`            | Tailored ATS-safe `cv.md` + `cv_trace.md` from selected KB files        |
-| `cover-letter-writer`  | 6-part, <300-word, company-specific `cover.md` + trace                  |
-| `application-verifier` | The gate: traceability, ATS, standards — CLEAN or findings; never edits |
+| Agent                  | Role                                                                     |
+| :--------------------- | :----------------------------------------------------------------------- |
+| `cv-tailor`            | Tailored ATS-safe `cv.md` + `cv_trace.md` from selected KB files         |
+| `cover-letter-writer`  | 6-part, <300-word, company-specific `cover.md` + trace                   |
+| `application-verifier` | The gate: traceability, ATS, standards — CLEAN or findings; never edits  |
+| `interview-briefer`    | Stage-specific interview `prep.md` — claims-aware, gaps flagged honestly |
 
 ## The docs layer (`job_docs/`)
 
