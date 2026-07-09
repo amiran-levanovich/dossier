@@ -29,7 +29,7 @@ Get the full text: WebFetch for a URL (ask for a paste if it's behind a login wa
 <honest gap analysis against the KB and goals.md: strong matches, gaps, dealbreakers>
 ```
 
-**Fit check before any writing:** compare against `goals.md` and `constraints.md`. A clear seniority/stack mismatch or a violated hard constraint gets said out loud now — whether to proceed anyway is the user's call.
+**Fit check before any writing:** compare against `goals.md`, `constraints.md`, and `knowledge/lessons.md`. A clear seniority/stack mismatch, a violated hard constraint, or a match with a logged lesson (a known-fatal `hard-filter`, a profile the search has already died at) gets said out loud now — whether to proceed anyway is the user's call.
 
 ## Step 2 — ATS keyword check (before writing anything)
 
@@ -48,6 +48,8 @@ Quick WebSearch: what the company does, size, recent news, product, tone of thei
 Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Do not pass the whole KB to the agents; targeted context is what makes tailoring sharp.
 
 If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies — and leave it out (so no link appears) when none does.
+
+`knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to the writer agents; their claims come from verified KB entries only.
 
 ## Step 5 — Dispatch the writers (parallel)
 

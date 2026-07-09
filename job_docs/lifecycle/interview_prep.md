@@ -45,4 +45,4 @@ The 5 core stories were harvested at intake (`core/interview_protocol.md` Phase 
 
 ## After every interview
 
-Debrief while it's fresh: what was asked, what landed, what wobbled. Write durable findings back — a new story or corrected metric into the KB; company-specific signals into `notes.md`; the next stage into the tracker with a dated `next_action`.
+Debrief while it's fresh: what was asked, what landed, what wobbled. Write durable findings back — a new story or corrected metric into the KB; company-specific signals into `notes.md`; the next stage into the tracker with a dated `next_action`. And the transferable learning — the wobble that will recur, the question every screen asks — lands as one `[interview]` lesson line in `knowledge/lessons.md` (format in `core/kb_schema.md`), where the next prep and post-mortem will actually reread it.

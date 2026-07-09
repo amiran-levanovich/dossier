@@ -18,7 +18,7 @@ A tailored application is only as good as what the system **actually knows** abo
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line. Posting in (URL or pasted text) → requirement breakdown → ATS keyword check *before writing anything* → company research → two sub-agents in parallel (**cv-tailor**, **cover-letter-writer**) → the **application-verifier** gate, looped fix→re-verify until CLEAN → tracker updated.
 
-When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly. And across applications, `lifecycle/analytics.md` reads the whole tracker — funnel, where applications die, pace — and turns a rejection pattern into one concrete strategy adjustment instead of another per-application fix.
+When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly. And across applications, `lifecycle/analytics.md` reads the whole tracker — funnel, where applications die, pace — and turns a rejection pattern into one concrete strategy adjustment instead of another per-application fix. The loop closes through `knowledge/lessons.md`: every rejection post-mortem and interview debrief lands one lesson line, and the fit check reads them back before the next application gets built — a diagnosis made once is never made from scratch again.
 
 The knowledge base it builds (in *your* job folder — the plugin ships zero personal data):
 
@@ -30,6 +30,7 @@ knowledge/
 ├── goals.md               # search targets
 ├── interview_progress.md  # the interview's save-game file
 ├── portfolio.md           # asset register: per clickable asset, a verdict — showcase / fix first / don't link
+├── lessons.md             # learning log: every post-mortem and debrief lands one lesson, reread before applying
 ├── roles/<company>.md     # one per position: stack, verified achievements, STAR stories
 ├── projects/<name>.md
 └── skills.md              # exact tool names with depth + provenance
