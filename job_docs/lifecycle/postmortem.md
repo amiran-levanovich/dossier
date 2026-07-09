@@ -4,7 +4,7 @@ Run when a rejection lands (offer it; don't force it). Goal: identify the most l
 
 ## Step 1 — Classify the rejection
 
-From the tracker `notes` (see `lifecycle/tracking.md`):
+From the tracker's `stage_reached` and `notes` (see `lifecycle/tracking.md`; legacy rows without `stage_reached` classify from `notes` alone):
 
 - **Generic auto-reply, fast** → the application was filtered by ATS or a volume screen. *A human almost certainly never read it.* Analyze the machine pass (Step 2).
 - **Human rejection, pre-interview** → a recruiter read it and passed. Analyze fit signaling: seniority match, summary framing, salary expectations, permit/notice logistics.
@@ -26,6 +26,6 @@ One paragraph: the most likely cause, the evidence, and **one specific fix**. Th
 
 - Missing-but-true keyword → mini-interview it into the KB now (it will serve every future application).
 - Recurring hard-credential filter → note in `goals.md` targeting (e.g. avoid postings with a strict degree filter, or target company types that weigh it less).
-- Pattern across 3+ rejections at the same stage → escalate from per-application fixes to a strategy conversation: targets, seniority band, market, or materials as a whole.
+- Pattern across 3+ rejections at the same stage → escalate from per-application fixes to a strategy conversation: targets, seniority band, market, or materials as a whole. `lifecycle/analytics.md` is the mechanized check — run it rather than counting by eye.
 
-Log the post-mortem conclusion in the application folder's `notes.md` and set the tracker row's `next_action` to empty (terminal) — the learning, not the row, carries forward.
+Log the post-mortem conclusion in the application folder's `notes.md` and close out the tracker row: `next_action` empty (terminal), `date_closed` and `stage_reached` filled — the learning, not the row, carries forward, and analytics needs the row complete.

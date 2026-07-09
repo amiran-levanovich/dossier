@@ -49,6 +49,7 @@ Gather context silently before responding; never ask for what a file can answer.
 | A rejection came in                                                                                    | update tracker, then `lifecycle/postmortem.md`     |
 | An interview got booked                                                                                | update tracker, then `lifecycle/interview_prep.md` |
 | Status changes, follow-ups, "where do things stand?"                                                   | `lifecycle/tracking.md`                            |
+| "How's the search going?", patterns, a strategy review                                                 | `lifecycle/analytics.md`                           |
 
 **Order is not optional:** `job-apply` requires a knowledge base with verified content and a signed-off `goals.md`. If either is missing, say so and route to the missing step first — a tailored CV built on an empty or unverified knowledge base is the exact failure this workflow exists to prevent.
 
