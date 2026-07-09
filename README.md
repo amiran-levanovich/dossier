@@ -18,7 +18,7 @@ A tailored application is only as good as what the system **actually knows** abo
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line. Posting in (URL or pasted text) → requirement breakdown → ATS keyword check *before writing anything* → company research → two sub-agents in parallel (**cv-tailor**, **cover-letter-writer**) → the **application-verifier** gate, looped fix→re-verify until CLEAN → tracker updated.
 
-When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly.
+When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly. And across applications, `lifecycle/analytics.md` reads the whole tracker — funnel, where applications die, pace — and turns a rejection pattern into one concrete strategy adjustment instead of another per-application fix.
 
 The knowledge base it builds (in *your* job folder — the plugin ships zero personal data):
 
@@ -60,16 +60,16 @@ knowledge/
 
 ## The docs layer (`job_docs/`)
 
-| Doc                                          | What it holds                                                                       |
-| :------------------------------------------- | :---------------------------------------------------------------------------------- |
-| `core/job_workflow.md`                       | The kernel: folder contract, session start/close, routing, quality model            |
-| `core/kb_schema.md`                          | Knowledge base layout, INDEX contract, verification markers                         |
-| `core/interview_protocol.md`                 | The extensive interview: phases, verification gauntlet, ecosystem expansion         |
-| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop, override protocol      |
-| `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                             |
-| `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`  |
-| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) |
-| `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                 |
+| Doc                                          | What it holds                                                                                                         |
+| :------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| `core/job_workflow.md`                       | The kernel: folder contract, session start/close, routing, quality model                                              |
+| `core/kb_schema.md`                          | Knowledge base layout, INDEX contract, verification markers                                                           |
+| `core/interview_protocol.md`                 | The extensive interview: phases, verification gauntlet, ecosystem expansion                                           |
+| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop, override protocol                                        |
+| `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
+| `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) |
+| `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
 ## European / DACH specifics
 
