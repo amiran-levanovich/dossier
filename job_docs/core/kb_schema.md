@@ -18,6 +18,8 @@ knowledge/
 ├── interview_progress.md    # the intake interview's save-game file (see below)
 ├── portfolio.md             # asset register: every public artifact a recruiter can click,
 │                            #   with an assessment and a show/fix/don't-link verdict (see below)
+├── lessons.md               # cross-application learning log — written by post-mortems and
+│                            #   interview debriefs, read before diagnosing or applying (see below)
 ├── roles/<company>.md       # one file per past position
 ├── projects/<name>.md       # one file per side project / notable non-employment work
 └── skills.md                # skill inventory with depth and provenance
@@ -31,6 +33,7 @@ One line per KB file: relative path, an em-dash, a hook that lets an agent decid
 - roles/acme.md — Senior backend dev 2021–2025: Rails APIs, B2B SaaS, perf work, team of 5
 - skills.md — full inventory: Ruby/Rails deep, Python working, PostgreSQL, Redis, CI
 - constraints.md — hard rules: title wording, industries to avoid  (ALWAYS read)
+- lessons.md — search learning log: 6 lessons, 1 open (degree-filter targeting)
 ```
 
 Rules:
@@ -92,6 +95,27 @@ Rules:
 - An artifact proves the *work exists*, not the *user's part in it* — authorship still goes through the interview's verification gauntlet (`core/interview_protocol.md`). Once confirmed, the URL is recorded as provenance: inspectable evidence beats interview-only testimony.
 - **Verdicts drive links.** Generated documents may only link assets marked `showcase` (see `standards/cv_rules.md`); the `application-verifier` enforces this.
 - Re-assess after any meaningful change to an asset — a stale verdict misleads exactly like a stale index.
+
+## `lessons.md` — the learning log
+
+What the *search* has taught, one line per lesson, newest first — so a diagnosis made once is never made from scratch again:
+
+```markdown
+# Lessons — cross-application learning log
+
+- 2026-07-08 [hard-filter] betacorp: strict CS-degree ATS filter → goals.md targeting now avoids degree-gated postings (applied)
+- 2026-07-05 [interview] acme: wobbled on DB indexing depth in the tech round → refresh before every Rails tech screen; story sharpened in roles/oldco.md (applied)
+- 2026-07-02 [keyword-gap] gammasoft: posting named "Sidekiq", KB only had "background jobs" → added to skills.md (applied)
+```
+
+Format: `- <date> [<category>] <company>: <what was learned> → <action taken> (applied | open)`. Categories: `keyword-gap | hard-filter | seniority | volume | format | screen-fit | interview | process`.
+
+Rules:
+- **Writers**: the post-mortem (`lifecycle/postmortem.md` Step 3) and the interview debrief (`lifecycle/interview_prep.md`) — every rejection and every debrief lands exactly one line.
+- **Readers**: the next post-mortem before diagnosing (a repeated diagnosis escalates instead of re-fixing), the `job-apply` fit check (known-fatal patterns surface before anything is built), and `lifecycle/analytics.md` (lessons corroborate the numbers).
+- `(open)` = the action wasn't applied on the spot — that is a debt; analytics and the next post-mortem surface open lessons until they're applied or consciously dropped.
+- Lessons record judgments about the **search**, not facts about the candidate — candidate facts go into the role/skills files as always; a lesson may point at the KB edit it caused.
+- **Orchestrator context only**: `lessons.md` is never passed to the writer agents — every CV/letter claim still traces to verified KB entries.
 
 ## `interview_progress.md` — the save-game file
 

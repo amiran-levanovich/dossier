@@ -79,5 +79,5 @@ There is no commit hook and nothing deterministic to check. The bar is held by t
 
 1. **Tracker current?** Every company touched this session has the right status, dates, link, and a concrete dated `next_action`.
 2. **Application folders complete?** Every application worked on has its `jd.md`, `cv.md`, `cover.md` (+ trace files) in place.
-3. **Knowledge base current?** New facts learned this session (a metric recalled mid-conversation, a new story) are written into `knowledge/` and `INDEX.md`; if the intake interview is still open, `interview_progress.md` reflects exactly where it stopped.
+3. **Knowledge base current?** New facts learned this session (a metric recalled mid-conversation, a new story) are written into `knowledge/` and `INDEX.md` — including a `lessons.md` line if a post-mortem or interview debrief ran; if the intake interview is still open, `interview_progress.md` reflects exactly where it stopped.
 4. End with one line: what was updated, what's next. Keep it brief.

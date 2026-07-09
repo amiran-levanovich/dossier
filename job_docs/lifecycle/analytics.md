@@ -80,6 +80,8 @@ Rules of thumb, **not market benchmarks** — they order the investigation, they
 | Funnel healthy but PACE low                                  | Volume, not quality              | More applications at current standards beats another materials pass                                             |
 | Everything stuck `applied`, little closure                   | Pipeline going cold              | Work the STALE list: follow up or close out; consider channels beyond portals (referrals, direct)               |
 
+After the numbers, read `knowledge/lessons.md` (it is small — no recipe needed): recurring categories corroborate whichever pattern the table points at, and `(open)` lessons — or the same lesson logged twice without action — are the strongest escalation evidence there is: the search is re-learning instead of adjusting.
+
 **3+ rejections at the same stage** is the formal escalation trigger (from `postmortem.md` Step 3): stop per-application fixes and have the strategy conversation — targets, seniority band, market, or the materials as a whole.
 
 ## Step 3 — Diagnose and act
