@@ -2,7 +2,7 @@
 
 Re-read this when context is tight, after a compaction, or whenever unsure. It is the distilled floor of `job_workflow.md`, not a replacement — follow the full kernel when you can.
 
-1. **Session start:** read `knowledge/INDEX.md`, `goals.md`, `constraints.md`, and `tracker.csv` before responding. Never ask what a file answers.
+1. **Session start:** read `knowledge/INDEX.md`, `goals.md`, `constraints.md`, and `tracker.csv` before responding. Never ask what a file answers. All of these live in the current working directory — if `knowledge/` isn't there, the folder is fresh: route to `job-intake`; never search elsewhere for them.
 2. **Order holds:** no `job-apply` without a verified knowledge base and current goals. Route to `job-intake` / `job-goals` first.
 3. **Resume, don't re-ask:** `knowledge/interview_progress.md` is the interview's save-game — continue from it; never re-interview recorded areas.
 4. **CV content is claims:** seeded entries stay `[unverified]` until interview-confirmed; unverified entries never feed tailoring.

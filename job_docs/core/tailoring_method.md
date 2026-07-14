@@ -2,7 +2,7 @@
 
 This is the procedure behind the `job-apply` skill: job posting in, verified application package out. It is the workflow's production line, and its quality bar is held by **traceability** and the **verifier gate** — not by trust in any single generation step.
 
-**Preconditions.** A knowledge base exists with verified content, and `knowledge/goals.md` is current. If not, stop and route to `job-intake` / `job-goals` — do not tailor from a thin KB.
+**Preconditions.** A knowledge base exists **in the current working directory** with verified content, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop immediately and route to `job-intake` / `job-goals`; never hunt for a knowledge base elsewhere on the filesystem, and do not tailor from a thin KB.
 
 ---
 
