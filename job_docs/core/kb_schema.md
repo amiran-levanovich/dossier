@@ -112,7 +112,7 @@ Format: `- <date> [<category>] <company>: <what was learned> → <action taken> 
 
 Rules:
 - **Writers**: the post-mortem (`lifecycle/postmortem.md` Step 3) and the interview debrief (`lifecycle/interview_prep.md`) — every rejection and every debrief lands exactly one line.
-- **Readers**: the next post-mortem before diagnosing (a repeated diagnosis escalates instead of re-fixing), the `job-apply` fit check (known-fatal patterns surface before anything is built), and `lifecycle/analytics.md` (lessons corroborate the numbers).
+- **Readers**: the next post-mortem before diagnosing (a repeated diagnosis escalates instead of re-fixing), the `job-apply` fit gate (`core/fit_check.md` — known-fatal patterns kill the application before anything is built), and `lifecycle/analytics.md` (lessons corroborate the numbers).
 - `(open)` = the action wasn't applied on the spot — that is a debt; analytics and the next post-mortem surface open lessons until they're applied or consciously dropped.
 - Lessons record judgments about the **search**, not facts about the candidate — candidate facts go into the role/skills files as always; a lesson may point at the KB edit it caused.
 - **Orchestrator context only**: `lessons.md` is never passed to the writer agents — every CV/letter claim still traces to verified KB entries.

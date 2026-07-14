@@ -5,7 +5,7 @@ These rules bind the `cover-letter-writer` agent; the `application-verifier` che
 ## Hard limits
 
 - **Under 300 words.** Recruiters skim; length is a cost, not a signal of effort.
-- **Specific to this company and role.** Every letter references something real about the company (from the Step 3 research notes — a product, a public decision, an initiative). A letter that would work with the company name swapped out is a defect.
+- **Specific to this company and role.** Every letter references something real about the company (from the Step 4 research notes — a product, a public decision, an initiative). A letter that would work with the company name swapped out is a defect.
 - **Language matches the posting** unless the user says otherwise; if applying in a second language, close with a natural note ("Ich führe das Gespräch gerne auf Deutsch weiter." / "Happy to continue the conversation in German.").
 - **Every factual claim traces** to a KB entry or a user-directed override — same contract as the CV (`core/tailoring_method.md`).
 

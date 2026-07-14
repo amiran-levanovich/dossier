@@ -6,7 +6,7 @@ European application norms differ from US/international ones, and the German-spe
 
 - German posting → German documents (CV as *Lebenslauf*, cover letter as *Anschreiben*), unless the posting is explicitly bilingual or the company language is stated as English. English posting from a DACH company → English documents are fine.
 - Formal register: **Sie**, never du, unless the posting itself uses du (common in startups — then mirror it).
-- Anschreiben salutation: a named contact (`Sehr geehrte Frau X`) beats `Sehr geehrte Damen und Herren` — check the posting and company page for a name during Step 3 research.
+- Anschreiben salutation: a named contact (`Sehr geehrte Frau X`) beats `Sehr geehrte Damen und Herren` — check the posting and company page for a name during Step 4 research.
 
 ## Lebenslauf (CV) specifics
 

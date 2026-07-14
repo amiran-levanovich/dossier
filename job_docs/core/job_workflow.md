@@ -16,7 +16,7 @@ The plugin ships **zero personal data**. Everything about the candidate lives in
 <job folder>/
 ├── knowledge/                 # the knowledge base — see core/kb_schema.md
 ├── applications/<company>/    # one folder per application:
-│   ├── jd.md                  #   requirement breakdown of the posting
+│   ├── jd.md                  #   requirement breakdown + fit verdict (core/fit_check.md)
 │   ├── cv.md + cv_trace.md    #   tailored CV + claim→source map
 │   ├── cover.md + cover_trace.md
 │   ├── overrides.md           #   user-directed claims, if any (tailoring_method.md)
@@ -72,7 +72,7 @@ There is no commit hook and nothing deterministic to check. The bar is held by t
 - **Language follows the posting.** The knowledge base is written in English; generated documents match the posting's language unless the user says otherwise. DACH-market specifics live in `standards/dach_conventions.md`.
 - **Research before writing.** Every new company gets a quick WebSearch (what they do, size, recent news, tone) before any material is written — letters that reference something real outperform generic ones.
 - **Never volunteer fabrication.** Agents write only what the knowledge base supports. The user may explicitly direct an unsupported claim — that path has a protocol (warn once, confirm, detail, record in `overrides.md`) and it is the *user's* call, not yours. See `core/tailoring_method.md`.
-- **Don't chase mismatches.** If a posting clearly misses the user's seniority, stack, or a hard constraint in `constraints.md`, say so before building anything — applying anyway is the user's call.
+- **Don't chase mismatches.** Every posting passes the fit gate (`core/fit_check.md`) before anything is built: liveness, a binary constraints screen, an evidence-cited 1–5 score, a legitimacy tier. A weak verdict gets said out loud — applying anyway is the user's call, and the override is recorded, never argued with twice.
 
 ---
 
