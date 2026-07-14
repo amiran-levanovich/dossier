@@ -17,7 +17,7 @@ Name the exact tool, credential, or phrase the posting uses. **Equivalency langu
 
 - Genuinely has it, differently deep: name it, contextualize in parentheses — `pytest (RSpec background — same TDD discipline)` → ATS finds pytest ✓
 - Currently learning: `Kafka — actively ramping` → visible, honest, no overclaim.
-- Doesn't have it: **omit it.** The gap is handled in `jd.md` Fit notes and, if the user insists, through the override protocol (`core/tailoring_method.md`) — never through fuzzy wording.
+- Doesn't have it: **omit it.** The gap is recorded in `jd.md`'s `## Fit` block and, if the user insists, handled through the override protocol (`core/tailoring_method.md`) — never through fuzzy wording.
 
 Use the posting's exact spelling ("PostgreSQL" if they wrote PostgreSQL, "Postgres" if they wrote Postgres); mirror recurring phrases from the posting where they're natural ("payment reconciliation", "stakeholder management") — naturally, not stuffed.
 

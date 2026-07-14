@@ -25,25 +25,27 @@ Get the full text: WebFetch for a URL (ask for a paste if it's behind a login wa
 ## ATS keywords
 <every named technology, tool, credential, and recurring phrase — exact spelling as in the posting>
 
-## Fit notes
-<honest gap analysis against the KB and goals.md: strong matches, gaps, dealbreakers>
+## Fit
+<filled by the fit gate — block template in core/fit_check.md>
 ```
 
-**Fit check before any writing:** compare against `goals.md`, `constraints.md`, and `knowledge/lessons.md`. A clear seniority/stack mismatch, a violated hard constraint, or a match with a logged lesson (a known-fatal `hard-filter`, a profile the search has already died at) gets said out loud now — whether to proceed anyway is the user's call.
+## Step 2 — The fit gate (before any research or writing)
 
-## Step 2 — ATS keyword check (before writing anything)
+Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict gets said out loud **now** — whether to proceed against it is the user's call, recorded per that doc. Research inside the gate is capped at 5 WebSearch queries; whatever it finds feeds Step 4's notes.
+
+## Step 3 — ATS keyword check (before writing anything)
 
 Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Three buckets:
 
 - **Covered** — a verified KB entry names it.
 - **Verifiable gap** — the user plausibly has it but the KB doesn't record it → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake).
-- **Real gap** — the user doesn't have it → record in Fit notes. It may only enter the documents through the override protocol below.
+- **Real gap** — the user doesn't have it → record under the KB-match evidence line in `jd.md`'s `## Fit` block. It may only enter the documents through the override protocol below.
 
-## Step 3 — Company research
+## Step 4 — Company research
 
-Quick WebSearch: what the company does, size, recent news, product, tone of their own postings. Write 5–8 lines into `applications/<company>/notes.md`. The cover letter must reference something real from this.
+Quick WebSearch: what the company does, size, recent news, product, tone of their own postings. Start from what the fit gate already found — don't repeat its queries. Write 5–8 lines into `applications/<company>/notes.md`. The cover letter must reference something real from this.
 
-## Step 4 — Select knowledge
+## Step 5 — Select knowledge
 
 Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Do not pass the whole KB to the agents; targeted context is what makes tailoring sharp.
 
@@ -51,22 +53,22 @@ If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets 
 
 `knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to the writer agents; their claims come from verified KB entries only.
 
-## Step 5 — Dispatch the writers (parallel)
+## Step 6 — Dispatch the writers (parallel)
 
 Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: the `jd.md` path, the selected KB file paths, `notes.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies, `templates/cv_template.md` for the CV), the output paths, and `overrides.md` if it exists. Each agent writes its document **plus a trace file** mapping every claim to its source.
 
-## Step 6 — The verifier gate (loop until CLEAN)
+## Step 7 — The verifier gate (loop until CLEAN)
 
 Launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
 
 - Findings → fix them (re-dispatch the relevant writer with the findings, or edit directly for trivial ones) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
 - Never present documents to the user while BLOCKER or MAJOR findings are open. MINOR findings may be presented as a short list alongside the documents if the user is in a hurry — their call.
 
-## Step 7 — Present and close
+## Step 8 — Present and close
 
 Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how they were handled, verifier result (including the override INFO line if any). Then:
 
-- Update `tracker.csv` per `lifecycle/tracking.md` (new row `to_apply`, or `applied` with today's date once the user submits; `next_action` two weeks out by default).
+- Update `tracker.csv` per `lifecycle/tracking.md` (new row `to_apply`, or `applied` with today's date once the user submits; `next_action` two weeks out by default; `fit_score` from the Step 2 gate, plus an override note in `notes` if the user went against the verdict).
 - Offer rendering **only if the user wants a file format** — options and market caveats in `standards/rendering.md`. Markdown is the deliverable by default.
 
 ---

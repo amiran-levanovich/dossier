@@ -23,8 +23,8 @@ missing file.
 
 ## Procedure
 
-1. Read jd.md first — must-haves, ATS keywords, fit notes. Then the standards, then
-   every KB file provided.
+1. Read jd.md first — must-haves, ATS keywords, the `## Fit` block (gaps and evidence).
+   Then the standards, then every KB file provided.
 2. Build the CV on the template skeleton, in the specified language:
    - **Select and reorder**: most relevant roles/bullets for THIS posting lead; bullets
      that add no signal for this posting get cut or compressed.

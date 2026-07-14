@@ -5,12 +5,13 @@
 ## Columns
 
 ```
-company,role,date_applied,status,next_action,link,notes,stage_reached,date_closed
+company,role,date_applied,status,next_action,link,notes,stage_reached,date_closed,fit_score
 ```
 
 - `stage_reached` — how far the application got before closing: `none` (never reached a human — ATS/volume filter), `screen`, `tech`, or `final`. Blank while the application is active.
 - `date_closed` — the date a terminal status (`offer` / `rejected` / `withdrawn`) was recorded. Together with `date_applied` it gives time-to-response; both columns feed `lifecycle/analytics.md`.
-- **Migration**: trackers created before these columns existed just add the two names to the header row; old rows may stay short or gain trailing commas — both read fine, and blanks are legitimate (analytics infers what it can from `notes`).
+- `fit_score` — the overall score from the fit gate (`core/fit_check.md`), set when the row is created and never revised afterward — it records the pre-application judgment, and analytics reads it against outcomes to check the gate's calibration. If the user overrode the verdict, the override note lives in `notes` (per `core/fit_check.md`).
+- **Migration**: trackers created before a column existed just add the missing names to the header row (in this order); old rows may stay short or gain trailing commas — both read fine, and blanks are legitimate (analytics infers what it can from `notes`; a blank `fit_score` simply predates the gate).
 
 ## Status lifecycle
 
