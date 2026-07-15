@@ -76,6 +76,7 @@ There is no commit hook and nothing deterministic to check. The bar is held by t
 - **Research before writing.** Every new company gets a quick WebSearch (what they do, size, recent news, tone) before any material is written — letters that reference something real outperform generic ones.
 - **Never volunteer fabrication.** Agents write only what the knowledge base supports. The user may explicitly direct an unsupported claim — that path has a protocol (warn once, confirm, detail, record in `overrides.md`) and it is the *user's* call, not yours. See `core/tailoring_method.md`.
 - **Don't chase mismatches.** Every posting passes the fit gate (`core/fit_check.md`) before anything is built: liveness, a binary constraints screen, an evidence-cited 1–5 score, a legitimacy tier. A weak verdict gets said out loud — applying anyway is the user's call, and the override is recorded, never argued with twice.
+- **Verify the checkable, don't assume it.** Before acting on a claimed state that a file or a fetch can confirm — a posting still live, a tracker row's status, an application package complete — check it, even when the claim comes from the user's memory or your own earlier in the session. The user's word is final on their own life (a call happened, a reply arrived); files and URLs speak for themselves.
 
 ---
 
