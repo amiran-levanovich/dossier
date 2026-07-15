@@ -27,4 +27,5 @@ Re-read in this order, stopping as soon as you're oriented: **this file → `kno
 | Rejection came in        | `lifecycle/postmortem.md` + `lifecycle/tracking.md`   |
 | Search review / patterns | `lifecycle/analytics.md`                              |
 | Interview booked         | `lifecycle/interview_prep.md`                         |
+| Offer arrived            | `lifecycle/offer.md` + `standards/dach_conventions.md` (clause taxonomy) |
 | Rendering request        | `standards/rendering.md`                              |
