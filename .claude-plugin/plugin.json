@@ -1,7 +1,7 @@
 {
   "name": "job-workflow",
   "displayName": "Job Workflow (Knowledge Base · Tailored Applications)",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "An opinionated job-search workflow for Claude Code. Builds a deep, distributed, verified knowledge base about the candidate through an extensive resumable interview, sets explicit search goals, then tailors every application: per job posting, sub-agents produce an ATS-safe CV and a company-specific cover letter, gated by a verifier agent that traces every claim back to the knowledge base. Ships European/DACH market conventions. No commit hook — enforcement is the verifier gate and the traceability contract. The plugin contains zero personal data; the knowledge base lives in the user's own job folder.",
   "author": {
     "name": "Amiran Tsiklauri",
