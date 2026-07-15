@@ -23,7 +23,7 @@ to_apply → applied → interview → offer
 - `to_apply` — package prepared or posting shortlisted, not yet submitted
 - `applied` — submitted; `date_applied` set the day it actually went out
 - `interview` — any stage from recruiter screen to final panel; which stage goes in `notes`
-- `offer` / `rejected` / `withdrawn` — terminal
+- `offer` / `rejected` / `withdrawn` — terminal. An `offer` row is terminal for analytics (`date_closed` + `stage_reached` set as usual) but stays *live for action*: it keeps a dated `next_action` through contract review and negotiation ("send questions by <date>", "counter by <date>", "sign-by deadline <date>") until the contract is signed or declined — see `lifecycle/offer.md`. The outcome lands in `notes`.
 
 ## Rules
 

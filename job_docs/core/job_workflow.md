@@ -21,6 +21,8 @@ The plugin ships **zero personal data**. Everything about the candidate lives in
 │   ├── cover.md + cover_trace.md
 │   ├── overrides.md           #   user-directed claims, if any (tailoring_method.md)
 │   ├── prep.md                #   interview prep, once an interview is booked
+│   ├── offer_notes.md         #   recorded promises, once an offer arrives (lifecycle/offer.md)
+│   ├── offer_prep.md          #   contract clause walk + negotiation prep (lifecycle/offer.md)
 │   └── notes.md               #   anything else worth keeping per company
 ├── tracker.csv                # application status log — see lifecycle/tracking.md
 └── CLAUDE.md                  # written after intake: a short pointer to knowledge/ and this workflow
@@ -49,6 +51,7 @@ Gather context silently before responding; never ask for what a file can answer.
 | The user brings a job posting (URL or pasted text)                                                     | `job-apply`                                        |
 | A rejection came in                                                                                    | update tracker, then `lifecycle/postmortem.md`     |
 | An interview got booked                                                                                | update tracker, then `lifecycle/interview_prep.md` |
+| An offer arrived                                                                                       | update tracker, then `lifecycle/offer.md`          |
 | Status changes, follow-ups, "where do things stand?"                                                   | `lifecycle/tracking.md`                            |
 | "How's the search going?", patterns, a strategy review                                                 | `lifecycle/analytics.md`                           |
 
