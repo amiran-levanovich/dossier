@@ -62,6 +62,7 @@ Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: 
 Launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
 
 - Findings → fix them (re-dispatch the relevant writer with the findings, or edit directly for trivial ones) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
+- Re-verify rounds **continue the same verifier** (SendMessage with a short summary of which files changed and how) instead of launching a fresh agent — it already holds the KB and standards in context and only re-reads what changed, while still re-running every check on the whole package. Launch fresh only if the continuation fails or the KB selection changed.
 - Never present documents to the user while BLOCKER or MAJOR findings are open. MINOR findings may be presented as a short list alongside the documents if the user is in a hurry — their call.
 
 ## Step 8 — Present and close
