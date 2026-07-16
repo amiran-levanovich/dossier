@@ -1,6 +1,6 @@
 # Orchestration Registry — advised skills & the availability check
 
-This plugin assumes **nothing is installed**. The workflow runs end-to-end with built-in tools and markdown output; the skills below are **advised, not required** — each raises quality or convenience for one role. Siblings: `dev-workflow`'s and `craft-workflow`'s `core/orchestration.md`.
+This plugin assumes **nothing is installed**. The workflow runs end-to-end with built-in tools and markdown output; the skills below are **advised, not required** — each raises quality or convenience for one role. Siblings: `redgreen`'s and `atelier`'s `core/orchestration.md`.
 
 ## The availability check (run by `job-intake` on first use)
 

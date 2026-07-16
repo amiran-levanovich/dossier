@@ -1,0 +1,7 @@
+# Session-local review working docs (see git history for promoted outcomes)
+REVIEW.md
+REVIEW-TODO.md
+
+# Personal Claude Code settings
+.claude/settings.local.json
+.claude/context-transfers/

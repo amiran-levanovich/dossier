@@ -1,6 +1,6 @@
-# job-workflow
+# dossier
 
-> Part of the [**claude_setup**](../README.md) marketplace. Sibling plugins: [**dev-workflow**](../dev-workflow/README.md) (code) · [**craft-workflow**](../craft-workflow/README.md) (design, content, research).
+> Sibling plugins, same method, separate repos: [**redgreen**](https://github.com/amiran-levanovich/redgreen) (code) · [**atelier**](https://github.com/amiran-levanovich/atelier) (design, content, research). Formerly `job-workflow` in the `claude_setup` marketplace.
 
 A Claude Code plugin that runs a **job search** with the same discipline its siblings bring to code and craft: build deep, *verified* knowledge before producing anything, define the bar before writing, and gate every output. Per job posting, sub-agents produce an ATS-safe tailored CV and a company-specific cover letter — and a verifier agent blocks anything that can't be traced back to what the candidate actually did.
 
@@ -84,13 +84,13 @@ Language follows the posting (German posting → Lebenslauf + Anschreiben); prot
 ## Install
 
 ```
-/plugin marketplace add amiran-levanovich/claude_setup
-/plugin install job-workflow@claude-setup
+/plugin marketplace add amiran-levanovich/dossier
+/plugin install dossier@dossier
 ```
 
 Then, in your job folder: run `job-intake` and block out a coffee's worth of time — the interview is the investment everything else pays back.
 
 ## What it deliberately does **not** have
 
-- **No pre-commit hook, no fixer agents** (same stance as `craft-workflow`) — application quality is a judgment; enforcement is the verifier gate and the traceability contract.
+- **No pre-commit hook, no fixer agents** (same stance as `atelier`) — application quality is a judgment; enforcement is the verifier gate and the traceability contract.
 - **No personal data in the plugin.** The knowledge base, tracker, and applications live in your own job folder; the plugin ships only method, standards, and templates.

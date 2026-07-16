@@ -1,6 +1,6 @@
 # The Job Workflow — knowledge-first job applications
 
-This runbook is the **kernel** for running a job search with Claude Code. It is the sibling of `dev-workflow`'s `coding_workflow.md` and `craft-workflow`'s `craft_workflow.md`: the same discipline — understand deeply before producing, define the bar before writing, gate the output — applied to applications instead of code.
+This runbook is the **kernel** for running a job search with Claude Code. It is the sibling of `redgreen`'s `coding_workflow.md` and `atelier`'s `craft_workflow.md`: the same discipline — understand deeply before producing, define the bar before writing, gate the output — applied to applications instead of code.
 
 > **The one idea everything hangs on:** a tailored application is only as good as what the system *actually knows* about the candidate. So the workflow front-loads an extensive, verified knowledge base, and every generated document must **trace each claim back to it**. Tailoring without the knowledge base is guessing; the pipeline refuses to guess.
 

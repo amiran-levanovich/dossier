@@ -1,0 +1,15 @@
+{
+  "name": "dossier",
+  "description": "Marketplace for the dossier plugin: an opinionated job-search workflow for Claude Code — a verified candidate knowledge base, tailored ATS-safe applications gated by claim-to-source traceability, and European/DACH conventions built in.",
+  "owner": {
+    "name": "Amiran Tsiklauri",
+    "url": "https://github.com/amiran-levanovich"
+  },
+  "plugins": [
+    {
+      "name": "dossier",
+      "source": "./",
+      "description": "Opinionated job-search workflow: an extensive resumable interview builds a verified candidate knowledge base, then per posting sub-agents tailor an ATS-safe CV and a company-specific cover letter, gated by a verifier that traces every claim to the knowledge base. European/DACH conventions built in."
+    }
+  ]
+}
