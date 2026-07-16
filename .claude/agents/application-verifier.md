@@ -25,10 +25,15 @@ If any input is missing, name it and stop. Never verify against files you guesse
 
 - Read fully: `jd.md`, `cv.md`, `cover.md`, both trace files, `overrides.md`,
   `constraints.md`, `knowledge/portfolio.md` — these are short and every line matters.
-- KB files: do **not** read each end to end. Verify every trace line against its cited
-  section (Read the cited file at the anchor, or Grep for the anchor heading and read
-  that section); use Grep across the KB paths for the keyword-coverage and equivalency
-  sweeps. A cited section that doesn't exist is a BLOCKER (invalid source).
+- KB files: the input list is already the targeted selection, so read each provided KB
+  file **once, in full, all in one batch** of parallel Reads alongside the package files
+  above — then verify every trace line against what you now hold in context. Never
+  issue a Read or Grep per trace line; one read per file is the total budget. A cited
+  section that doesn't exist in its file is a BLOCKER (invalid source).
+- Sweeps run in-context too: the equivalency scan and the keyword-coverage check work
+  over the files you already read — no Grep-per-keyword. Your whole first pass should
+  be one batched read round followed by analysis, roughly 10–15 tool calls total; if
+  you find yourself re-reading a file you already hold, you are off the rails.
 - Re-verify rounds: you may be continued (not respawned) after fixes, with a summary of
   what changed. Re-read only the changed files — but re-run **all three checks on the
   whole package**; CLEAN means the package passes, not that the listed fixes landed.

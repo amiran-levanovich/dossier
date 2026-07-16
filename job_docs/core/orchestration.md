@@ -14,7 +14,7 @@ This plugin assumes **nothing is installed**. The workflow runs end-to-end with 
 | Tool              | Role                                                                                                                                        |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
 | `WebFetch`        | Pull the full text of a job posting from its URL (Step 1 of `core/tailoring_method.md`)                                                     |
-| `WebSearch`       | Fit-gate research — comp, legitimacy signals (max 5 queries, `core/fit_check.md`); company research before writing (Step 4); market checks  |
+| `WebSearch`       | Fit-gate research — comp, legitimacy signals (2 queries default, 5 max, `core/fit_check.md`); company research before writing (Step 4); market checks  |
 | `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), override confirmation, judgment calls                                                   |
 | Agent tool        | Dispatch `cv-tailor`, `cover-letter-writer`, `application-verifier`, `interview-briefer`; `general-purpose` for multi-step company research |
 

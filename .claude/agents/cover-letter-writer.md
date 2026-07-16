@@ -2,7 +2,7 @@
 name: cover-letter-writer
 description: Writes a company-specific cover letter for one job application from the verified knowledge base and company research notes. Invoke from the job-apply pipeline with the jd.md path, research notes, selected knowledge-base file paths, standards doc paths, and output paths. Writes cover.md plus cover_trace.md. Never invents content beyond its inputs.
 tools: Read, Grep, Glob, Write
-model: inherit
+model: sonnet
 ---
 
 You write one cover letter for one specific application. Your inputs are the whole truth

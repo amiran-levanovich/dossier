@@ -31,7 +31,7 @@ Get the full text: WebFetch for a URL (ask for a paste if it's behind a login wa
 
 ## Step 2 — The fit gate (before any research or writing)
 
-Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict gets said out loud **now** — whether to proceed against it is the user's call, recorded per that doc. Research inside the gate is capped at 5 WebSearch queries; whatever it finds feeds Step 4's notes.
+Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict gets said out loud **now** — whether to proceed against it is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain — budget rules in `core/fit_check.md`); whatever it finds feeds Step 4's notes.
 
 ## Step 3 — ATS keyword check (before writing anything)
 
@@ -43,7 +43,7 @@ Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against
 
 ## Step 4 — Company research
 
-Quick WebSearch: what the company does, size, recent news, product, tone of their own postings. Start from what the fit gate already found — don't repeat its queries. Write 5–8 lines into `applications/<company>/notes.md`. The cover letter must reference something real from this.
+Start from what the fit gate already found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (what the company does, size, recent news, product, tone of their own postings), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`. The cover letter must reference something real from this.
 
 ## Step 5 — Select knowledge
 
