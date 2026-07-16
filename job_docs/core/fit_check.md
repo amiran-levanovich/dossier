@@ -4,7 +4,7 @@ This is the gate between capturing a posting and building anything: five minutes
 
 > **The verdict is advice, not a wall.** The user's decision always wins — an override is recorded, never argued with twice. What the gate refuses to do is stay silent while a weak application gets built.
 
-**Research budget: at most 5 WebSearch queries for the whole check. No sub-agents.** The gate exists to save time; a gate that costs more than the application defeats itself. Spend the budget where the posting is uncertain (comp, legitimacy), skip it where the JD and KB already answer. When it runs out, score with what's on hand and mark the affected dimension *low confidence*. Anything found here (company news, salary data) is reusable in the Step 4 research notes — never search for the same fact twice.
+**Research budget: 2 WebSearch queries by default — typically one for comp, one for legitimacy. No sub-agents.** Expand to at most 5 only when the posting is genuinely uncertain: no printed salary *and* thin public data, or adverse legitimacy signals that need confirming. The gate exists to save time; a gate that costs more than the application defeats itself. Skip searching entirely where the JD and KB already answer. When the budget runs out, score with what's on hand and mark the affected dimension *low confidence*. Anything found here (company news, salary data) is reusable in the Step 4 research notes — never search for the same fact twice.
 
 ---
 

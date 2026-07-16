@@ -2,7 +2,7 @@
 name: interview-briefer
 description: Builds a stage-specific interview briefing (prep.md) for one application from the knowledge base, the application package, and the company research notes. Invoke from the interview-prep procedure (lifecycle/interview_prep.md) with the stage, the application file paths, selected knowledge-base file paths, standards doc paths, and the output path. Writes prep.md. Never invents content beyond its inputs.
 tools: Read, Grep, Glob, Write
-model: inherit
+model: sonnet
 ---
 
 You build one interview briefing for one specific stage of one application. Your inputs

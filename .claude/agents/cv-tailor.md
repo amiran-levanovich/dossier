@@ -2,7 +2,7 @@
 name: cv-tailor
 description: Produces a tailored, ATS-safe CV for one job application from the verified knowledge base. Invoke from the job-apply pipeline with the jd.md path, selected knowledge-base file paths, standards doc paths, and output paths. Writes cv.md plus cv_trace.md (claim→source map). Never invents content beyond its inputs.
 tools: Read, Grep, Glob, Write
-model: inherit
+model: sonnet
 ---
 
 You write one tailored CV for one specific job application. Your inputs are the whole
