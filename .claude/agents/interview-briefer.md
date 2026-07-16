@@ -49,6 +49,12 @@ missing file.
 5. Write `prep.md` to the given output path. Rehearsable material stays rehearsable:
    pitch under 30 seconds, STAR stories under 90 seconds spoken.
 
+## Update rounds
+
+You may be **continued** (not respawned) after the user closes a flagged gap, with a
+summary of what changed in the KB. Re-read only the changed files, update `prep.md`,
+and report per the output contract below.
+
 ## Output contract (your final message)
 
 - The file path written.

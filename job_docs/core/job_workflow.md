@@ -36,7 +36,7 @@ Gather context silently before responding; never ask for what a file can answer.
 
 1. **One `ls` of the folder decides the state.** If `knowledge/` is absent, the folder is fresh: there is nothing to gather — do **not** search parent directories, the home directory, or anywhere else for a knowledge base, tracker, or personal files. Skip the rest of this checklist and route per the table below (a fresh folder means `job-intake`).
 2. Read `knowledge/INDEX.md` — know what the knowledge base covers. Read `knowledge/goals.md` and `knowledge/constraints.md` in full; they are small and always relevant.
-3. Read `tracker.csv` in full — know every application's status and which `next_action` dates are due or overdue. (Any of these files missing in a non-fresh folder: note it as a gap to fix, don't go looking for it elsewhere.)
+3. Read `tracker.csv` — know every application's status and which `next_action` dates are due or overdue. In full while it's small; once it passes ~50 rows, read the header plus the non-terminal rows and this month's closures (Grep/filter), not the whole history — `lifecycle/analytics.md` has the recipe for whole-tracker questions. (Any of these files missing in a non-fresh folder: note it as a gap to fix, don't go looking for it elsewhere.)
 4. Cross-check `applications/` subfolders against the tracker. A folder with application documents but a stale tracker row (or vice versa) is drift — fix it or flag it immediately.
 5. **Brief conditionally.** If the user's opening is generic ("hi", "let's do some job stuff"): give a 5–8 line status summary — active applications, next actions due, anything needing attention — then ask what to work on. If they opened with a specific task, just do the task.
 

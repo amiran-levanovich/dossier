@@ -35,7 +35,7 @@ Run `core/fit_check.md` end to end: liveness and location sanity, the binary con
 
 ## Step 3 — ATS keyword check (before writing anything)
 
-Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Three buckets:
+Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Sweep with **Grep across `knowledge/`** (exact keyword, then obvious spelling variants) and open only the matching entry's section to confirm it's verified — this check needs keyword coverage, not a full KB read; nothing in this pipeline ever loads the whole KB into the main session. Three buckets:
 
 - **Covered** — a verified KB entry names it.
 - **Verifiable gap** — the user plausibly has it but the KB doesn't record it → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake).
@@ -61,7 +61,7 @@ Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: 
 
 Launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
 
-- Findings → fix them (re-dispatch the relevant writer with the findings, or edit directly for trivial ones) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
+- Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings, since it already holds the KB and standards; launch a fresh writer only if the continuation fails or the KB selection changed) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
 - Re-verify rounds **continue the same verifier** (SendMessage with a short summary of which files changed and how) instead of launching a fresh agent — it already holds the KB and standards in context and only re-reads what changed, while still re-running every check on the whole package. Launch fresh only if the continuation fails or the KB selection changed.
 - Never present documents to the user while BLOCKER or MAJOR findings are open. MINOR findings may be presented as a short list alongside the documents if the user is in a hurry — their call.
 

@@ -6,10 +6,10 @@ Run when an interview gets booked. The briefing itself is built by the `intervie
 
 1. **Update the tracker** (`lifecycle/tracking.md`): status, stage, date, a dated `next_action`.
 2. **Ask which stage** — and who's in the room and the format, if the user didn't volunteer it. The brief is stage-specific; "an interview" is not enough.
-3. **Fresh research pass** (WebSearch): the interviewer if named (LinkedIn, company page — shared context, their team's work), plus a company-news refresh since the application went out. Append findings to `notes.md` — research is durable there, not in the brief.
+3. **Fresh research pass** (WebSearch): the interviewer if named (LinkedIn, company page — shared context, their team's work), plus a company-news refresh since the application went out. **Budget: at most 4 queries** — read `notes.md` first and never re-search what it already answers (same economy as the fit gate). Append findings to `notes.md` — research is durable there, not in the brief.
 4. **Select KB files** via `knowledge/INDEX.md`: the roles/projects and skills this posting draws on, plus `profile.md`, `constraints.md`, `goals.md`.
 5. **Dispatch `interview-briefer`** with resolved absolute paths: the stage (+ room/format), `jd.md`, `notes.md`, `cv.md` + `cv_trace.md`, `cover.md`, `overrides.md` if it exists, the selected KB files, this file as the briefing standards (plus `standards/dach_conventions.md` when the market applies), and the output path `applications/<company>/prep.md`.
-6. **Review with the user**: relay every flag the agent reports — rusty-risk topics, skipped `[unverified]` entries, override claims the user must sustain. A flagged gap the user can close on the spot (a metric recalled, a story verified) goes into the KB now; then re-dispatch for an updated brief.
+6. **Review with the user**: relay every flag the agent reports — rusty-risk topics, skipped `[unverified]` entries, override claims the user must sustain. A flagged gap the user can close on the spot (a metric recalled, a story verified) goes into the KB now; then **continue the same briefer** (SendMessage with what changed — it already holds the package and KB) for an updated brief; dispatch fresh only if the continuation fails.
 
 ## Briefing standards (what the agent builds against, per stage)
 
