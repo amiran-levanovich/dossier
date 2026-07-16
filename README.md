@@ -14,11 +14,68 @@ A tailored application is only as good as what the system **actually knows** abo
 
 ## How it works
 
-1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly and records a show/fix/don't-link verdict per asset — what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped.
-2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
-3. **`job-apply`** — the production line. Posting in (URL or pasted text) → requirement breakdown → the **fit gate** (liveness check, a binary constraints screen, a 1–5 fit score where every dimension cites its evidence, and a signals-based legitimacy tier — a weak or fishy posting gets said out loud *before* a minute is spent producing for it; the user's override always wins and is recorded) → ATS keyword check *before writing anything* → company research → two sub-agents in parallel (**cv-tailor**, **cover-letter-writer**) → the **application-verifier** gate, looped fix→re-verify until CLEAN → tracker updated with the fit score.
+Three skills, in order — each builds what the next one needs:
 
-When an interview gets booked, the workflow routes to `lifecycle/interview_prep.md`: the session refreshes the company/interviewer research, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly. When an **offer** arrives, `lifecycle/offer.md` takes over: a contract-reading companion (describe-don't-judge — a clause-by-clause walk with neutral tags against the DACH clause taxonomy, promises-vs-paper reconciliation, and two strictly separated question lists: clarifications for the employer, everything legal for a lawyer — the companion never states law or judges enforceability), then negotiation prep that positions the offer against `goals.md` and the fit gate's own comp research, anchors arguments in KB-traced achievements, and drafts replies without ever sending them. Contract text is the most sensitive input the workflow touches: it never goes to a sub-agent or into a web query — this stage runs entirely in the main session against local files. (The contract-reading companion adapts ideas from *career-ops*' offer-prep skill, itself building on Anthropic's *claude-for-legal* — credit to both.) And across applications, `lifecycle/analytics.md` reads the whole tracker — funnel, where applications die, pace — and turns a rejection pattern into one concrete strategy adjustment instead of another per-application fix. The loop closes through `knowledge/lessons.md`: every rejection post-mortem and interview debrief lands one lesson line, and the fit gate reads them back before the next application gets built — a diagnosis made once is never made from scratch again. The gate's scores land in the tracker too, so analytics can tell whether the scoring itself is calibrated.
+```
+        (once; resumable)      (small; re-runnable)     (per posting)
+        ┌────────────┐         ┌───────────┐         ┌───────────┐
+CV ───▶ │ job-intake │ ──────▶ │ job-goals │ ──────▶ │ job-apply │ ◀─── posting
+        └─────┬──────┘         └─────┬─────┘         └─────┬─────┘
+              ▼                      ▼                     ▼
+         knowledge/              goals.md         applications/<company>/
+        (verified KB)        (search targets)     (CV + letter + traces)
+```
+
+1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped.
+2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
+3. **`job-apply`** — the production line:
+
+```
+posting (URL or pasted text)
+   │
+   ▼
+ jd.md ── requirement breakdown + ATS keyword list
+   │
+   ▼
+ FIT GATE ── liveness · constraints screen · evidence-cited score 1–5
+   │         · legitimacy tier — verdict said out loud BEFORE anything
+   │         is built; weak/fishy → user decides (override recorded)
+   ▼
+ ATS keyword check ── covered / verifiable gap (mini-interview → KB)
+   │                  / real gap — before writing a single line
+   ▼
+ company research ──▶ notes.md
+   │
+   ├──────────────────┬─────────────────────┐   parallel sub-agents,
+   ▼                  ▼                     │   targeted KB files only
+ cv-tailor        cover-letter-writer       │
+ cv.md + trace    cover.md + trace          │
+   └──────────────────┴─────────────────────┘
+   ▼
+ application-verifier ──▶ findings ──▶ fix ──▶ re-verify ─┐
+   ▲                     (same agents continued, not      │
+   └──────────────────────respawned)◀─────────────────────┘
+   │ CLEAN
+   ▼
+ present + tracker.csv row (fit score recorded)
+```
+
+## After you apply — the lifecycle
+
+```
+                ┌─ rejection ──▶ postmortem ──────────────┐
+ tracker.csv ───┼─ interview ──▶ interview-briefer ▶ prep.md ─┼──▶ one lesson line
+                └─ offer ─────▶ clause walk + negotiation ┘         │
+                                                                    ▼
+     next application's fit gate ◀── reads ◀── knowledge/lessons.md
+                (analytics reads the whole tracker for patterns)
+```
+
+- **Interview booked** → `lifecycle/interview_prep.md`: a capped research refresh, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly.
+- **Offer arrives** → `lifecycle/offer.md`, two parts in strict order. First the **contract-reading companion**: describe-don't-judge — a clause-by-clause walk with neutral tags against the DACH clause taxonomy, promises-vs-paper reconciliation, and two strictly separated question lists (clarifications for the employer; everything legal for a lawyer — the companion never states law or judges enforceability). Then **negotiation prep**: the offer positioned against `goals.md` and the fit gate's own comp research, arguments anchored in KB-traced achievements, replies drafted but never sent. **Contract text never leaves the main session** — no sub-agent, no web query, no artifact. *(The companion adapts ideas from career-ops' offer-prep skill, itself building on Anthropic's claude-for-legal — credit to both.)*
+- **Rejection** → `lifecycle/postmortem.md`: classify where it died (machine / human screen / post-interview), work the cause checklist against the actual submitted documents, state one plain diagnosis with one concrete fix.
+- **Across applications** → `lifecycle/analytics.md` reads the whole tracker by recipe — funnel, where applications die, pace — and turns a rejection *pattern* into one strategy adjustment instead of another per-application fix. Fit scores land in the tracker, so analytics can also tell whether the gate's own scoring is calibrated.
+- **The loop closes** through `knowledge/lessons.md`: every post-mortem and interview debrief lands exactly one lesson line, and the fit gate reads them back before the next application is built — a diagnosis made once is never made from scratch again.
 
 The knowledge base it builds (in *your* job folder — the plugin ships zero personal data):
 

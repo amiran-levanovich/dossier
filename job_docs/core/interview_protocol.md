@@ -54,7 +54,13 @@ For a stack not in this table, construct the expansion on the fly: ask what the 
 
 ## Phase 2b — Portfolio review (only if public assets exist)
 
-Anything a recruiter can click: GitHub profile, personal website, presentations, published work. This is the one interview area where evidence can be inspected directly — **fetch each asset** (WebFetch the site, the profile page, pinned repos) rather than taking the user's description of it. Two passes per asset:
+Anything a recruiter can click: GitHub profile, personal website, presentations, published work. This is the one interview area where evidence can be inspected directly — inspect the asset rather than taking the user's description of it. But **fetching is the most expensive thing this interview does**, and an unbounded crawl can consume the whole session:
+
+- **One asset at a time, at most 2 targeted fetches each** — the profile/landing page, a repo's README. Never crawl file trees, commit histories, or every repo "to be thorough".
+- **Mine → write → drop, per asset.** Write the findings into the KB files *before* fetching the next asset; fetched page content is working material to extract from once, not context to keep.
+- **3+ assets: delegate the inspection.** Dispatch one `general-purpose` agent with the URLs, the same 2-fetch-per-asset budget, and the register format from `core/kb_schema.md`; it returns draft register entries and candidate `projects/<name>.md` content. The verification gauntlet (attribution, scope) still runs in the main session with the user — the agent inspects, it never verifies.
+
+Two passes per asset:
 
 1. **Mine it.** Extract substantial pieces into `projects/<name>.md` and demonstrated tools into `skills.md`. A public artifact proves the *work exists*, not the *user's part in it* — forks, team projects, and tutorial-following all look like authorship from outside. Run the Phase 2 gauntlet (attribution, scope) before clearing `[unverified]`; once confirmed, record the URL as provenance.
 2. **Assess it as a recruiter would.** Judge what a visitor sees on click: last activity, broken demos, README quality, whether the visible work supports the CV's seniority story. Write the entry into `knowledge/portfolio.md` per the register format in `core/kb_schema.md`, with a verdict — `showcase`, `fix first`, or `don't link` — and citation guidance. Deliver the verdict to the user plainly; a flattering wrong verdict costs real applications.

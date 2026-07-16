@@ -13,7 +13,7 @@ The pipeline this skill orchestrates:
 4. **ATS keyword check** (per `job_docs/standards/ats_rules.md`) **before writing anything**; verifiable gaps get mini-interviewed into the KB now.
 5. **Company research** (WebSearch) → `notes.md`.
 6. **Select KB files** via `knowledge/INDEX.md` — targeted context, never the whole KB.
-7. **Dispatch** the `cv-tailor` and `cover-letter-writer` agents in parallel, then the `application-verifier` gate — **fix → re-verify until CLEAN** (re-verify rounds continue the same verifier via SendMessage, not a fresh launch). Never present documents with open BLOCKER/MAJOR findings.
+7. **Dispatch** the `cv-tailor` and `cover-letter-writer` agents in parallel, then the `application-verifier` gate — **fix → re-verify until CLEAN**. Fix and re-verify rounds **continue the same agents via SendMessage** (writer with the findings, verifier with what changed), never fresh launches — each already holds its inputs; relaunch only if a continuation fails or the KB selection changed. Never present documents with open BLOCKER/MAJOR findings.
 8. **Close**: present with the 3-line summary, update `tracker.csv` (per `job_docs/lifecycle/tracking.md`, `fit_score` included), offer rendering only if the user wants a file format (`job_docs/standards/rendering.md`).
 
 If the user asks to include something the KB can't back, follow the **user-directed override protocol** in `tailoring_method.md` exactly: warn once, confirm, get details, record in `overrides.md` — never fight, never volunteer.

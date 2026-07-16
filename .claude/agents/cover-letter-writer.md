@@ -40,6 +40,12 @@ If any input is missing, name it and stop.
    / `→ notes.md` for company facts).
 7. Write both files to the given output paths.
 
+## Fix rounds
+
+You may be **continued** (not respawned) with verifier findings. Apply them against the
+inputs you already hold — do not re-read unchanged input files — rewrite both output
+files completely, and report per the output contract below.
+
 ## Output contract (your final message)
 
 - The two file paths written.
