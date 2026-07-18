@@ -26,7 +26,7 @@ CV ───▶ │ job-intake │ ──────▶ │ job-goals │ ─�
         (verified KB)        (search targets)     (CV + letter + traces)
 ```
 
-1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped.
+1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped. Closes by offering the **master-documents build** (below) — the one-time investment that makes every later application cheaper.
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line:
 
@@ -59,6 +59,15 @@ posting (URL or pasted text)
    ▼
  present + tracker.csv row (fit score recorded)
 ```
+
+## The exemplars — master CV + cover frame
+
+Since v2.5.0 the writers don't have to regenerate from scratch. At intake's close (user's call), the pipeline builds two exemplars in the job folder and verifies them **once, at full rigor** (`lifecycle/master_documents.md`):
+
+- **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, canonical spellings, fully traced. Per application, `cv-tailor` **subtracts and makes bounded edits** instead of writing: dropping/reordering verified bullets can't introduce claims, so it's free; anything reworded is CHANGED — `scripts/master_diff.py` proves the split mechanically — and gets judged normally.
+- **`cover_frame.md`** — the fixed letter scaffolding (salutation, pitch framing, logistics close, sign-off), verified once. The writer generates only the why-this-company paragraph and the value proposition per application.
+
+The claim ledger records each exemplar's content hash on CLEAN: edit a master and the verbatim shortcut switches off until it's re-verified. One master only, in the search's primary language. No exemplars → the pipeline runs exactly as before.
 
 ## After you apply — the lifecycle
 
