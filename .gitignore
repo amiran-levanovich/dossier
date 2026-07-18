@@ -5,3 +5,7 @@ REVIEW-TODO.md
 # Personal Claude Code settings
 .claude/settings.local.json
 .claude/context-transfers/
+
+# Python bytecode from the pipeline scripts
+__pycache__/
+*.pyc
