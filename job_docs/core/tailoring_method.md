@@ -45,7 +45,7 @@ Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against
 
 ## Step 4 — Company research
 
-Start from what the fit gate already found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (what the company does, size, recent news, product, tone of their own postings), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`. The cover letter must reference something real from this.
+Start from what the fit gate already found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (what the company does, size, recent news, product, tone), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`; the cover letter must reference something real from this.
 
 ## Step 5 — Select knowledge
 
@@ -61,7 +61,7 @@ Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: 
 
 ## Step 7 — The verifier gate (loop until CLEAN)
 
-First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`. Fix dangling traces before the verifier runs, so it spends its context on judgment (does the source honestly support the claim?), not broken references.
+First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`. Fix dangling traces before the verifier runs, so it spends its context on judgment, not broken references.
 
 Then launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
 
@@ -82,9 +82,9 @@ Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced
 
 The no-fabrication rule binds **the agents, not the user**. If the user explicitly asks to include something the KB cannot back ("just add Kafka to this one"), do not fight them:
 
-1. **Warn once, concretely.** One short paragraph: what an interviewer or background check could probe, and what the honest alternative would be (e.g. `"Kafka — actively ramping"`). No moralizing, no repetition, no second warning later.
+1. **Warn once, concretely.** One short paragraph: what an interviewer or background check could probe, and the honest alternative (e.g. `"Kafka — actively ramping"`). No moralizing, no second warning later.
 2. **Confirm** via AskUserQuestion — proceed / use the honest alternative / drop it.
-3. **Get details.** If they proceed, briefly interview for what exactly to claim (which role, what depth, what wording) so the addition is coherent and the user can defend it live.
+3. **Get details.** If they proceed, briefly interview for what to claim (role, depth, wording) so it is coherent and defensible live.
 4. **Record.** Write the claim to `applications/<company>/overrides.md`, marked `user-directed`, with date and scope. **It never enters `knowledge/`** — the KB stays true; the override is per-application.
 
 Trace entries may then point at `overrides.md`. The verifier treats override-sourced claims as sourced and reports them as a single INFO line (`N user-directed claims present`) — never as findings. Agents never volunteer an override, never extend one beyond what the user specified, and never carry one silently into a different application.
@@ -101,4 +101,4 @@ Trace entries may then point at `overrides.md`. The verifier treats override-sou
 - "<...>" → overrides.md (user-directed, 2026-07-07)
 ```
 
-Structural/neutral text (section headings, contact lines from `profile.md`, logistics phrasing) needs no trace line. Everything that asserts experience, a skill, an outcome, or a credential does.
+`#anchor` is a **lowercase GitHub slug** of the heading (`## Data & infra` → `#data--infra`); one canonical target per line. KB paths resolve against `knowledge/` (leading `knowledge/` prefix fine); `overrides.md`/`notes.md`/`jd.md` resolve against the application folder — `overrides.md` existence-only, the rest anchor-checked. Never cite `cv.md`/`cover.md`: a document can't source its own claims. Structural/neutral text (headings, `profile.md` contact lines, logistics phrasing) needs no trace line; anything asserting experience, a skill, an outcome, or a credential does.

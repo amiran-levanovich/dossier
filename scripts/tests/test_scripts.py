@@ -40,6 +40,17 @@ class TestCommon(unittest.TestCase):
         self.assertEqual(_common.slugify_heading("## Achievements"), "achievements")
         self.assertEqual(_common.slugify_heading("Data & APIs"), "data--apis")
 
+    def test_normalize_anchor_tolerant(self):
+        # Title case, raw heading text, and single- vs double-hyphen all collapse
+        # to one normalised form so a hand-written anchor matches a real slug.
+        self.assertEqual(_common.normalize_anchor("Achievements"), "achievements")
+        self.assertEqual(_common.normalize_anchor("Data & infra"), "data-infra")
+        self.assertEqual(_common.normalize_anchor("data-infra"), "data-infra")
+        self.assertEqual(
+            _common.normalize_anchor("data--infra"),
+            _common.normalize_anchor("Data & infra"),
+        )
+
     def test_keyword_pattern_whole_token(self):
         self.assertTrue(_common.keyword_pattern("Go").search("wrote Go services"))
         self.assertFalse(_common.keyword_pattern("Go").search("using Google Cloud"))
@@ -51,7 +62,10 @@ class TestCommon(unittest.TestCase):
 
 class TestTraceCheck(TmpMixin):
     def _kb(self):
-        self.write("knowledge/roles/acme.md", "# Acme\n\n## Achievements\n- did things\n")
+        self.write(
+            "knowledge/roles/acme.md",
+            "# Acme\n\n## Achievements\n- did things\n\n## Data & infra\n- pipelines\n",
+        )
         self.write("knowledge/skills.md", "# Skills\n\n## Databases\n- PostgreSQL\n")
         return self.root / "knowledge"
 
@@ -90,6 +104,88 @@ class TestTraceCheck(TmpMixin):
         n, ok, findings = trace_check.check_file(trace, kb, trace.parent)
         self.assertEqual((n, ok, findings), (1, 1, []))
 
+    def test_anchor_case_insensitive(self):
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "x" → roles/acme.md#Achievements\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual((ok, findings), (1, []))
+
+    def test_anchor_raw_heading_and_single_hyphen(self):
+        # Raw '#Data & infra' and hand-written '#data-infra' both match the
+        # '&'-derived slug 'data--infra'.
+        kb = self._kb()
+        trace = self.write(
+            "app/cv_trace.md",
+            '- "a" → roles/acme.md#Data & infra\n- "b" → roles/acme.md#data-infra\n',
+        )
+        n, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual((n, ok, findings), (2, 2, []))
+
+    def test_knowledge_prefix_stripped(self):
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "x" → knowledge/skills.md#databases\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual((ok, findings), (1, []))
+
+    def test_app_local_notes_and_jd_resolve_against_app_dir(self):
+        kb = self._kb()
+        self.write("app/notes.md", "# Notes\n\n## Company\n- funded 2021\n")
+        self.write("app/jd.md", "# JD\n\n## Must-haves\n- Rails\n")
+        trace = self.write(
+            "app/cv_trace.md",
+            '- "co" → notes.md#company\n- "req" → jd.md#must-haves\n',
+        )
+        n, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual((n, ok, findings), (2, 2, []))
+
+    def test_headingless_file_with_cited_anchor_is_a_finding(self):
+        # tailoring_method.md: app-local targets other than overrides.md are
+        # anchor-checked. A cited anchor into a heading-less file cannot be
+        # verified — that IS a dangling reference, it must not pass silently.
+        kb = self._kb()
+        self.write("app/notes.md", "just freeform prose, no headings here\n")
+        trace = self.write("app/cv_trace.md", '- "x" → notes.md#company\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual(ok, 0)
+        self.assertEqual(findings[0][1], "ANCHOR")
+
+    def test_cv_and_cover_are_not_valid_sources(self):
+        # A document cannot source its own claims: cv.md / cover.md never
+        # resolve as trace targets, even though they exist in the app folder.
+        kb = self._kb()
+        self.write("app/cv.md", "# CV\n\n## Experience\n- stuff\n")
+        self.write("app/cover.md", "# Cover\n\n## Body\n- text\n")
+        trace = self.write(
+            "app/cv_trace.md",
+            '- "x" → cv.md#experience\n- "y" → cover.md#body\n',
+        )
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual(ok, 0)
+        self.assertEqual([f[1] for f in findings], ["FILE", "FILE"])
+
+    def test_near_miss_anchor_still_fails(self):
+        # Normalisation tolerates spelling variants of the SAME heading, not
+        # references to headings that don't exist.
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "x" → roles/acme.md#achievement\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual(ok, 0)
+        self.assertEqual(findings[0][1], "ANCHOR")
+
+    def test_knowledge_prefix_missing_file_still_fails(self):
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "x" → knowledge/ghost.md#x\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual(ok, 0)
+        self.assertEqual(findings[0][1], "FILE")
+
+    def test_missing_app_local_target_fails(self):
+        kb = self._kb()  # note: no app/notes.md written
+        trace = self.write("app/cv_trace.md", '- "x" → notes.md#company\n')
+        _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
+        self.assertEqual(ok, 0)
+        self.assertEqual(findings[0][1], "FILE")
+
     def test_malformed_line(self):
         kb = self._kb()
         trace = self.write("app/cv_trace.md", '- "no arrow here"\n')
@@ -123,7 +219,7 @@ class TestAtsCoverage(TmpMixin):
         self.assertIn("[GAP]        Terraform", out)
 
     def test_lessons_excluded(self):
-        self.write("knowledge/lessons.md", "- gammasoft: posting named Sidekiq\n")
+        self.write("knowledge/lessons.md", "- examplecorp: posting named Sidekiq\n")
         jd = self.root / "jd.md"
         jd.write_text("## ATS keywords\n- Sidekiq\n", encoding="utf-8")
         buf = io.StringIO()

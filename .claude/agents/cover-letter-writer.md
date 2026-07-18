@@ -37,7 +37,10 @@ If any input is missing, name it and stop.
 5. Skip `[unverified]` KB entries entirely; report a decisive one instead of using it.
 6. Write `cover_trace.md`: one line per factual claim →
    `- "<abbreviated claim>" → <kb-file>#<section>` (or `→ overrides.md (user-directed, <date>)`
-   / `→ notes.md` for company facts).
+   / `→ notes.md#<section>` or `→ jd.md#<section>` for company facts, which resolve against
+   the application folder). The `#<section>` is a **lowercase GitHub anchor slug**: spaces →
+   `-`, `&`/punctuation dropped (`## Data & infra` → `#data--infra`). **One canonical target
+   per line** — cite the primary source and put extras in a trailing `(also …)` note.
 7. Write both files to the given output paths.
 
 ## Fix rounds

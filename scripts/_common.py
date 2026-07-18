@@ -40,6 +40,19 @@ def slugify_heading(heading: str) -> str:
     return text
 
 
+def normalize_anchor(anchor: str) -> str:
+    """Slug rules + collapse runs of hyphens, for tolerant anchor matching.
+
+    A trace anchor is written by hand and a heading slug is derived by GitHub's
+    rules, so the same reference can be spelled several ways: 'Achievements'
+    (title case), 'Data & infra' (raw heading text), 'data-infra' (single
+    hyphen) vs the '&'-derived slug 'data--infra'. Passing both the cited anchor
+    and each real heading slug through this makes those all compare equal, while
+    still rejecting a reference to a heading that genuinely does not exist.
+    """
+    return re.sub(r"-{2,}", "-", slugify_heading(anchor))
+
+
 def heading_slugs(text: str) -> set[str]:
     """Every heading anchor slug present in a markdown document."""
     slugs = set()

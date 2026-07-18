@@ -38,7 +38,11 @@ missing file.
      report it in your final message instead of using it.
 3. Write `cv_trace.md`: one line per claim-bearing element →
    `- "<abbreviated claim>" → <kb-file>#<section>` (or `→ overrides.md (user-directed, <date>)`).
-   Structural text (headings, contact lines from profile.md) needs no trace line.
+   The `#<section>` is a **lowercase GitHub anchor slug** of the heading: spaces → `-`,
+   `&` and other punctuation dropped (so `## Data & infra` → `#data--infra`). Give **one
+   canonical target per line**; if a claim draws on several sections, cite the primary and
+   put any extras in a trailing `(also …)` note. Structural text (headings, contact lines
+   from profile.md) needs no trace line.
 4. Write both files to the given output paths.
 
 ## Fix rounds

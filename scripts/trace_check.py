@@ -14,9 +14,15 @@ exists? It does NOT judge whether the source honestly supports the claim — tha
 judgment is the application-verifier's job. Running this first lets the verifier
 spend its context on judgment instead of chasing dangling references.
 
-KB targets (roles/*.md, skills.md, ...) resolve against --kb-dir. The special
-target `overrides.md` resolves against --app-dir (the application folder) and is
-existence-checked only; overrides are user-directed and need no anchor.
+KB targets (roles/*.md, skills.md, ...) resolve against --kb-dir; a leading
+`knowledge/` path prefix is tolerated. Application-local targets (overrides.md,
+notes.md, jd.md) resolve against --app-dir instead. overrides.md is
+existence-checked only (user-directed, no anchor); the rest are anchor-checked
+like KB files — a cited anchor into a heading-less file fails rather than
+passing unverified. cv.md/cover.md are never valid sources (a document cannot
+source its own claims). Anchors compare via GitHub-slug normalisation with
+hyphen-run collapse (see _common.normalize_anchor), so a hand-written
+'#Achievements' or '#Data & infra' matches the real heading.
 
 Exit code: 0 if every target resolves, 1 if any dangle or any line is malformed,
 2 on a usage/IO error. Nonzero is a gate failure — fix before the verifier runs.
@@ -31,6 +37,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
+
+# Targets that resolve against the application folder, not the knowledge base.
+# cv.md / cover.md are deliberately NOT here: a document cannot source its own
+# claims, so those targets fall through to KB resolution and fail.
+APP_LOCAL = {"overrides.md", "notes.md", "jd.md"}
+# Of those, the ones checked for existence only (no anchor requirement).
+EXISTENCE_ONLY = {"overrides.md"}
 
 
 class TraceLine:
@@ -86,21 +99,42 @@ def check_file(trace_path: Path, kb_dir: Path, app_dir: Path):
             findings.append((lineno, "MALFORMED", claim, "no `→ target` on this trace line"))
             continue
         n_lines += 1
-        is_override = tline.path == "overrides.md"
-        base = app_dir if is_override else kb_dir
-        target_file = base / tline.path
+        # Application-local targets resolve against the app folder; everything
+        # else is a KB path (a leading `knowledge/` prefix is tolerated).
+        if tline.path in APP_LOCAL:
+            base, rel = app_dir, tline.path
+        else:
+            rel = tline.path
+            prefix = kb_dir.name + "/"
+            if rel.startswith(prefix):
+                rel = rel[len(prefix):]
+            base = kb_dir
+        target_file = base / rel
 
         if not target_file.is_file():
             findings.append(
                 (tline.lineno, "FILE", tline.claim, f"source file not found: {tline.path}")
             )
             continue
-        if tline.anchor and not is_override:
+        if tline.anchor and tline.path not in EXISTENCE_ONLY:
             if target_file not in heading_cache:
                 heading_cache[target_file] = _common.heading_slugs(_common.read_text(target_file))
-            slugs = heading_cache[target_file]
-            if tline.anchor not in slugs:
-                hint = difflib.get_close_matches(tline.anchor, slugs, n=1)
+            raw_slugs = heading_cache[target_file]
+            # A cited anchor must be verifiable — a heading-less file can't
+            # verify one, and that is a dangling reference, not a pass.
+            if not raw_slugs:
+                findings.append(
+                    (
+                        tline.lineno,
+                        "ANCHOR",
+                        tline.claim,
+                        f"{tline.path} has no headings — #{tline.anchor} cannot resolve",
+                    )
+                )
+                continue
+            cited = _common.normalize_anchor(tline.anchor)
+            if cited not in {_common.normalize_anchor(s) for s in raw_slugs}:
+                hint = difflib.get_close_matches(tline.anchor, sorted(raw_slugs), n=1)
                 suffix = f"; did you mean #{hint[0]}" if hint else ""
                 findings.append(
                     (
