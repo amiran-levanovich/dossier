@@ -138,6 +138,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | :-------------------- | :------------------------------------------------------------------------------------------- |
 | `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords vs the KB, bucketed COVERED / UNVERIFIED / GAP |
 | `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
+| `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
 | `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |
 

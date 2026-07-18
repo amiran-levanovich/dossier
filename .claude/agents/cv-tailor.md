@@ -43,7 +43,24 @@ missing file.
    canonical target per line**; if a claim draws on several sections, cite the primary and
    put any extras in a trailing `(also …)` note. Structural text (headings, contact lines
    from profile.md) needs no trace line.
-4. Write both files to the given output paths.
+4. Run the self-check below, fix what it catches, then write both files to the given
+   output paths.
+
+## Self-check (before writing the final files)
+
+One pass over your finished draft against the verifier's top finding categories — each
+miss here costs a whole verify→fix→re-verify round:
+
+1. Every claim-bearing line has a trace line, and the cited section states it **at that
+   strength** — no upgraded attribution ("built" where the KB says "contributed to"),
+   no inflated metric.
+2. No `[unverified]` KB entry used anywhere.
+3. Every covered must-have keyword appears with the posting's **exact spelling**; zero
+   equivalency language ("X-style", "similar to", "familiar with" a named tool).
+4. `constraints.md` holds (protected titles, hard rules); template format holds: single
+   column, standard headings, both dates on every position.
+5. Every URL beyond profile.md contact facts is a `showcase` asset from the provided
+   portfolio register — no register in the inputs, no links.
 
 ## Fix rounds
 

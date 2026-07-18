@@ -1,8 +1,8 @@
 # Tailoring Method — the per-application pipeline
 
-This is the procedure behind the `job-apply` skill: job posting in, verified application package out. It is the workflow's production line, and its quality bar is held by **traceability** and the **verifier gate** — not by trust in any single generation step.
+This is the procedure behind the `job-apply` skill: job posting in, verified application package out. It is the workflow's production line, and its quality bar is held by **traceability** and the **verifier gate**, not trust in any single generation step.
 
-**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/` — resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply the judgment. If a script errors or is absent, do the step by hand — they save tokens, never a hard dependency.
+**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/` — resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply the judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
 
 **Preconditions.** A knowledge base exists **in the current working directory** with verified content, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop immediately and route to `job-intake` / `job-goals`; never hunt for a knowledge base elsewhere on the filesystem, and do not tailor from a thin KB.
 
@@ -10,7 +10,7 @@ This is the procedure behind the `job-apply` skill: job posting in, verified app
 
 ## Step 1 — Capture the posting
 
-Get the full text: WebFetch for a URL (ask for a paste if it's behind a login wall), or take pasted text directly. Create `applications/<company>/` (kebab-case company name) and write `jd.md`:
+Get the full text: WebFetch for a URL (ask for a paste if it's login-walled), or take pasted text directly. Create `applications/<company>/` (kebab-case company name) and write `jd.md`:
 
 ```markdown
 # <Company> — <Role Title>
@@ -49,7 +49,7 @@ Start from what the fit gate already found — its findings usually cover this s
 
 ## Step 5 — Select knowledge
 
-Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Do not pass the whole KB to the agents; targeted context is what makes tailoring sharp.
+Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Never pass the whole KB — targeted context makes tailoring sharp.
 
 If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies — and leave it out (so no link appears) when none does.
 
@@ -61,12 +61,13 @@ Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: 
 
 ## Step 7 — The verifier gate (loop until CLEAN)
 
-First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`. Fix dangling traces before the verifier runs, so it spends its context on judgment, not broken references.
+First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`; fix dangling traces now. Then the **ledger pre-check** — `scripts/claim_ledger.py check` (same arguments) — which marks claims already judged in an earlier CLEAN round against unchanged KB sources PRE-VERIFIED.
 
-Then launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
+Then launch **`application-verifier`** with the same inputs plus both documents and trace files, **pasting the trace-check, ledger, and Step-3 coverage reports into its prompt** — it consumes them and spends its budget judging the NEW claims. It returns CLEAN or severity-ordered findings.
 
-- Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings, since it already holds the KB and standards; launch a fresh writer only if the continuation fails or the KB selection changed) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
-- Re-verify rounds **continue the same verifier** (SendMessage with a short summary of which files changed and how) instead of launching a fresh agent — it already holds the KB and standards in context and only re-reads what changed, while still re-running every check on the whole package. Launch fresh only if the continuation fails or the KB selection changed.
+- Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
+- Re-verify rounds **continue the same verifier** (SendMessage: which files changed and how) — it re-reads only the changed files but re-runs every check on the whole package. For either agent, launch fresh only if the continuation fails or the KB selection changed.
+- On CLEAN, run `scripts/claim_ledger.py record` (same arguments) — verified claims skip re-judgment in the next application.
 - Never present documents to the user while BLOCKER or MAJOR findings are open. MINOR findings may be presented as a short list alongside the documents if the user is in a hurry — their call.
 
 ## Step 8 — Present and close

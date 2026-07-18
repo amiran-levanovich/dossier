@@ -41,7 +41,23 @@ If any input is missing, name it and stop.
    the application folder). The `#<section>` is a **lowercase GitHub anchor slug**: spaces →
    `-`, `&`/punctuation dropped (`## Data & infra` → `#data--infra`). **One canonical target
    per line** — cite the primary source and put extras in a trailing `(also …)` note.
-7. Write both files to the given output paths.
+7. Run the self-check below, fix what it catches, then write both files to the given
+   output paths.
+
+## Self-check (before writing the final files)
+
+One pass over your finished draft against the verifier's top finding categories — each
+miss here costs a whole verify→fix→re-verify round:
+
+1. Every factual claim has a trace line, and the cited source states it **at that
+   strength** — no upgraded attribution, no inflated metric, no `[unverified]` entry.
+2. Under 300 words, 6 parts in order, no banned opener.
+3. At least one specific, real company reference from notes.md — not a generic line
+   that could open any letter.
+4. Logistics close complete from profile.md (DACH: permit status and notice period are
+   mandatory); salary expectation only if the posting asked.
+5. Correct language and register for the posting; zero equivalency language applied to
+   named tools.
 
 ## Fix rounds
 

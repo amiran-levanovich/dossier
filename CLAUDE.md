@@ -23,7 +23,7 @@ job_docs/
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
 ├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer
 └── templates/               # cv_template.md
-scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · session_metrics (+ _common, tests/)
+scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · session_metrics (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
 ```
 

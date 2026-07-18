@@ -56,6 +56,11 @@ found exactly this way — "5 minutes, 60k tokens" → tool-call count → C2.
 gets interrupted, not waited out — diagnose from its partial transcript, fix the agent
 definition, relaunch. A runaway never gets cheaper by finishing.
 
+**Prompt-cache TTL:** the API prompt cache expires after ~5 idle minutes. A verify/fix
+loop that stalls (typically on a user question) pays a full context re-write when it
+resumes — observed as a single 69k-token cache_write turn mid-loop in the v2.2 baseline.
+Keep loops moving; batch questions to the user at the loop's start or end, not inside it.
+
 ## 3. Budgets — the targets that define "too long / too much"
 
 An issue exists when a number is exceeded; without numbers, "too slow" is a mood.
@@ -145,10 +150,18 @@ Recognize regressions by knowing what already burned us:
   tokens/5 min per round (C2) → one batched read per KB file, all checks in-context,
   10–15-call budget.
 
+- **v2.4.0** — the 2026-07 baseline showed the verifier at **45% of an application's
+  tokens** (39 calls vs the 20 ceiling, 4 rounds): it re-read its own deliverables per
+  finding (cover.md ×11 — the batch discipline covered KB files but not the package,
+  C2), redid script-covered bookkeeping in-agent, and spent rounds on findings the
+  writers could have pre-empted (C6) → batch discipline extended to the package files,
+  script reports passed into the verifier prompt, writer self-checks, and the
+  verified-claim ledger (§7b).
+
 If a symptom matches a log entry, first check whether the fix's wording was weakened or
 worked around by a later edit.
 
-## 7b. Implemented levers — mechanical steps moved to scripts (v2.3.0)
+## 7b. Implemented levers — mechanical steps moved to scripts (v2.3.0+)
 
 The cheapest token savings is deleting an LLM call for a step that never needed language
 understanding. These pipeline steps now run through `scripts/` (dependency-free Python,
@@ -164,6 +177,12 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
 - **Tracker writes** (`tracker.py`) — column order, quoting, and header migration for
   `tracker.csv`, so the orchestrator never reads the whole CSV back to re-emit it.
 - **Session metrics** (`session_metrics.py`) — the §2 measurement harness itself.
+- **Verified-claim ledger** (`claim_ledger.py`, v2.4.0) — `record` memoizes (claim
+  text, source path + anchor, source content hash) on every CLEAN verdict; `check`
+  marks byte-identical repeats PRE-VERIFIED before the verifier runs, so it judges only
+  new/changed claims. Any drift in claim wording, cited anchor, or source content
+  auto-invalidates; app-local sources are never carried over. (shrinks the verifier's
+  judgment set across applications — C2/C6.)
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully
@@ -178,7 +197,5 @@ Candidates for future releases, in rough order of value:
    token sink and the dead-link failure path. (C3)
 2. **KB role-file size budget** (~1,500 words each) enforced at intake, so
    `INDEX.md` selection yields small slices; oversized files get split. (C5)
-3. **Writer self-check line** — a 5-item pre-return checklist in the writer agents
-   mirroring the verifier's top finding categories, to push round-1 CLEAN rate up. (C6)
-4. **Main-session model guidance** — a README note that job sessions don't need a
+3. **Main-session model guidance** — a README note that job sessions don't need a
    frontier orchestrator model; the pipeline is procedural by design. (C1, user-side)
