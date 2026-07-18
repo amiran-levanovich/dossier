@@ -73,7 +73,7 @@ If any input is missing, name it and stop. Never verify against files you guesse
 
 ## Output contract
 
-Return exactly one of:
+Return one of:
 
 - `CLEAN — cv + cover verified, <n> claims traced` — every check passed.
   Append `INFO: <n> user-directed claims present (overrides.md)` when applicable.
