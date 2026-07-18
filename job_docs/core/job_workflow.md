@@ -19,11 +19,13 @@ The plugin ships **zero personal data**. Everything about the candidate lives in
 │   ├── jd.md                  #   requirement breakdown + fit verdict (core/fit_check.md)
 │   ├── cv.md + cv_trace.md    #   tailored CV + claim→source map
 │   ├── cover.md + cover_trace.md
-│   ├── overrides.md           #   user-directed claims, if any (tailoring_method.md)
+│   ├── overrides.md           #   user-directed claims, if any (core/override_protocol.md)
 │   ├── prep.md                #   interview prep, once an interview is booked
 │   ├── offer_notes.md         #   recorded promises, once an offer arrives (lifecycle/offer.md)
 │   ├── offer_prep.md          #   contract clause walk + negotiation prep (lifecycle/offer.md)
 │   └── notes.md               #   anything else worth keeping per company
+├── master_cv.md (+ trace)     # optional exemplars, built once — lifecycle/master_documents.md
+├── cover_frame.md (+ trace)   #   (with .claim_ledger.json, the verifier's memo of past CLEANs)
 ├── tracker.csv                # application status log — see lifecycle/tracking.md
 └── CLAUDE.md                  # written after intake: a short pointer to knowledge/ and this workflow
 ```

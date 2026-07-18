@@ -18,6 +18,8 @@ the research notes or jd.md.
 - **Standards paths** — `cover_letter_rules.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cover.md` and `cover_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application
+- **Frame paths** (optional) — `cover_frame.md` + `cover_frame_trace.md` when a
+  verified frame exists
 - **Language** — the output language
 
 If any input is missing, name it and stop.
@@ -43,6 +45,15 @@ If any input is missing, name it and stop.
    per line** — cite the primary source and put extras in a trailing `(also …)` note.
 7. Run the self-check below, fix what it catches, then write both files to the given
    output paths.
+
+## With a frame: generate only the core
+
+When the inputs include a verified `cover_frame.md`, the letter is the frame verbatim
+plus your generated core: the why-this-company paragraph (from notes.md) and the value
+proposition. Fill the `{company}`/`{role}` placeholders; do not rephrase frame text —
+a reworded frame line loses its verified status. Generated core under 150 words. Frame
+lines keep their trace lines from `cover_frame_trace.md`; yours cover the generated
+paragraphs.
 
 ## Self-check (before writing the final files)
 

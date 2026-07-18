@@ -183,6 +183,13 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   new/changed claims. Any drift in claim wording, cited anchor, or source content
   auto-invalidates; app-local sources are never carried over. (shrinks the verifier's
   judgment set across applications — C2/C6.)
+- **Master-CV subset check** (`master_diff.py` + ledger `--document` records, v2.5.0) —
+  with exemplar documents (`lifecycle/master_documents.md`: one verified master CV +
+  cover frame, built once at intake close), the writers subtract/edit instead of
+  regenerating and this script proves which cv.md lines are verbatim from a
+  hash-VERIFIED master; only CHANGED lines get judged. Turns per-application generation
+  and judgment into a delta against a one-time investment. (C5 for the writers' inputs,
+  C6 for the verifier's judgment set.)
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully

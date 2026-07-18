@@ -17,10 +17,10 @@ loops fix → re-verify until you return CLEAN; do not soften findings to end th
   `knowledge/portfolio.md` if it exists
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `cover_letter_rules.md`;
   plus `dach_conventions.md` when the market applies
-- **Script reports** (optional) — pasted `trace_check`, `claim_ledger check`, and
-  `ats_coverage` output; consume, never redo their bookkeeping
+- **Script reports** (optional) — pasted `trace_check`, `claim_ledger check`,
+  `master_diff`, and `ats_coverage` output; consume, never redo their bookkeeping
 
-If any input is missing, name it and stop. Never verify against files you guessed at.
+If any input is missing, name it and stop — never verify against guessed files.
 
 ## Read discipline (keep the gate cheap without narrowing it)
 
@@ -29,9 +29,9 @@ If any input is missing, name it and stop. Never verify against files you guesse
   `knowledge/portfolio.md`, and each provided KB file in one batch of parallel Reads,
   then verify everything against what you hold in context. One Read per file is the
   total budget, and it binds the documents under review hardest: never re-open
-  `cv.md`/`cover.md` to check a finding — quote the copy you already hold. A cited
+  `cv.md`/`cover.md` — quote the copy you already hold. A cited
   section that doesn't exist in its file is a BLOCKER (invalid source).
-- Sweeps run in-context too — no Grep-per-keyword, no Read or Grep per trace line.
+- Sweeps run in-context too — no Grep-per-keyword, no Read/Grep per trace line.
   First pass ≈ 10–15 tool calls; if you re-read a file you already hold, you are off
   the rails.
 - Re-verify rounds: you are continued (not respawned) with a summary of what changed.
@@ -48,12 +48,13 @@ If any input is missing, name it and stop. Never verify against files you guesse
    - it has a trace line, AND the cited source actually supports it at the stated
      strength — an inflated metric or upgraded attribution ("built" where the KB says
      "contributed to") fails even with a trace line;
-   - a claim marked PRE-VERIFIED in a provided `claim_ledger` report was judged in an
-     earlier CLEAN round against byte-identical sources — count it, don't re-judge it;
-     spend judgment on the NEW claims;
+   - a claim marked PRE-VERIFIED in a provided `claim_ledger` report — or on a line
+     `master_diff` marks VERBATIM from a ledger-VERIFIED master — was already
+     judged against byte-identical sources: count it, don't re-judge it; spend judgment
+     on the NEW/CHANGED ones;
    - a claim tracing to a `[unverified]` KB entry is a BLOCKER;
-   - a claim tracing to `overrides.md` is **sourced** — count these and report them as
-     one INFO line, never as findings;
+   - a claim tracing to `overrides.md` is **sourced** — report them as one INFO line,
+     never as findings;
    - a claim with no valid source is a BLOCKER.
 2. **ATS** (per `ats_rules.md`) — a provided `ats_coverage` report settles which jd.md
    keywords the KB covers (no report: derive coverage in-context):
