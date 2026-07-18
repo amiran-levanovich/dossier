@@ -11,7 +11,7 @@ This skill runs the front of the kernel (`job_docs/core/job_workflow.md`):
 2. **Availability check** (first run only): read `job_docs/core/orchestration.md` and report the compact advised-skills table. Informational, never blocks.
 3. **Seed** (Phase 1): ingest the existing CV/materials into the KB layout, every entry marked `[unverified]` — a CV is claims, not facts.
 4. **Interview** (Phases 2–4): role deep-dives with the verification gauntlet (quantify, scope, attribute, correct) and ecosystem keyword expansion; then skills, education, admin facts, constraints, story harvest. Update the KB files, `INDEX.md`, and `interview_progress.md` **as you go** — the interview must survive the session dying at any point.
-5. **Close out** (Phase 5): no surviving `[unverified]` markers or open areas, regenerate INDEX hooks, write the job folder's `CLAUDE.md` stub, then hand off to `job-goals`.
+5. **Close out** (Phase 5): no surviving `[unverified]` markers or open areas, regenerate INDEX hooks, write the job folder's `CLAUDE.md` stub. Then **offer the master-documents build** (`job_docs/lifecycle/master_documents.md`): one verified master CV + cover frame, built once so every later application is a cheap, checkable delta — the user's call. Then hand off to `job-goals`.
 
 Offer a natural break at every area boundary — the interview is extensive by design and resumability is the feature, not an apology.
 

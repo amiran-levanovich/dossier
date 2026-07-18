@@ -123,11 +123,12 @@ knowledge/
 | `core/job_workflow.md`                       | The kernel: folder contract, session start/close, routing, quality model                                              |
 | `core/kb_schema.md`                          | Knowledge base layout, INDEX contract, verification markers                                                           |
 | `core/interview_protocol.md`                 | The extensive interview: phases, verification gauntlet, ecosystem expansion                                           |
-| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop, override protocol                                        |
+| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop                                                           |
+| `core/override_protocol.md`                  | User-directed overrides: warn once → confirm → record in `overrides.md`, never in the KB                              |
 | `core/fit_check.md`                          | The pre-application gate: liveness, constraints kill-switch, evidence-cited fit score, comp-reliability weighting, legitimacy tier |
 | `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
 | `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |
-| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `master_documents` (build/maintain the master CV + cover frame exemplars) |
 | `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
 ## The scripts layer (`scripts/`)
@@ -138,7 +139,8 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | :-------------------- | :------------------------------------------------------------------------------------------- |
 | `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords vs the KB, bucketed COVERED / UNVERIFIED / GAP |
 | `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
-| `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims |
+| `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records exemplar-document hashes (`--document`) |
+| `master_diff.py`      | Re-judging master-CV content — proves which cv.md lines are verbatim from a verified `master_cv.md`; only CHANGED lines need judgment |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
 | `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |
 

@@ -16,6 +16,8 @@ that your input files don't contain.
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `templates/cv_template.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cv.md` and `cv_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application
+- **Master paths** (optional) — `master_cv.md` + `master_cv_trace.md` when a verified
+  master exists
 - **Language** — the output language (from jd.md)
 
 If any input is missing, name it and stop. Never substitute your own assumptions for a
@@ -45,6 +47,16 @@ missing file.
    from profile.md) needs no trace line.
 4. Run the self-check below, fix what it catches, then write both files to the given
    output paths.
+
+## With a master CV: subtract + bounded edits
+
+When the inputs include a verified `master_cv.md`, edit it — don't regenerate. Drop
+bullets that add no signal for this posting, reorder so the most relevant lead, tailor
+the headline/summary, mirror the posting's keyword spellings. Any line not verbatim
+from the master is new content that gets judged in full — keep edits bounded: never a
+strength upgrade, never a claim the KB can't back. Kept lines copy their trace lines
+from `master_cv_trace.md` unchanged; every edited or new line gets a fresh trace line.
+Provided KB files back your edits; the master covers the rest.
 
 ## Self-check (before writing the final files)
 

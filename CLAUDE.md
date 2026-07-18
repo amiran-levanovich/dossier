@@ -19,11 +19,11 @@ Verification = JSON validates (`python3 -c 'import json…'`), markdown links re
 ├── skills/                  # thin routers: job-intake · job-goals · job-apply
 └── agents/                  # cv-tailor · cover-letter-writer · application-verifier · interview-briefer
 job_docs/
-├── core/                    # job_workflow.md (kernel) · kb_schema.md · interview_protocol.md · tailoring_method.md · fit_check.md · orchestration.md · quickref.md
+├── core/                    # job_workflow.md (kernel) · kb_schema.md · interview_protocol.md · tailoring_method.md · override_protocol.md · fit_check.md · orchestration.md · quickref.md
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
-├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer
+├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · master_documents
 └── templates/               # cv_template.md
-scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · session_metrics (+ _common, tests/)
+scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · master_diff · session_metrics (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
 ```
 
