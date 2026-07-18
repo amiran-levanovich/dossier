@@ -130,6 +130,19 @@ knowledge/
 | `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) |
 | `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
+## The scripts layer (`scripts/`)
+
+The pipeline's mechanical, no-judgment steps run through small, dependency-free Python helpers (standard library only) instead of burning tokens on an LLM call. Each returns a short report; the orchestrator applies the judgment, and every step falls back to being done by hand if a script is absent.
+
+| Script                | Replaces                                                                                     |
+| :-------------------- | :------------------------------------------------------------------------------------------- |
+| `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords vs the KB, bucketed COVERED / UNVERIFIED / GAP |
+| `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
+| `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
+| `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |
+
+Tests: `python3 -m unittest discover -s scripts/tests`.
+
 ## European / DACH specifics
 
 Language follows the posting (German posting → Lebenslauf + Anschreiben); protected titles ("Ingenieur") are hard rules the verifier blocks on; the logistics close always carries permit status and notice period; photo/birth-date are the user's recorded choice, asked once at intake; Austrian KV-minimum and Swiss permit/salary conventions covered; a contract clause taxonomy (Probezeit, Kündigungsfrist, 13th salary, non-compete with compensation, …) equips the offer stage's clause walk — as market patterns, never legal statements. Details: [`job_docs/standards/dach_conventions.md`](./job_docs/standards/dach_conventions.md).

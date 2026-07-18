@@ -2,6 +2,8 @@
 
 `tracker.csv` in the job folder root is the single source of truth for where every application stands. It is plain CSV so it needs no tooling, diffs cleanly, and any session can read it in one call.
 
+**Writing rows:** use `scripts/tracker.py --file tracker.csv {add|update|show}` (resolve `scripts/` as in `core/tailoring_method.md`). It handles column order, CSV quoting, and header migration deterministically, and warns on the defects below (an `applied` row missing `date_applied`/`link`/`next_action`; a terminal status missing `stage_reached`) — you still supply every value, since what to write is judgment. Hand-editing the CSV stays valid; the script is a convenience, not a gatekeeper.
+
 ## Columns
 
 ```

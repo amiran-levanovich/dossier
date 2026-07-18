@@ -40,9 +40,11 @@ If any input is missing, name it and stop. Never verify against files you guesse
 
 ## Checks (all three, always)
 
-1. **Traceability** — the core check. For every claim-bearing element in cv.md and
-   cover.md (anything asserting experience, a skill, an outcome, a credential, or a
-   company fact):
+1. **Traceability** — the core check. A pre-check (`scripts/trace_check.py`) has already
+   confirmed every trace target resolves to a real file and `#anchor` — don't re-prove
+   that; your job is the judgment it can't make: does the source honestly support the
+   claim at the stated strength? For every claim-bearing element in cv.md and cover.md
+   (anything asserting experience, a skill, an outcome, a credential, or a company fact):
    - it has a trace line, AND the cited source actually supports it at the stated
      strength — an inflated metric or upgraded attribution ("built" where the KB says
      "contributed to") fails even with a trace line;

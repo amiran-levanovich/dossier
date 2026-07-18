@@ -2,6 +2,8 @@
 
 This is the procedure behind the `job-apply` skill: job posting in, verified application package out. It is the workflow's production line, and its quality bar is held by **traceability** and the **verifier gate** — not by trust in any single generation step.
 
+**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/` — resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply the judgment. If a script errors or is absent, do the step by hand — they save tokens, never a hard dependency.
+
 **Preconditions.** A knowledge base exists **in the current working directory** with verified content, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop immediately and route to `job-intake` / `job-goals`; never hunt for a knowledge base elsewhere on the filesystem, and do not tailor from a thin KB.
 
 ---
@@ -35,11 +37,11 @@ Run `core/fit_check.md` end to end: liveness and location sanity, the binary con
 
 ## Step 3 — ATS keyword check (before writing anything)
 
-Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Sweep with **Grep across `knowledge/`** (exact keyword, then obvious spelling variants) and open only the matching entry's section to confirm it's verified — this check needs keyword coverage, not a full KB read; nothing in this pipeline ever loads the whole KB into the main session. Three buckets:
+Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Run `scripts/ats_coverage.py jd.md --kb-dir knowledge/` — literal whole-token matching, each keyword bucketed COVERED / UNVERIFIED / GAP, no KB read into the main session (fallback: Grep `knowledge/` per keyword and spelling variants). Then apply judgment:
 
-- **Covered** — a verified KB entry names it.
-- **Verifiable gap** — the user plausibly has it but the KB doesn't record it → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake).
-- **Real gap** — the user doesn't have it → record under the KB-match evidence line in `jd.md`'s `## Fit` block. It may only enter the documents through the override protocol below.
+- **Covered** (`COVERED`) — a verified KB entry names it.
+- **Verifiable gap** — the user plausibly has it but the KB doesn't record it as verified → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake). The script's `UNVERIFIED` bucket (named only on an `[unverified]` line) lands here.
+- **Real gap** — the user doesn't have it → record under the KB-match evidence line in `jd.md`'s `## Fit` block. It may only enter the documents through the override protocol below. (Script `GAP` = this or a verifiable gap — judgment decides.)
 
 ## Step 4 — Company research
 
@@ -59,7 +61,9 @@ Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: 
 
 ## Step 7 — The verifier gate (loop until CLEAN)
 
-Launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
+First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`. Fix dangling traces before the verifier runs, so it spends its context on judgment (does the source honestly support the claim?), not broken references.
+
+Then launch **`application-verifier`** with the same inputs plus both documents and trace files. It returns CLEAN or severity-ordered findings.
 
 - Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings, since it already holds the KB and standards; launch a fresh writer only if the continuation fails or the KB selection changed) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
 - Re-verify rounds **continue the same verifier** (SendMessage with a short summary of which files changed and how) instead of launching a fresh agent — it already holds the KB and standards in context and only re-reads what changed, while still re-running every check on the whole package. Launch fresh only if the continuation fails or the KB selection changed.
@@ -69,7 +73,7 @@ Launch **`application-verifier`** with the same inputs plus both documents and t
 
 Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how they were handled, verifier result (including the override INFO line if any). Then:
 
-- Update `tracker.csv` per `lifecycle/tracking.md` (new row `to_apply`, or `applied` with today's date once the user submits; `next_action` two weeks out by default; `fit_score` from the Step 2 gate, plus an override note in `notes` if the user went against the verdict).
+- Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 2 gate, a dated `--next-action` (default two weeks out), and an override note in `--notes` if the user went against the verdict.
 - Offer rendering **only if the user wants a file format** — options and market caveats in `standards/rendering.md`. Markdown is the deliverable by default.
 
 ---
