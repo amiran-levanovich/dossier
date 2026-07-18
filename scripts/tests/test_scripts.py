@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import _common  # noqa: E402
 import ats_coverage  # noqa: E402
 import claim_ledger  # noqa: E402
+import master_diff  # noqa: E402
 import session_metrics  # noqa: E402
 import tracker  # noqa: E402
 import trace_check  # noqa: E402
@@ -484,6 +485,168 @@ class TestClaimLedger(TmpMixin):
         with redirect_stdout(buf):
             rc = claim_ledger.main(["check", str(trace), "--kb-dir", str(self.root / "ghost")])
         self.assertEqual(rc, 2)
+
+
+class TestMasterDiff(TmpMixin):
+    """Contract: every content-bearing line of cv.md is either VERBATIM
+    (present in master_cv.md, whitespace-normalized) or CHANGED — no semantic
+    tolerance, a 95%-similar rewording is CHANGED and gets judged. Advisory:
+    exit 0 even with changes; missing master degrades to "everything CHANGED"
+    (= v2.4.0 behavior, full judgment)."""
+
+    MASTER = (
+        "# CV\n\n## Experience\n"
+        "- Built the billing pipeline serving 2M users\n"
+        "- Contributed to the Kafka migration\n"
+        "- Led a team of 3 engineers\n"
+        "\n## Skills\n- Ruby on Rails, PostgreSQL\n"
+    )
+
+    def _run(self, cv_text, master_text=MASTER):
+        cv = self.write("app/cv.md", cv_text)
+        master = self.write("master_cv.md", master_text) if master_text else self.root / "ghost.md"
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_diff.main([str(cv), "--master", str(master)])
+        return rc, buf.getvalue()
+
+    def test_verbatim_subset_with_reorder_is_clean(self):
+        # Subtraction + reordering is the tailor's job — dropped bullets and a
+        # new order must not count as changes.
+        rc, out = self._run(
+            "# CV\n\n## Experience\n"
+            "- Led a team of 3 engineers\n"
+            "- Built the billing pipeline serving 2M users\n"
+        )
+        self.assertEqual(rc, 0)
+        self.assertIn("verbatim: 2", out)
+        self.assertIn("changed: 0", out)
+
+    def test_reworded_bullet_is_changed_even_when_close(self):
+        rc, out = self._run(
+            "## Experience\n- Built the billing pipeline serving 3M users\n"
+        )
+        self.assertEqual(rc, 0)
+        self.assertIn("changed: 1", out)
+        self.assertIn("[CHANGED]", out)
+
+    def test_changed_line_reports_closest_master_line(self):
+        _, out = self._run("## Experience\n- Led a team of 5 engineers\n")
+        self.assertIn("Led a team of 3 engineers", out)
+
+    def test_new_bullet_reports_no_close_match(self):
+        _, out = self._run("## Experience\n- Certified Kubernetes administrator since 2024\n")
+        self.assertIn("changed: 1", out)
+        self.assertIn("no close match", out)
+
+    def test_whitespace_and_bullet_marker_drift_is_verbatim(self):
+        rc, out = self._run(
+            "## Skills\n*   Ruby on Rails,   PostgreSQL\n"
+        )
+        self.assertEqual(rc, 0)
+        self.assertIn("verbatim: 1", out)
+        self.assertIn("changed: 0", out)
+
+    def test_headings_and_blanks_are_not_compared(self):
+        # A tailored section heading must not show up as a CHANGED line.
+        _, out = self._run("# Tailored CV\n\n## Core experience\n- Contributed to the Kafka migration\n")
+        self.assertIn("lines: 1", out)
+        self.assertIn("verbatim: 1", out)
+
+    def test_missing_master_all_changed_exit_zero(self):
+        rc, out = self._run("## Experience\n- Built the billing pipeline serving 2M users\n", master_text=None)
+        self.assertEqual(rc, 0)
+        self.assertIn("changed: 1", out)
+        self.assertIn("no master", out)
+
+    def test_missing_cv_is_an_io_error(self):
+        master = self.write("master_cv.md", self.MASTER)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_diff.main([str(self.root / "nope.md"), "--master", str(master)])
+        self.assertEqual(rc, 2)
+
+
+class TestClaimLedgerDocuments(TmpMixin):
+    """Contract: `record --document` stores a verified document's content hash
+    on CLEAN; `check --document` answers whether the file is still exactly the
+    one that was verified. Any edit → CHANGED until re-verified. Keyed by
+    basename (the exemplars live at the job-folder root beside the ledger)."""
+
+    def _kb(self):
+        self.write("knowledge/skills.md", "# Skills\n\n## Databases\n- PostgreSQL\n")
+        return self.root / "knowledge"
+
+    def _run(self, args):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = claim_ledger.main(args)
+        return rc, buf.getvalue()
+
+    def test_record_then_check_document_verified(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        master = self.write("master_cv.md", "# CV\n- Built things\n")
+        rc, _ = self._run(["record", "--document", str(master), "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertEqual(rc, 0)
+        rc, out = self._run(["check", "--document", str(master), "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertEqual(rc, 0)
+        self.assertIn("VERIFIED", out)
+
+    def test_document_edit_invalidates(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        master = self.write("master_cv.md", "# CV\n- Built things\n")
+        self._run(["record", "--document", str(master), "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.write("master_cv.md", "# CV\n- Built DIFFERENT things\n")
+        _, out = self._run(["check", "--document", str(master), "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertIn("CHANGED", out)
+        self.assertNotIn("VERIFIED", out.replace("CHANGED", ""))
+
+    def test_unrecorded_document_reported(self):
+        kb = self._kb()
+        master = self.write("master_cv.md", "# CV\n- Built things\n")
+        rc, out = self._run(["check", "--document", str(master), "--kb-dir", str(kb),
+                             "--ledger", str(self.root / "ledger.json")])
+        self.assertEqual(rc, 0)
+        self.assertIn("not recorded", out)
+
+    def test_documents_and_traces_combine_in_one_call(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        master = self.write("master_cv.md", "# CV\n- db work\n")
+        trace = self.write("app/cv_trace.md", '- "db work" → skills.md#databases\n')
+        rc, _ = self._run(["record", str(trace), "--document", str(master),
+                           "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertEqual(rc, 0)
+        _, out = self._run(["check", str(trace), "--document", str(master),
+                            "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertIn("pre-verified: 1", out)
+        self.assertIn("VERIFIED", out)
+
+    def test_no_traces_and_no_document_is_usage_error(self):
+        kb = self._kb()
+        rc, _ = self._run(["check", "--kb-dir", str(kb), "--ledger", str(self.root / "l.json")])
+        self.assertEqual(rc, 2)
+
+    def test_v240_ledger_without_documents_key_still_works(self):
+        # Backwards compatibility: a ledger written by v2.4.0 has only
+        # "entries" — trace checks keep working, document checks degrade to
+        # "not recorded".
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write("app/cv_trace.md", '- "db work" → skills.md#databases\n')
+        self._run(["record", str(trace), "--kb-dir", str(kb), "--ledger", str(ledger)])
+        import json
+        data = json.loads(ledger.read_text(encoding="utf-8"))
+        data.pop("documents", None)
+        ledger.write_text(json.dumps(data), encoding="utf-8")
+        master = self.write("master_cv.md", "# CV\n")
+        rc, out = self._run(["check", str(trace), "--document", str(master),
+                             "--kb-dir", str(kb), "--ledger", str(ledger)])
+        self.assertEqual(rc, 0)
+        self.assertIn("pre-verified: 1", out)
+        self.assertIn("not recorded", out)
 
 
 if __name__ == "__main__":
