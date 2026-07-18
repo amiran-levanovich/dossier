@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import _common  # noqa: E402
 import ats_coverage  # noqa: E402
+import claim_ledger  # noqa: E402
 import session_metrics  # noqa: E402
 import tracker  # noqa: E402
 import trace_check  # noqa: E402
@@ -323,6 +324,166 @@ class TestSessionMetrics(TmpMixin):
         self.assertEqual(s["assistant_turns"], 1)
         self.assertEqual(s["tokens"]["input_tokens"], 100)
         self.assertEqual(s["tools"]["Read"], 2)
+
+
+class TestClaimLedger(TmpMixin):
+    """Contract: on a CLEAN verdict, `record` memoizes (claim text, resolved KB
+    source, source content hash); `check` marks exact matches PRE-VERIFIED so
+    the verifier judges only new/changed claims. Any drift — claim wording,
+    source content, cited anchor — invalidates. Advisory only: exit 0, never a
+    gate; missing/corrupt ledger degrades to "everything is NEW"."""
+
+    def _kb(self):
+        self.write(
+            "knowledge/roles/acme.md",
+            "# Acme\n\n## Achievements\n- did things\n\n## Data & infra\n- pipelines\n",
+        )
+        self.write("knowledge/skills.md", "# Skills\n\n## Databases\n- PostgreSQL\n")
+        return self.root / "knowledge"
+
+    def _run(self, cmd, trace, kb, ledger):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = claim_ledger.main(
+                [cmd, str(trace), "--kb-dir", str(kb), "--ledger", str(ledger)]
+            )
+        return rc, buf.getvalue()
+
+    def test_record_then_check_roundtrip_pre_verified(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write(
+            "app/cv_trace.md",
+            '- "led work" → roles/acme.md#achievements\n- "db" → skills.md#databases\n',
+        )
+        rc, _ = self._run("record", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        rc, out = self._run("check", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        self.assertIn("pre-verified: 2", out)
+        self.assertIn("new: 0", out)
+
+    def test_changed_claim_text_is_new(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        self._run("record", trace, kb, ledger)
+        trace2 = self.write("app2/cv_trace.md", '- "led major work" → roles/acme.md#achievements\n')
+        _, out = self._run("check", trace2, kb, ledger)
+        self.assertIn("pre-verified: 0", out)
+        self.assertIn("new: 1", out)
+
+    def test_changed_source_content_invalidates(self):
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        self._run("record", trace, kb, ledger)
+        self.write(
+            "knowledge/roles/acme.md",
+            "# Acme\n\n## Achievements\n- did DIFFERENT things\n\n## Data & infra\n- pipelines\n",
+        )
+        _, out = self._run("check", trace, kb, ledger)
+        self.assertIn("pre-verified: 0", out)
+        self.assertIn("source changed", out)
+
+    def test_changed_anchor_is_new(self):
+        # Same claim, same file, different cited section — the support moved,
+        # so the previous CLEAN judgment does not carry over.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        self._run("record", trace, kb, ledger)
+        trace2 = self.write("app2/cv_trace.md", '- "led work" → roles/acme.md#data--infra\n')
+        _, out = self._run("check", trace2, kb, ledger)
+        self.assertIn("pre-verified: 0", out)
+
+    def test_app_local_targets_never_pre_verified(self):
+        # jd.md / notes.md / overrides.md are per-application by definition —
+        # a past CLEAN on another application's files must never carry over.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        self.write("app/notes.md", "# Notes\n\n## Company\n- funded 2021\n")
+        trace = self.write("app/cv_trace.md", '- "funded" → notes.md#company\n')
+        rc, out = self._run("record", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        self.assertIn("skipped (app-local): 1", out)
+        _, out = self._run("check", trace, kb, ledger)
+        self.assertIn("pre-verified: 0", out)
+        self.assertIn("app-local", out)
+
+    def test_unresolved_target_not_recorded(self):
+        # record runs post-CLEAN so this shouldn't happen — but a dangling
+        # target must degrade to "not recorded", never crash or poison entries.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        trace = self.write("app/cv_trace.md", '- "x" → roles/ghost.md#achievements\n')
+        rc, out = self._run("record", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        self.assertIn("skipped (unresolved): 1", out)
+        self.assertIn("recorded: 0", out)
+
+    def test_missing_ledger_all_new_exit_zero(self):
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        rc, out = self._run("check", trace, kb, self.root / "nope.json")
+        self.assertEqual(rc, 0)
+        self.assertIn("pre-verified: 0", out)
+        self.assertIn("new: 1", out)
+
+    def test_corrupt_ledger_treated_as_empty(self):
+        kb = self._kb()
+        ledger = self.write("ledger.json", "{ not json at all")
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        rc, out = self._run("check", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        self.assertIn("new: 1", out)
+        # ...and record must recover by rewriting a valid ledger.
+        rc, _ = self._run("record", trace, kb, ledger)
+        self.assertEqual(rc, 0)
+        _, out = self._run("check", trace, kb, ledger)
+        self.assertIn("pre-verified: 1", out)
+
+    def test_record_merges_across_applications(self):
+        # A second application's record must extend the ledger, not wipe the
+        # first application's entries.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        t1 = self.write("app1/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        t2 = self.write("app2/cv_trace.md", '- "db" → skills.md#databases\n')
+        self._run("record", t1, kb, ledger)
+        self._run("record", t2, kb, ledger)
+        _, out = self._run("check", t1, kb, ledger)
+        self.assertIn("pre-verified: 1", out)
+        _, out = self._run("check", t2, kb, ledger)
+        self.assertIn("pre-verified: 1", out)
+
+    def test_knowledge_prefix_and_anchor_variants_hit_same_entry(self):
+        # `knowledge/skills.md#Databases` and `skills.md#databases` are the
+        # same source — resolution + anchor normalisation happen before hashing.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        t1 = self.write("app1/cv_trace.md", '- "db" → knowledge/skills.md#Databases\n')
+        t2 = self.write("app2/cv_trace.md", '- "db" → skills.md#databases\n')
+        self._run("record", t1, kb, ledger)
+        _, out = self._run("check", t2, kb, ledger)
+        self.assertIn("pre-verified: 1", out)
+
+    def test_default_ledger_lives_beside_kb(self):
+        # No --ledger flag: the ledger sits next to knowledge/ (job-folder
+        # root), shared across every application of that job search.
+        kb = self._kb()
+        trace = self.write("app/cv_trace.md", '- "led work" → roles/acme.md#achievements\n')
+        with redirect_stdout(io.StringIO()):
+            rc = claim_ledger.main(["record", str(trace), "--kb-dir", str(kb)])
+        self.assertEqual(rc, 0)
+        self.assertTrue((kb.parent / ".claim_ledger.json").is_file())
+
+    def test_missing_kb_dir_is_an_io_error(self):
+        trace = self.write("app/cv_trace.md", '- "x" → skills.md#databases\n')
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = claim_ledger.main(["check", str(trace), "--kb-dir", str(self.root / "ghost")])
+        self.assertEqual(rc, 2)
 
 
 if __name__ == "__main__":
