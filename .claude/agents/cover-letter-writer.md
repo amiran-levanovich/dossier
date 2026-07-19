@@ -14,7 +14,7 @@ the research notes or jd.md.
 
 - **jd.md path** — requirement breakdown, including posting language and tone signals
 - **notes.md path** — company research (what they do, size, news, tone)
-- **KB file paths** — selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means the portfolio line is omitted)
+- **KB file paths** — selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means the portfolio line is omitted). With a verified frame this shrinks to `profile.md`, `goals.md`, and the value-proposition evidence files — the frame trace carries the rest
 - **Standards paths** — `cover_letter_rules.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cover.md` and `cover_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application
@@ -53,7 +53,9 @@ plus your generated core: the why-this-company paragraph (from notes.md) and the
 proposition. Fill the `{company}`/`{role}` placeholders; do not rephrase frame text —
 a reworded frame line loses its verified status. Generated core under 150 words. Frame
 lines keep their trace lines from `cover_frame_trace.md`; yours cover the generated
-paragraphs.
+paragraphs. If the core needs a source no provided file covers, follow the frame
+trace's citation and read **just that one file** — never sweep the knowledge base in
+frame mode.
 
 ## Self-check (before writing the final files)
 

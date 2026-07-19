@@ -12,7 +12,7 @@ that your input files don't contain.
 ## Inputs (required in the invoking prompt)
 
 - **jd.md path** — the requirement breakdown for this posting
-- **KB file paths** — the selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means no portfolio links in the CV)
+- **KB file paths** — the selected knowledge-base files (roles, skills, profile, constraints, goals; `portfolio.md` only when a linkable asset exists — no register in the inputs means no portfolio links in the CV). With a verified master this shrinks to `constraints.md` plus the files backing planned edits — the master trace carries the rest
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `templates/cv_template.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cv.md` and `cv_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application
@@ -56,7 +56,9 @@ the headline/summary, mirror the posting's keyword spellings. Any line not verba
 from the master is new content that gets judged in full — keep edits bounded: never a
 strength upgrade, never a claim the KB can't back. Kept lines copy their trace lines
 from `master_cv_trace.md` unchanged; every edited or new line gets a fresh trace line.
-Provided KB files back your edits; the master covers the rest.
+Provided KB files back your edits; the master covers the rest. If an edit needs a
+source no provided file covers, follow the master trace's citation and read **just that
+one file** — never sweep the knowledge base in master mode.
 
 ## Self-check (before writing the final files)
 
