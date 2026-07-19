@@ -158,6 +158,14 @@ Recognize regressions by knowing what already burned us:
   script reports passed into the verifier prompt, writer self-checks, and the
   verified-claim ledger (§7b).
 
+- **v2.5.1** — the 2026-07-19 remeasure showed both writers over ceiling (16–18 calls
+  vs 15) and costlier than the v2.2 baseline despite subtract-mode working: masters
+  were passed *alongside* the full KB selection, so each writer swept 7–8 KB files
+  whose claims the master trace already carried (C5) → Step-5 master-mode selection
+  made a hard replace-not-supplement rule (cv-tailor: `constraints.md` + edit-backing
+  files; cover: `profile.md` + `goals.md` + value-prop evidence), writer contracts
+  read master-first with on-demand single-file reads.
+
 If a symptom matches a log entry, first check whether the fix's wording was weakened or
 worked around by a later edit.
 

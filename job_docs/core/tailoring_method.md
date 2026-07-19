@@ -55,7 +55,7 @@ If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets 
 
 `knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to the writer agents; their claims come from verified KB entries only.
 
-**With exemplar documents** (`master_cv.md` / `cover_frame.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md --document cover_frame.md`. For each document that checks VERIFIED, the KB selection shrinks to the files backing planned edits — often none, since the master already encodes the roles. A CHANGED document is used as a source like any other draft: full judgment, and flag it for re-verification.
+**With exemplar documents** (`master_cv.md` / `cover_frame.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md --document cover_frame.md`. For each document that checks VERIFIED, the selection above is **replaced, not supplemented**: `cv-tailor` gets `constraints.md` plus only the files backing planned edits, named from the `## Fit` block — often none, since the master already encodes the roles; `cover-letter-writer` gets `profile.md`, `goals.md`, and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies to both. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED document is used as a source like any other draft: full judgment, the full Step-5 selection, and flag it for re-verification.
 
 ## Step 6 — Dispatch the writers (parallel)
 
