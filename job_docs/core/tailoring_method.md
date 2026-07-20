@@ -1,10 +1,10 @@
 # Tailoring Method — the per-application pipeline
 
-This is the procedure behind the `job-apply` skill: job posting in, verified application package out. It is the workflow's production line, and its quality bar is held by **traceability** and the **verifier gate**, not trust in any single generation step.
+The procedure behind the `job-apply` skill: job posting in, verified application package out. Its quality bar is held by **traceability** and the **verifier gate**, not trust in any single generation step.
 
-**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/` — resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply the judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
+**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/`, resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
 
-**Preconditions.** A knowledge base exists **in the current working directory** with verified content, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop immediately and route to `job-intake` / `job-goals`; never hunt for a knowledge base elsewhere on the filesystem, and do not tailor from a thin KB.
+**Preconditions.** A knowledge base with verified content exists **in the current working directory**, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop and route to `job-intake` / `job-goals`; never hunt for a KB elsewhere, and do not tailor from a thin one.
 
 ---
 
@@ -33,7 +33,7 @@ Get the full text: WebFetch for a URL (ask for a paste if it's login-walled), or
 
 ## Step 2 — The fit gate (before any research or writing)
 
-Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict gets said out loud **now** — whether to proceed against it is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain — budget rules in `core/fit_check.md`); whatever it finds feeds Step 4's notes.
+Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain — budget rules in `core/fit_check.md`); whatever it finds feeds Step 4's notes.
 
 ## Step 3 — ATS keyword check (before writing anything)
 
@@ -45,17 +45,17 @@ Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against
 
 ## Step 4 — Company research
 
-Start from what the fit gate already found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (what the company does, size, recent news, product, tone), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`; the cover letter must reference something real from this.
+Start from what the fit gate found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (company, size, recent news, product, tone), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`; the cover letter must reference something real from this.
 
 ## Step 5 — Select knowledge
 
 Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Never pass the whole KB — targeted context makes tailoring sharp.
 
-If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies — and leave it out (so no link appears) when none does.
+If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies; leave it out when none does.
 
 `knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to the writer agents; their claims come from verified KB entries only.
 
-**With exemplar documents** (`master_cv.md` / `cover_frame.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md --document cover_frame.md`. For each document that checks VERIFIED, the selection above is **replaced, not supplemented**: `cv-tailor` gets `constraints.md` plus only the files backing planned edits, named from the `## Fit` block — often none, since the master already encodes the roles; `cover-letter-writer` gets `profile.md`, `goals.md`, and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies to both. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED document is used as a source like any other draft: full judgment, the full Step-5 selection, and flag it for re-verification.
+**With exemplar documents** (`master_cv.md` / `cover_frame.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md --document cover_frame.md`. For each document that checks VERIFIED, the selection above is **replaced, not supplemented**: `cv-tailor` gets `constraints.md` plus only the files backing planned edits, named from the `## Fit` block — often none, since the master already encodes the roles; `cover-letter-writer` gets `profile.md`, `goals.md`, and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies to both. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED document is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification.
 
 ## Step 6 — Dispatch the writers (parallel)
 
@@ -72,14 +72,14 @@ Then launch **`application-verifier`** with the same inputs plus both documents 
 - Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
 - Re-verify rounds **continue the same verifier** (SendMessage: which files changed and how) — it re-reads only the changed files but re-runs every check on the whole package. For either agent, launch fresh only if the continuation fails or the KB selection changed.
 - On CLEAN, run `scripts/claim_ledger.py record` (same arguments) — verified claims skip re-judgment in the next application.
-- Never present documents to the user while BLOCKER or MAJOR findings are open. MINOR findings may be presented as a short list alongside the documents if the user is in a hurry — their call.
+- Never present documents while BLOCKER or MAJOR findings are open. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
 
 ## Step 8 — Present and close
 
-Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how they were handled, verifier result (including the override INFO line if any). Then:
+Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how handled, verifier result (including the override INFO line if any). Then:
 
 - Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 2 gate, a dated `--next-action` (default two weeks out), and an override note in `--notes` if the user went against the verdict.
-- Offer rendering **only if the user wants a file format** — options and market caveats in `standards/rendering.md`. Markdown is the deliverable by default.
+- Offer rendering **only if the user wants a file format** — options and caveats in `standards/rendering.md`. Markdown is the deliverable by default.
 
 ---
 
