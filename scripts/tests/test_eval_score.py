@@ -146,6 +146,49 @@ class TestBundleReaders(TmpMixin):
 
 
 # --------------------------------------------------------------------------
+# Machine Summary consumption: block supplies the verdict; claims stay
+# independently verified, with a consistency cross-check on the self-report.
+# --------------------------------------------------------------------------
+class TestSummaryConsumption(TmpMixin):
+    def _bundle(self, block_verdict="CLEAN", block_total=2):
+        self.write("knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
+        self.write("cv_trace.md", '- "wrote Python" → skills.md#languages\n')      # 1
+        self.write("cover_trace.md", '- "Python focus" → skills.md#languages\n')   # 1  -> n_lines=2
+        self.write("verdict.txt", "CLEAN\n")                                       # fallback source
+        self.write("report.md",
+                   "# R\n\n## Machine Summary\n\n"
+                   f"    verdict: {block_verdict}\n"
+                   f"    claims_traced: {block_total}\n    claims_total: {block_total}\n")
+        return self.root
+
+    def ref(self):
+        return dict(REF, claims_expected=2)
+
+    def test_block_verdict_overrides_verdict_txt(self):
+        # verdict.txt says CLEAN but the block says FINDINGS -> block wins -> fail
+        card = eval_score.score_bundle(self._bundle(block_verdict="FINDINGS"), self.ref())
+        self.assertFalse(next(s for s in card.signals if s.name == "verdict").passed)
+
+    def test_consistency_flags_self_report_mismatch(self):
+        # block claims 5 total, but only 2 trace lines exist independently
+        card = eval_score.score_bundle(self._bundle(block_total=5), self.ref())
+        sig = next(s for s in card.signals if s.name == "summary_consistency")
+        self.assertFalse(sig.passed)
+        self.assertFalse(card.ok)
+
+    def test_consistent_block_passes(self):
+        self.assertTrue(eval_score.score_bundle(self._bundle(block_total=2), self.ref()).ok)
+
+    def test_no_report_falls_back_and_adds_no_consistency_signal(self):
+        self.write("knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
+        self.write("cv_trace.md", '- "x" → skills.md#languages\n')
+        self.write("verdict.txt", "CLEAN\n")
+        card = eval_score.score_bundle(self.root, dict(REF, claims_expected=1))
+        self.assertTrue(next(s for s in card.signals if s.name == "verdict").passed)
+        self.assertFalse(any(s.name == "summary_consistency" for s in card.signals))
+
+
+# --------------------------------------------------------------------------
 # load_reference + main
 # --------------------------------------------------------------------------
 class TestMain(TmpMixin):

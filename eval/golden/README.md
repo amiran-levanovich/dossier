@@ -14,9 +14,16 @@ eval/golden/<case>/
     ├── cv_trace.md
     ├── cover_trace.md
     ├── knowledge/     # the KB slice the run used
-    ├── verdict.txt    # line 1: CLEAN or FINDINGS (the verifier's final call)
+    ├── report.md      # the application report; its `## Machine Summary` block
+    │                  # supplies the verdict and is cross-checked on claim count
+    ├── verdict.txt    # fallback verdict source when report.md has no block
     └── session.jsonl  # optional transcript -> cost-metric scoring
 ```
+
+The verdict is read from `report.md`'s `## Machine Summary` block when present
+(falling back to `verdict.txt`). Claim counts are always verified independently
+from the trace files; the block's self-reported count is cross-checked against
+them, so a run whose report disagrees with its own traces fails.
 
 `reference.json` fields:
 
