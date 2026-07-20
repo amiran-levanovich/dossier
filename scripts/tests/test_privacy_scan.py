@@ -8,6 +8,9 @@ each detector is specified by the strings it MUST flag and the legitimate
 dossier-doc strings it MUST NOT (the false-positive traps found by calibrating
 against the real repo — token counts like "60k tokens", ISO dates, and
 call-count ranges like "16-18").
+
+pii-ok-file: this file holds PII-shaped fixtures by design; privacy_scan skips
+it whole so it doesn't flag its own test literals.
 """
 
 import io
@@ -188,6 +191,11 @@ class TestScanPaths(TmpMixin):
         self.assertEqual(len(results), 1)
         path, finding = results[0]
         self.assertEqual(finding.category, "email")
+
+    def test_honors_file_level_optout(self):
+        # A file that is PII-shaped fixtures by design opts the whole file out.
+        self.write("fixtures.md", "pii-ok-file: fixtures by design\nreal amiran@gmail.com\n")
+        self.assertEqual(privacy_scan.scan_paths([self.root / "fixtures.md"], denylist=[]), [])
 
     def test_skips_binary(self):
         p = self.root / "blob.bin"

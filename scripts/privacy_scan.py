@@ -27,7 +27,10 @@ Modes:
 A line carrying the marker `pii-ok` (e.g. an HTML comment
 `<!-- pii-ok: reason -->`) is exempt — the escape hatch for a genuinely generic
 illustrative example in a method doc, e.g. a salary-format range. It is
-line-scoped and greppable, so every suppression stays auditable.
+line-scoped and greppable, so every suppression stays auditable. A file
+containing `pii-ok-file` anywhere is skipped whole — reserved for files that
+are PII-shaped fixtures by nature (this scanner's own tests), never for real
+docs.
 
 Findings are printed to stderr as `path:line: category: <masked>` — the match
 is masked so the scanner never echoes full PII into a log. `--json` prints the
@@ -68,6 +71,9 @@ _PHONE_RE = re.compile(r"\+\d{1,3}(?:[\s./-]?\(?\d{2,4}\)?){3,5}")
 # A line with this marker opts out (like '# noqa'): the escape hatch for a
 # generic illustrative example. Line-scoped and greppable for audit.
 _SUPPRESS_RE = re.compile(r"pii-ok", re.IGNORECASE)
+# A file containing this marker is skipped whole — only for files that are
+# PII-shaped fixtures by nature (this scanner's own tests).
+_SUPPRESS_FILE_RE = re.compile(r"pii-ok-file", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -191,6 +197,8 @@ def scan_paths(paths, denylist: list[str]) -> list[tuple[Path, Finding]]:
         if is_binary(data):
             continue
         text = data.decode("utf-8", errors="replace")
+        if _SUPPRESS_FILE_RE.search(text):
+            continue
         for finding in scan_text(text, denylist):
             results.append((p, finding))
     return results
