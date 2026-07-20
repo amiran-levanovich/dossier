@@ -38,7 +38,7 @@ The intake interview records the user's degree situation and title rules in `kno
 
 ## Salary conventions
 
-Annual gross (*Brutto/Jahr*) in Germany and Austria; state a range, never a point ("62.000–68.000 € brutto/Jahr"), anchored at the top of the user's target from `goals.md`. Only include it when asked for; volunteering it in the Anschreiben unprompted is a mild negative signal.
+Annual gross (*Brutto/Jahr*) in Germany and Austria; state a range, never a point ("62.000–68.000 € brutto/Jahr"), anchored at the top of the user's target from `goals.md`. Only include it when asked for; volunteering it in the Anschreiben unprompted is a mild negative signal. <!-- pii-ok: illustrative salary-format example, not personal data -->
 
 ## Contract clause taxonomy — for the offer stage
 
