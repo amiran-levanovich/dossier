@@ -6,15 +6,22 @@ plugin's defense against cost creep, but they were a *manual* routine a human
 runs — or forgets. This script makes the deterministic parts a tested,
 stdlib-only gate so a regression fails loud instead of shipping.
 
-Checks in this version (the two with zero false positives):
+Checks:
   C1  no `.claude/agents/*.md` sets `model: inherit` — a model-tier leak runs
       mechanical work on a frontier model (TOKEN_ECONOMY.md §1 C1, v2.2.0).
+  C3  every skill/core doc that mentions WebSearch/WebFetch carries a numeric
+      search budget somewhere in the file (v2.2.0 unbudgeted-search incident).
+  C4  every agent/core doc with fix/verify-loop language names continuation
+      (SendMessage / "continue") somewhere (v2.1.0 respawn incident).
   C7  each budgeted doc is at or under its word budget. The budgets are parsed
       FROM the §5 table in TOKEN_ECONOMY.md, so the doc stays the single source
       of truth and the script can never drift from it.
 
-Deferred (need proximity heuristics; a later release): C3 (WebSearch/WebFetch
-mentions carry a numeric budget) and C4 (loop instructions name continuation).
+C3/C4 are file-level presence checks (line-level proximity is too false-positive
+prone: many mentions are descriptive). They catch the whole-doc regression — a
+search/loop doc with no budget/continuation anywhere — not per-line rigor, which
+stays a human/verifier concern. An overview that intentionally defers detail to
+another doc opts out with a file-level `audit-ok: <CHECK>` marker (greppable).
 
 Usage:
   release_audit.py            human report, exit 1 if any violation
@@ -35,11 +42,33 @@ from pathlib import Path
 
 TOKEN_ECONOMY = "TOKEN_ECONOMY.md"
 AGENTS_GLOB = ".claude/agents/*.md"
+SKILLS_GLOB = ".claude/skills/*/SKILL.md"
+CORE_GLOB = "job_docs/core/*.md"
 
 _BACKTICKED = re.compile(r"`([^`]+)`")
 _MODEL_INHERIT = re.compile(r"^\s*model:\s*inherit\s*$", re.MULTILINE)
 _SECTION5 = re.compile(r"^##\s*5\b")
 _NEXT_SECTION = re.compile(r"^##\s")
+
+# C3: a web-tool mention, and a numeric budget nearby. "Nearby" = a count within
+# ~25 chars of a budget word (quer/max/default), either order — matches "2
+# queries default", "5 max", and "2 WebSearch queries by default" (where the
+# number and "queries" are split by "WebSearch"). Budget words are kept to the
+# real budget vocabulary so a bare "WebSearch" mention never self-satisfies.
+_WEB_MENTION = re.compile(r"WebSearch|WebFetch")
+_WEB_BUDGET = re.compile(
+    r"\d+[^\n]{0,25}?(?:quer|max|default)|(?:quer|max|default)[^\n]{0,25}?\d+",
+    re.IGNORECASE,
+)
+
+# C4: fix/verify-loop language, and a continuation cue.
+_LOOP_TRIGGER = re.compile(r"re-verify|fix round|relaunch|respawn", re.IGNORECASE)
+_CONTINUATION = re.compile(r"SendMessage|continu", re.IGNORECASE)
+
+
+def _audit_ok(text: str, check: str) -> bool:
+    """A file opts out of one check with a greppable `audit-ok: <CHECK>` marker."""
+    return re.search(rf"audit-ok:[^\n]*\b{check}\b", text) is not None
 
 
 @dataclass(frozen=True)
@@ -109,11 +138,54 @@ def check_doc_weights(budgets: list[tuple[str, int]], root: Path) -> list[Violat
     return violations
 
 
+def check_web_budget(root: Path) -> list[Violation]:
+    """C3: a doc that mentions a web tool must carry a numeric budget somewhere."""
+    root = Path(root)
+    violations = []
+    seen = set()
+    for glob in (SKILLS_GLOB, CORE_GLOB):
+        for path in sorted(root.glob(glob)):
+            if path in seen:
+                continue
+            seen.add(path)
+            text = path.read_text(encoding="utf-8")
+            if not _WEB_MENTION.search(text) or _audit_ok(text, "C3"):
+                continue
+            if not _WEB_BUDGET.search(text):
+                rel = path.relative_to(root).as_posix()
+                violations.append(Violation("C3", rel, "mentions WebSearch/WebFetch but states no numeric budget (or add an `audit-ok: C3` marker if it defers)"))
+    return violations
+
+
+def check_loop_continuation(root: Path) -> list[Violation]:
+    """C4: a doc with fix/verify-loop language must name continuation somewhere."""
+    root = Path(root)
+    violations = []
+    seen = set()
+    for glob in (AGENTS_GLOB, CORE_GLOB):
+        for path in sorted(root.glob(glob)):
+            if path in seen:
+                continue
+            seen.add(path)
+            text = path.read_text(encoding="utf-8")
+            if not _LOOP_TRIGGER.search(text) or _audit_ok(text, "C4"):
+                continue
+            if not _CONTINUATION.search(text):
+                rel = path.relative_to(root).as_posix()
+                violations.append(Violation("C4", rel, "has fix/verify-loop language but never names continuation (SendMessage/continue) — or add an `audit-ok: C4` marker if it defers"))
+    return violations
+
+
 def run_audit(root: Path) -> list[Violation]:
     root = Path(root)
     te = root / TOKEN_ECONOMY
     budgets = parse_budgets(te.read_text(encoding="utf-8")) if te.is_file() else []
-    return check_model_inherit(root) + check_doc_weights(budgets, root)
+    return (
+        check_model_inherit(root)
+        + check_web_budget(root)
+        + check_loop_continuation(root)
+        + check_doc_weights(budgets, root)
+    )
 
 
 def main(argv=None) -> int:

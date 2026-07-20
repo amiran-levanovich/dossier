@@ -105,6 +105,61 @@ class TestModelInherit(TmpMixin):
 
 
 # --------------------------------------------------------------------------
+# C3 — WebSearch/WebFetch mentions carry a numeric budget (file-level)
+# --------------------------------------------------------------------------
+class TestWebBudget(TmpMixin):
+    def test_flags_search_without_budget(self):
+        self.write("job_docs/core/x.md", "Use WebSearch to research the company.")
+        v = release_audit.check_web_budget(self.root)
+        self.assertEqual([x.check for x in v], ["C3"])
+
+    def test_clean_with_budget_in_file(self):
+        self.write("job_docs/core/x.md", "Use WebSearch (2 queries default, 5 max).")
+        self.assertEqual(release_audit.check_web_budget(self.root), [])
+
+    def test_checks_skill_files_too(self):
+        self.write(".claude/skills/job-apply/SKILL.md", "Capture with WebFetch, no budget here.")
+        self.assertEqual(len(release_audit.check_web_budget(self.root)), 1)
+
+    def test_no_mention_is_clean(self):
+        self.write("job_docs/core/x.md", "No web tools referenced at all.")
+        self.assertEqual(release_audit.check_web_budget(self.root), [])
+
+    def test_audit_ok_marker_skips_c3(self):
+        self.write("job_docs/core/x.md",
+                   "Every company gets a quick WebSearch.\n<!-- audit-ok: C3 — overview -->")
+        self.assertEqual(release_audit.check_web_budget(self.root), [])
+
+
+# --------------------------------------------------------------------------
+# C4 — loop instructions name continuation as the default (file-level)
+# --------------------------------------------------------------------------
+class TestLoopContinuation(TmpMixin):
+    def test_flags_loop_without_continuation(self):
+        self.write(".claude/agents/v.md", "You loop fix then re-verify until CLEAN.")
+        v = release_audit.check_loop_continuation(self.root)
+        self.assertEqual([x.check for x in v], ["C4"])
+
+    def test_clean_when_continuation_named(self):
+        self.write(".claude/agents/v.md",
+                   "Loop fix then re-verify; continue the same verifier via SendMessage.")
+        self.assertEqual(release_audit.check_loop_continuation(self.root), [])
+
+    def test_checks_core_files_too(self):
+        self.write("job_docs/core/x.md", "The fix round repeats; relaunch each time.")
+        self.assertEqual(len(release_audit.check_loop_continuation(self.root)), 1)
+
+    def test_no_trigger_is_clean(self):
+        self.write(".claude/agents/v.md", "This agent has no loop language.")
+        self.assertEqual(release_audit.check_loop_continuation(self.root), [])
+
+    def test_audit_ok_marker_skips_c4(self):
+        self.write("job_docs/core/x.md",
+                   "the fix -> re-verify loop runs until CLEAN.\n<!-- audit-ok: C4 — kernel -->")
+        self.assertEqual(release_audit.check_loop_continuation(self.root), [])
+
+
+# --------------------------------------------------------------------------
 # C7 — doc weight budgets
 # --------------------------------------------------------------------------
 class TestDocWeights(TmpMixin):
