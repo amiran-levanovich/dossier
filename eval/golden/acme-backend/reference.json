@@ -1,0 +1,11 @@
+{
+  "expected_verdict": "CLEAN",
+  "claims_expected": 3,
+  "claims_tolerance": 1,
+  "traced_fraction_min": 1.0,
+  "metric_ceilings": {
+    "web_fetch": 2,
+    "web_search": 5,
+    "subagent_spawns": 8
+  }
+}
