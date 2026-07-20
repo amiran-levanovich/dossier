@@ -1,0 +1,4 @@
+CLEAN
+Recorded reference run. The application-verifier returned CLEAN with every claim
+traced. Replace this bundle's contents with a fresh live run to score against the
+reference; keep the first line as the verdict (CLEAN or FINDINGS).
