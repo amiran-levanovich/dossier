@@ -103,3 +103,28 @@ After the numbers, read `knowledge/lessons.md` (it is small — no recipe needed
 ## Step 3 — Diagnose and act
 
 Same contract as the post-mortem: one paragraph — the dominant pattern, the evidence, **one specific strategy adjustment** — stated plainly; a comforting wrong diagnosis costs future applications. Then apply it where it belongs: targeting changes in `goals.md`, missing-but-true keywords into the KB, prep focus for the next interview. The report itself is presented in chat and not saved — the learning, not the report, carries forward.
+
+## The Machine Summary block (per-report artifact)
+
+Each application report may end with a `## Machine Summary` block: the run's key
+signals in flat, machine-readable `key: value` form, so this analysis (and the
+eval layer, and a future baseline remeasure) reads structured data instead of
+re-parsing prose. It is optional — a report without one is fine — but a present
+block must be well-formed. Validate with `scripts/machine_summary.py <report.md>
+--check`; parse for aggregation with `--json`.
+
+```
+## Machine Summary
+
+    verdict: CLEAN            # CLEAN | FINDINGS (the verifier's final call)
+    verify_rounds: 1          # rounds the verifier ran
+    claims_traced: 3          # claim-bearing lines with a resolving trace
+    claims_total: 3           # claim-bearing lines total (traced <= total)
+    ats_covered: 4            # ATS keywords COVERED / UNVERIFIED / GAP
+    ats_unverified: 1
+    ats_gap: 1
+    ledger_preverified: 0     # claims skipped via the claim ledger
+```
+
+Fields are non-negative integers except `verdict`. Add fields as new signals
+appear; keep the names stable so aggregation across reports stays simple.

@@ -18,7 +18,11 @@ run); SCORING a bundle does not — so a recorded bundle replays for $0 and keep
 the scorer itself CI-testable. See eval/golden/README.md for the workflow.
 
 A run bundle is a directory holding: cv_trace.md, cover_trace.md, knowledge/,
-verdict.txt (first line CLEAN or FINDINGS), and optionally session.jsonl.
+and optionally session.jsonl. The verdict comes from report.md's `## Machine
+Summary` block when present (falling back to a verdict.txt whose first line is
+CLEAN or FINDINGS); if that block also self-reports a claim count, it is
+cross-checked against the independent trace count as an extra gate. Claims are
+always counted independently — the self-report is never trusted for them.
 
 Usage:
   eval_score.py --case <id>                 score the case's recorded bundle
@@ -36,6 +40,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import machine_summary
 import session_metrics
 import trace_check
 
@@ -132,12 +137,36 @@ def score(reference: dict, verdict: str, n_ok: int, n_lines: int, metrics: dict)
     return card
 
 
+def load_summary(bundle_dir):
+    """The run's `## Machine Summary` block from report.md, or None."""
+    report = Path(bundle_dir) / "report.md"
+    if not report.is_file():
+        return None
+    return machine_summary.parse(report.read_text(encoding="utf-8"))
+
+
 def score_bundle(bundle_dir, reference: dict) -> Scorecard:
     bundle_dir = Path(bundle_dir)
-    verdict = read_verdict(bundle_dir)
+    summary = load_summary(bundle_dir)
+
+    # The verdict is the verifier's judgment — not something this scorer can
+    # recompute — so take it from the structured Machine Summary block when the
+    # run recorded one, falling back to verdict.txt. Claims stay INDEPENDENTLY
+    # counted below; the block's self-report is never trusted for those.
+    verdict = (summary.get("verdict", "").upper() if summary else "") or read_verdict(bundle_dir)
     n_ok, n_lines, _ = traced_fraction(bundle_dir)
     metrics = compute_metrics(bundle_dir / "session.jsonl")
-    return score(reference, verdict, n_ok, n_lines, metrics)
+
+    card = score(reference, verdict, n_ok, n_lines, metrics)
+
+    # Cross-check: if the run self-reported a claim count, it must match the
+    # independent trace count. Consuming the block makes the eval stronger — a
+    # run whose self-report disagrees with reality fails here.
+    if summary and isinstance(summary.get("claims_total"), int):
+        card.signals.append(Signal(
+            "summary_consistency", "gate", summary["claims_total"],
+            f"== {n_lines} (independent count)", summary["claims_total"] == n_lines))
+    return card
 
 
 def load_reference(path) -> dict:
