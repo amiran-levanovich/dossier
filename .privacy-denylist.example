@@ -1,0 +1,21 @@
+# .privacy-denylist.example — template for privacy_scan.py's denylist.
+#
+# Copy this file to `.privacy-denylist` (which is git-ignored) and list the
+# candidate-specific proper nouns that must never appear in the dossier repo's
+# system-layer docs: real name, past/present employers, product/vendor names.
+# One term per line. Blank lines and '#' comments are ignored. Matching is
+# whole-token and case-insensitive, so "Straiv" flags "STRAIV" but not
+# "Straivision".
+#
+# The real .privacy-denylist stays local and untracked, so the names it holds
+# never enter git history — only this placeholder example is committed.
+
+# Real name (as it must not leak into method docs)
+# Firstname Lastname
+
+# Employers / clients
+# Acme GmbH
+# Straiv
+
+# Products / internal codenames
+# ProjectFalcon

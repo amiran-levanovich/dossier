@@ -1,0 +1,30 @@
+name: CI
+
+# PR gate for the dossier plugin repo. This is a reporter, not a git hook and
+# not a fixer agent (both are forbidden by CLAUDE.md) — it runs the same
+# verification CLAUDE.md already blesses, just automatically on every PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Unit tests (stdlib unittest)
+        run: python3 -m unittest discover -s scripts/tests
+
+      - name: Personal-data boundary scan
+        run: python3 scripts/privacy_scan.py
+
+      - name: Validate plugin manifests
+        run: |
+          python3 -c "import json,sys; json.load(open('.claude-plugin/marketplace.json')); json.load(open('.claude-plugin/plugin.json')); print('manifests OK')"

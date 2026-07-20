@@ -9,3 +9,7 @@ REVIEW-TODO.md
 # Python bytecode from the pipeline scripts
 __pycache__/
 *.pyc
+
+# Local PII denylist for privacy_scan.py (holds the user's real name/employers;
+# must never be committed). Copy .privacy-denylist.example to create it.
+.privacy-denylist
