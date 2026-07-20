@@ -1,0 +1,3 @@
+- "wrote Python services" → skills.md#languages
+- "led a platform migration" → skills.md#nonexistent-heading
+- "shipped a feature" → roles/missing-file.md#achievements

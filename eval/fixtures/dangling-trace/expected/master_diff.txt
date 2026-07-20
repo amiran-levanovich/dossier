@@ -1,0 +1,5 @@
+exit 0
+MASTER-DIFF cv.md vs master_cv.md
+  lines: 1   verbatim: 1   changed: 0
+
+RESULT: 1/1 verbatim — pure subtract/reorder of the master

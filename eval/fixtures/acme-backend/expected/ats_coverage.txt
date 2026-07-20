@@ -1,0 +1,9 @@
+exit 0
+ATS-COVERAGE  jd=jd.md  kb=knowledge
+  keywords: 6   covered: 4   unverified: 1   gap: 1
+  [COVERED]    Ruby — profile.md, skills.md
+  [COVERED]    Rails — profile.md, roles/acme.md
+  [COVERED]    PostgreSQL — skills.md
+  [COVERED]    Redis — skills.md
+  [UNVERIFIED] Go — skills.md  (only on [unverified] lines — verify or drop)
+  [GAP]        Kubernetes — not found in KB (mini-interview, or real gap → jd.md ## Fit)

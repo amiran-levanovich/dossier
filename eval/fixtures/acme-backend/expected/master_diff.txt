@@ -1,0 +1,6 @@
+exit 0
+MASTER-DIFF cv.md vs master_cv.md
+  lines: 2   verbatim: 1   changed: 1
+  [CHANGED] line 7: PostgreSQL, Redis, Ruby. — closest master line: "PostgreSQL, Redis, Ruby, Python."
+
+RESULT: 1/2 verbatim — the verifier judges the 1 changed line(s)
