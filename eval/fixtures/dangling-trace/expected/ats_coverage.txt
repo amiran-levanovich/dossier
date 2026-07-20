@@ -1,0 +1,4 @@
+exit 0
+ATS-COVERAGE  jd=jd.md  kb=knowledge
+  keywords: 1   covered: 1   unverified: 0   gap: 0
+  [COVERED]    Python — skills.md

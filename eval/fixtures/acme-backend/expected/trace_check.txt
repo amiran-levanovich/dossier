@@ -1,0 +1,7 @@
+exit 0
+TRACE-CHECK cv_trace.md
+  lines: 2   ok: 2   problems: 0
+TRACE-CHECK cover_trace.md
+  lines: 1   ok: 1   problems: 0
+
+RESULT: PASS — every trace target resolves to a real file and anchor

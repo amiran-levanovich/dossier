@@ -1,0 +1,9 @@
+exit 1
+TRACE-CHECK cv_trace.md
+  lines: 3   ok: 1   problems: 2
+  [ANCHOR] line 2: "led a platform migration" — no heading in skills.md slugs to #nonexistent-heading
+  [FILE] line 3: "shipped a feature" — source file not found: roles/missing-file.md
+TRACE-CHECK cover_trace.md
+  lines: 1   ok: 1   problems: 0
+
+RESULT: FAIL — 2 unresolved trace target(s)
