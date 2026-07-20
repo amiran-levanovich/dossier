@@ -25,6 +25,9 @@ jobs:
       - name: Personal-data boundary scan
         run: python3 scripts/privacy_scan.py
 
+      - name: Release audit (TOKEN_ECONOMY.md §5/§6)
+        run: python3 scripts/release_audit.py
+
       - name: Validate plugin manifests
         run: |
           python3 -c "import json,sys; json.load(open('.claude-plugin/marketplace.json')); json.load(open('.claude-plugin/plugin.json')); print('manifests OK')"
