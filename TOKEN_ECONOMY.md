@@ -113,6 +113,11 @@ These files are loaded on every application run (directly or by an agent). Keep 
 or under budget; `scripts/release_audit.py` enforces this table and parses it *from this
 file*, so the doc is the single source of truth and the script can never drift from it.
 
+A row whose budget cell is anything but a bare number fails the audit loudly rather than
+being skipped, and so does a missing copy of this file. C1–C4 read the repo and cannot
+silently vanish; C7 reads a parsed table, so every way the table can go wrong is a way the
+check would otherwise disappear at exit 0.
+
 | File | Budget (tokens) |
 |---|---|
 | `.claude/skills/*/SKILL.md` (each — thin routers) | 1,150 |
@@ -168,7 +173,7 @@ no script can stand in for. Read the numbers, don't just watch for green.
      from the §5 table itself so doc and script cannot drift.
 
    A doc that deliberately defers the detail elsewhere opts out per check with a
-   file-level `<!-- audit-ok: C2 C3 C4 — why -->` marker.
+   file-level `<!-- audit-ok: C2 C3 C4 C7 — why -->` marker.
 2. `python3 scripts/privacy_scan.py` → exit 0. The §3.4 personal-data boundary.
 3. `python3 scripts/eval_run.py` → Tier-1 golden fixtures match their blessed snapshots.
 4. One live smoke run (a real or synthetic posting): score it with

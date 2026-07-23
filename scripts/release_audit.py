@@ -55,6 +55,7 @@ SKILLS_GLOB = ".claude/skills/*/SKILL.md"
 CORE_GLOB = "job_docs/core/*.md"
 
 _BACKTICKED = re.compile(r"`([^`]+)`")
+_BUDGET_CELL = re.compile(r"^\d{1,3}(?:[,\s]\d{3})*$|^\d+$")
 _TOKEN_PIECE = re.compile(r"[A-Za-z]+(?:'[A-Za-z]+)?|\d{1,3}|\s+|[^\sA-Za-z\d]")
 _MODEL_INHERIT = re.compile(r"^\s*model:\s*inherit\s*$", re.MULTILINE)
 _SECTION5 = re.compile(r"^##\s*5\b")
@@ -159,11 +160,60 @@ def parse_budgets(token_economy_text: str) -> list[tuple[str, int]]:
         if not m:
             continue  # header, separator, or a non-path row
         glob = m.group(1)
-        digits = re.sub(r"[^\d]", "", cells[-1])
-        if not digits:
-            continue
-        budgets.append((glob, int(digits)))
+        budget = _parse_budget_cell(cells[-1])
+        if budget is None:
+            continue  # malformed — check_budget_table reports it loudly
+        budgets.append((glob, budget))
     return budgets
+
+
+def _parse_budget_cell(cell: str) -> int | None:
+    """A budget cell is a bare number, thousands separators allowed.
+
+    Strict on purpose. Stripping non-digits would read "1,400 (was 500)" as
+    1400500 — a row that looks fine and silently can never fail.
+    """
+    if not _BUDGET_CELL.match(cell.strip()):
+        return None
+    return int(re.sub(r"[,\s]", "", cell))
+
+
+def budget_table_problems(token_economy_text: str) -> list[str]:
+    """§5 rows that name a path but whose budget cell will not parse."""
+    problems = []
+    in_section = False
+    for line in token_economy_text.splitlines():
+        if _SECTION5.match(line):
+            in_section = True
+            continue
+        if in_section and _NEXT_SECTION.match(line):
+            break
+        if not in_section or not line.lstrip().startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        m = _BACKTICKED.search(cells[0])
+        if m and _parse_budget_cell(cells[-1]) is None:
+            problems.append(f"`{m.group(1)}` has an unparseable budget cell {cells[-1]!r}")
+    return problems
+
+
+def check_budget_table(root: Path) -> list[Violation]:
+    """C7's input must fail loudly.
+
+    C1-C4 read the repo, so they cannot silently vanish. C7 reads a parsed
+    table, so a missing file or a malformed row would otherwise disable the
+    check while the audit still exits 0.
+    """
+    root = Path(root)
+    te = root / TOKEN_ECONOMY
+    if not te.is_file():
+        return [Violation("C7", TOKEN_ECONOMY,
+                          "budget source is missing — C7 cannot run (restore the file, "
+                          "or drop C7 from the §6 checklist)")]
+    return [Violation("C7", TOKEN_ECONOMY, p)
+            for p in budget_table_problems(te.read_text(encoding="utf-8"))]
 
 
 def check_model_inherit(root: Path) -> list[Violation]:
@@ -182,10 +232,13 @@ def check_doc_weights(budgets: list[tuple[str, int]], root: Path) -> list[Violat
         for path in sorted(root.glob(glob)):
             if not path.is_file():
                 continue
-            count = estimate_tokens(path.read_text(encoding="utf-8"))
+            text = path.read_text(encoding="utf-8")
+            if _audit_ok(text, "C7"):
+                continue
+            count = estimate_tokens(text)
             if count > budget:
                 rel = path.relative_to(root).as_posix()
-                violations.append(Violation("C7", rel, f"{count} tokens > budget {budget} (over by {count - budget})"))
+                violations.append(Violation("C7", rel, f"{count} tokens > budget {budget} (over by {count - budget}) — cut substance, or add an `audit-ok: C7` marker with the reason"))
     return violations
 
 
@@ -279,6 +332,7 @@ def run_audit(root: Path) -> list[Violation]:
         + check_batch_discipline(root)
         + check_web_budget(root)
         + check_loop_continuation(root)
+        + check_budget_table(root)
         + check_doc_weights(budgets, root)
     )
 
