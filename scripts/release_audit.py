@@ -18,7 +18,10 @@ Checks:
       (SendMessage / "continue") somewhere (v2.1.0 respawn incident).
   C7  each budgeted doc is at or under its token budget. The budgets are parsed
       FROM the §5 table in TOKEN_ECONOMY.md, so the doc stays the single source
-      of truth and the script can never drift from it.
+      of truth and the script can never drift from it. A missing or malformed
+      table is itself a C7 violation: C1-C4 read the repo and cannot silently
+      vanish, but C7's input is parsed, so every way it can go wrong is a way
+      the check would otherwise disappear at exit 0.
 
 C3/C4 are file-level presence checks (line-level proximity is too false-positive
 prone: many mentions are descriptive). They catch the whole-doc regression — a
