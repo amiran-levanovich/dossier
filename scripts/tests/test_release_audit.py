@@ -2,9 +2,11 @@
 """Tests for release_audit.py — the enforced version of TOKEN_ECONOMY.md's
 release checklist. Run: python3 -m unittest discover scripts/tests
 
-Stdlib only. These tests are the contract. This release covers the two
-deterministic, zero-false-positive checks:
+Stdlib only. These tests are the contract. They cover every check in the gate:
   C1  no agent runs on `model: inherit`
+  C2  a per-item read instruction carries a batch discipline and a call budget
+  C3  a doc mentioning WebSearch/WebFetch carries a numeric budget
+  C4  a doc with loop language names continuation
   C7  each budgeted doc is at or under its §5 word budget
 The §5 budgets are parsed FROM TOKEN_ECONOMY.md so the doc stays the single
 source of truth (the script never hard-codes a number).
@@ -102,6 +104,72 @@ class TestModelInherit(TmpMixin):
 
     def test_no_agents_dir_is_clean(self):
         self.assertEqual(release_audit.check_model_inherit(self.root), [])
+
+
+# --------------------------------------------------------------------------
+# C2 — per-item read instructions carry batch discipline + a call budget
+#
+# Trigger is line-level (a quantifier and a read tool colliding on one line);
+# mitigation is file-level. Both halves are required, because the v2.2.0 and
+# v2.4.0 incidents each needed both fixes.
+# --------------------------------------------------------------------------
+class TestBatchDiscipline(TmpMixin):
+    BARE = "Read the KB file for every claim in the trace map."
+
+    def test_flags_per_item_read_with_no_mitigation(self):
+        self.write(".claude/agents/v.md", self.BARE)
+        v = release_audit.check_batch_discipline(self.root)
+        self.assertEqual([x.check for x in v], ["C2"])
+        self.assertIn("batch discipline", v[0].message)
+        self.assertIn("call budget", v[0].message)
+
+    def test_clean_with_both_batch_and_budget(self):
+        self.write(".claude/agents/v.md",
+                   self.BARE + "\nOne batched read per file, 10-15 tool calls total.")
+        self.assertEqual(release_audit.check_batch_discipline(self.root), [])
+
+    def test_flags_batch_without_budget(self):
+        self.write(".claude/agents/v.md", self.BARE + "\nRead each file exactly once.")
+        v = release_audit.check_batch_discipline(self.root)
+        self.assertEqual(len(v), 1)
+        self.assertIn("call budget", v[0].message)
+        self.assertNotIn("batch discipline", v[0].message)
+
+    def test_flags_budget_without_batch(self):
+        self.write(".claude/agents/v.md", self.BARE + "\nStay under 12 calls.")
+        v = release_audit.check_batch_discipline(self.root)
+        self.assertEqual(len(v), 1)
+        self.assertIn("batch discipline", v[0].message)
+        self.assertNotIn("call budget", v[0].message)
+
+    def test_quantifier_and_tool_on_separate_lines_is_clean(self):
+        # The whole point of the line-level trigger: these co-occur innocently.
+        self.write(".claude/agents/v.md", "Read the posting.\nEvery application is tracked.")
+        self.assertEqual(release_audit.check_batch_discipline(self.root), [])
+
+    def test_tool_without_quantifier_is_clean(self):
+        self.write(".claude/agents/v.md", "Read the posting once.")
+        self.assertEqual(release_audit.check_batch_discipline(self.root), [])
+
+    def test_demonstratives_do_not_trigger(self):
+        # "per that doc" quantifies a reference, not a loop over items.
+        self.write(".claude/agents/v.md", "Read jd.md; the verdict is recorded per that doc.")
+        self.assertEqual(release_audit.check_batch_discipline(self.root), [])
+
+    def test_reports_line_numbers(self):
+        self.write(".claude/agents/v.md", "intro\n" + self.BARE)
+        v = release_audit.check_batch_discipline(self.root)
+        self.assertIn("line 2", v[0].message)
+
+    def test_checks_core_and_skill_files_too(self):
+        self.write("job_docs/core/x.md", self.BARE)
+        self.write(".claude/skills/job-apply/SKILL.md", self.BARE)
+        v = release_audit.check_batch_discipline(self.root)
+        self.assertEqual(len(v), 2)
+
+    def test_audit_ok_marker_skips_c2(self):
+        self.write("job_docs/core/x.md", self.BARE + "\n<!-- audit-ok: C2 — kernel -->")
+        self.assertEqual(release_audit.check_batch_discipline(self.root), [])
 
 
 # --------------------------------------------------------------------------
