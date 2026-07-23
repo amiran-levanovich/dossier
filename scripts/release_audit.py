@@ -9,6 +9,9 @@ stdlib-only gate so a regression fails loud instead of shipping.
 Checks:
   C1  no `.claude/agents/*.md` sets `model: inherit` — a model-tier leak runs
       mechanical work on a frontier model (TOKEN_ECONOMY.md §1 C1, v2.2.0).
+  C2  a per-item read instruction (a quantifier on the same line as a read tool)
+      is answered by a batch discipline AND a numeric call budget in the same
+      file (v2.2.0 Read/Grep-per-trace-line, v2.4.0 re-read-per-finding).
   C3  every skill/core doc that mentions WebSearch/WebFetch carries a numeric
       search budget somewhere in the file (v2.2.0 unbudgeted-search incident).
   C4  every agent/core doc with fix/verify-loop language names continuation
@@ -22,6 +25,12 @@ prone: many mentions are descriptive). They catch the whole-doc regression — a
 search/loop doc with no budget/continuation anywhere — not per-line rigor, which
 stays a human/verifier concern. An overview that intentionally defers detail to
 another doc opts out with a file-level `audit-ok: <CHECK>` marker (greppable).
+
+C2 splits the difference: its *trigger* is line-level because "every" and "Read"
+are ordinary words that co-occur innocently across a whole doc, and only their
+collision on one line reads as "one tool call per item". Its *mitigation* stays
+file-level like C3/C4, and it requires both halves of the §6 wording ("a batch
+discipline and call budget") because the two incidents needed both fixes.
 
 Usage:
   release_audit.py            human report, exit 1 if any violation
@@ -64,6 +73,23 @@ _WEB_BUDGET = re.compile(
 # C4: fix/verify-loop language, and a continuation cue.
 _LOOP_TRIGGER = re.compile(r"re-verify|fix round|relaunch|respawn", re.IGNORECASE)
 _CONTINUATION = re.compile(r"SendMessage|continu", re.IGNORECASE)
+
+# C2: a quantifier on the same line as a read tool = "one call per item".
+# Demonstratives are excluded because "per that doc" / "per this rule" quantify a
+# reference, not a loop over items.
+_C2_QUANT = re.compile(
+    r"\b(?:every|each|per\s+(?!the\b|that\b|this\b|these\b|those\b|our\b|its\b)\w+)\b",
+    re.IGNORECASE,
+)
+_C2_TOOL = re.compile(r"\b(?:Read|Grep|Glob|WebSearch|WebFetch)\b")
+_C2_BATCH = re.compile(
+    r"batch|one pass|single read|at once|in one call|exactly once|in-context",
+    re.IGNORECASE,
+)
+_C2_BUDGET = re.compile(
+    r"\d+[^\n]{0,20}?(?:calls?|quer)|(?:calls?|quer)[^\n]{0,20}?\d+|call budget",
+    re.IGNORECASE,
+)
 
 
 def _audit_ok(text: str, check: str) -> bool:
@@ -138,6 +164,49 @@ def check_doc_weights(budgets: list[tuple[str, int]], root: Path) -> list[Violat
     return violations
 
 
+def check_batch_discipline(root: Path) -> list[Violation]:
+    """C2: a per-item read instruction needs a batch discipline and a call budget.
+
+    Trigger is line-level (quantifier + read tool on one line); mitigation is
+    file-level, matching C3/C4. Reports the offending line numbers so the finding
+    is actionable rather than "somewhere in this file".
+    """
+    root = Path(root)
+    violations = []
+    seen = set()
+    for glob in (AGENTS_GLOB, CORE_GLOB, SKILLS_GLOB):
+        for path in sorted(root.glob(glob)):
+            if path in seen:
+                continue
+            seen.add(path)
+            text = path.read_text(encoding="utf-8")
+            if _audit_ok(text, "C2"):
+                continue
+            hits = [
+                n for n, line in enumerate(text.splitlines(), 1)
+                if _C2_QUANT.search(line) and _C2_TOOL.search(line)
+            ]
+            if not hits:
+                continue
+            missing = []
+            if not _C2_BATCH.search(text):
+                missing.append("batch discipline")
+            if not _C2_BUDGET.search(text):
+                missing.append("call budget")
+            if not missing:
+                continue
+            rel = path.relative_to(root).as_posix()
+            where = ", ".join(f"line {n}" for n in hits[:3])
+            if len(hits) > 3:
+                where += f" (+{len(hits) - 3} more)"
+            violations.append(Violation(
+                "C2", rel,
+                f"per-item tool instruction at {where} but the file states no "
+                f"{' or '.join(missing)} (or add an `audit-ok: C2` marker if it defers)",
+            ))
+    return violations
+
+
 def check_web_budget(root: Path) -> list[Violation]:
     """C3: a doc that mentions a web tool must carry a numeric budget somewhere."""
     root = Path(root)
@@ -182,6 +251,7 @@ def run_audit(root: Path) -> list[Violation]:
     budgets = parse_budgets(te.read_text(encoding="utf-8")) if te.is_file() else []
     return (
         check_model_inherit(root)
+        + check_batch_discipline(root)
         + check_web_budget(root)
         + check_loop_continuation(root)
         + check_doc_weights(budgets, root)

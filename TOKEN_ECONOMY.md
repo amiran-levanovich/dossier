@@ -126,17 +126,26 @@ per-run taxes and get no hard budget — but the same restraint applies.
 
 ## 6. Release audit — recurring, before every version bump
 
-1. `grep -rn "model: inherit" .claude/agents/` → must be empty. (C1)
-2. Grep for unbounded-loop language in agents and core docs: `every`, `each`, `per
-   keyword`, `per claim` near Read/Grep/WebSearch instructions → each hit either has a
-   batch discipline and call budget, or gets one. (C2)
-3. Grep for `WebSearch`/`WebFetch` in skills + core docs → every mention carries a
-   numeric budget. (C3)
-4. Grep for agent-loop instructions (`re-verify`, `fix round`, `relaunch`) → each names
-   continuation as the default. (C4)
-5. Doc weight sweep vs §5 table. (C7)
-6. One live smoke run (a real or synthetic posting): record the §2 metrics, compare to
-   §3, and note the numbers in the release PR description.
+Steps 1–3 are scripts, and CI already runs 1 and 2 on every PR; step 4 is the live run
+no script can stand in for. Read the numbers, don't just watch for green.
+
+1. `python3 scripts/release_audit.py` → exit 0. What it enforces:
+   - **C1** no `model: inherit` in `.claude/agents/*.md`.
+   - **C2** a per-item read instruction — a quantifier (`every`, `each`, `per <noun>`)
+     on the same line as `Read`/`Grep`/`Glob`/`WebSearch`/`WebFetch` — is answered by a
+     batch discipline *and* a numeric call budget in that file.
+   - **C3** every skill/core doc mentioning `WebSearch`/`WebFetch` states a numeric budget.
+   - **C4** every agent/core doc with loop language names continuation as the default.
+   - **C7** each budgeted doc is at or under its §5 word budget, with the budgets parsed
+     from the §5 table itself so doc and script cannot drift.
+
+   A doc that deliberately defers the detail elsewhere opts out per check with a
+   file-level `<!-- audit-ok: C2 C3 C4 — why -->` marker.
+2. `python3 scripts/privacy_scan.py` → exit 0. The §3.4 personal-data boundary.
+3. `python3 scripts/eval_run.py` → Tier-1 golden fixtures match their blessed snapshots.
+4. One live smoke run (a real or synthetic posting): score it with
+   `python3 scripts/eval_score.py --case <id>`, record the §2 metrics, compare to §3,
+   and note the numbers in the release PR description.
 
 ## 7. Fixed-issue log (regression markers)
 

@@ -6,7 +6,7 @@ This runbook is the **kernel** for running a job search with Claude Code. It is 
 
 > **Context tight or lost?** `core/quickref.md` is the distilled 10-rule floor with a "when lost" protocol — re-read it instead of guessing.
 
-<!-- audit-ok: C3 C4 — kernel overview: it names the research step and the fix/re-verify loop conceptually; the search budgets live in core/fit_check.md + core/tailoring_method.md and the "continue, don't respawn" rule in core/tailoring_method.md + core/quickref.md. Duplicating them here would bloat the kernel and split the source of truth. -->
+<!-- audit-ok: C2 C3 C4 — kernel overview: it names the research step, the fix/re-verify loop and the daily tracker read conceptually; the search budgets live in core/fit_check.md + core/tailoring_method.md, the "continue, don't respawn" rule in core/tailoring_method.md + core/quickref.md, and the batch/read discipline in agents/application-verifier.md. Duplicating them here would bloat the kernel and split the source of truth. -->
 
 
 ---
