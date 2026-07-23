@@ -37,7 +37,7 @@ Run `core/fit_check.md` end to end: liveness and location sanity, the binary con
 
 ## Step 3 — ATS keyword check (before writing anything)
 
-Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Run `scripts/ats_coverage.py jd.md --kb-dir knowledge/` — literal whole-token matching, each keyword bucketed COVERED / UNVERIFIED / GAP, no KB read into the main session (fallback: Grep `knowledge/` per keyword and spelling variants). Then apply judgment:
+Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Run `scripts/ats_coverage.py jd.md --kb-dir knowledge/` — literal whole-token matching, each keyword bucketed COVERED / UNVERIFIED / GAP, no KB read into the main session (fallback: batch-Grep `knowledge/` with variants, ≤5 calls). Then apply judgment:
 
 - **Covered** (`COVERED`) — a verified KB entry names it.
 - **Verifiable gap** — the user plausibly has it but the KB doesn't record it as verified → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake). The script's `UNVERIFIED` bucket (named only on an `[unverified]` line) lands here.
