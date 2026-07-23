@@ -138,6 +138,65 @@ class TestEstimateTokens(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------
+# C7's input must fail loudly, and its opt-out must exist
+#
+# C1–C4 read the repo, so they cannot silently vanish. C7 reads a parsed table,
+# so every way that table can go wrong is a way the check disappears while the
+# audit still exits 0. Ported from redgreen, where these holes were found.
+# --------------------------------------------------------------------------
+class TestBudgetTableIntegrity(TmpMixin):
+    def test_missing_token_economy_is_a_violation_not_silence(self):
+        self.write(".claude/agents/a.md", "---\nmodel: sonnet\n---\nbody")
+        v = release_audit.check_budget_table(self.root)
+        self.assertEqual([x.check for x in v], ["C7"])
+        self.assertIn("TOKEN_ECONOMY.md", v[0].message + v[0].path)
+
+    def test_budget_cell_with_trailing_prose_is_rejected_not_concatenated(self):
+        # "1,400 (was 500)" must not silently become 1400500, disabling the row.
+        self.assertEqual(release_audit.parse_budgets(
+            "## 5\n| `a/*.md` | 1,400 (was 500) |\n## 6"), [])
+
+    def test_malformed_budget_row_is_reported(self):
+        self.write("TOKEN_ECONOMY.md", "## 5\n| `a/*.md` | 1,400 (was 500) |\n## 6")
+        v = release_audit.check_budget_table(self.root)
+        self.assertEqual(len(v), 1)
+        self.assertIn("a/*.md", v[0].message)
+
+    def test_thousands_separator_still_parses(self):
+        self.assertEqual(release_audit.parse_budgets(
+            "## 5\n| `a/*.md` | 1,400 |\n## 6"), [("a/*.md", 1400)])
+
+    def test_well_formed_table_is_clean(self):
+        self.write("TOKEN_ECONOMY.md", "## 5\n| `a/*.md` | 800 |\n## 6")
+        self.assertEqual(release_audit.check_budget_table(self.root), [])
+
+    def test_missing_budget_source_fails_the_whole_gate(self):
+        self.write(".claude/agents/a.md", "---\nmodel: sonnet\n---\nbody")
+        self.assertTrue(any(v.check == "C7" for v in release_audit.run_audit(self.root)))
+
+
+class TestDocWeightsAuditOk(TmpMixin):
+    """The module docstring promises `audit-ok: <CHECK>` for any check. C7 has
+    to actually honour it, or the promise is false."""
+
+    BUDGETS = [("job_docs/core/*.md", 5)]
+
+    def test_audit_ok_marker_skips_c7(self):
+        self.write("job_docs/core/x.md",
+                   "word " * 40 + "\n<!-- audit-ok: C7 — deliberately long -->")
+        self.assertEqual(release_audit.check_doc_weights(self.BUDGETS, self.root), [])
+
+    def test_unmarked_file_still_flags(self):
+        self.write("job_docs/core/x.md", "word " * 40)
+        self.assertEqual(len(release_audit.check_doc_weights(self.BUDGETS, self.root)), 1)
+
+    def test_marker_for_another_check_does_not_skip_c7(self):
+        self.write("job_docs/core/x.md",
+                   "word " * 40 + "\n<!-- audit-ok: C2 — different check -->")
+        self.assertEqual(len(release_audit.check_doc_weights(self.BUDGETS, self.root)), 1)
+
+
+# --------------------------------------------------------------------------
 # C1 — model: inherit
 # --------------------------------------------------------------------------
 class TestModelInherit(TmpMixin):
