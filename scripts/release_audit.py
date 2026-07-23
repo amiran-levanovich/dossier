@@ -109,9 +109,9 @@ def estimate_tokens(text: str) -> int:
     """Estimate the tokens a doc costs when loaded. Not exact — deliberately.
 
     Budgets are in tokens because tokens are what a run pays, and words price
-    the wrong thing: markdown-free prose runs about 1.3 tokens per word while a
-    table row of backticked paths runs nearer 4, so a word budget under-prices
-    exactly the dense markup these docs are full of.
+    the wrong thing: markdown-free prose runs about 1.3 tokens per word, a table
+    row of backticked paths nearer 4, and the docs in the §5 table 1.9-3.2 since
+    they mix both. A word budget under-prices exactly that dense markup.
 
     No tokenizer ships in the standard library and `scripts/` takes no
     dependencies, so this approximates a BPE pre-tokenizer: letter runs, digit

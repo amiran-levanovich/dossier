@@ -7,7 +7,7 @@ Stdlib only. These tests are the contract. They cover every check in the gate:
   C2  a per-item read instruction carries a batch discipline and a call budget
   C3  a doc mentioning WebSearch/WebFetch carries a numeric budget
   C4  a doc with loop language names continuation
-  C7  each budgeted doc is at or under its §5 word budget
+  C7  each budgeted doc is at or under its §5 token budget
 The §5 budgets are parsed FROM TOKEN_ECONOMY.md so the doc stays the single
 source of truth (the script never hard-codes a number).
 """
@@ -38,7 +38,7 @@ TOKEN_ECON_SAMPLE = """\
 
 Some prose about the sweep.
 
-| File | Budget (words) |
+| File | Budget (tokens) |
 |---|---|
 | `.claude/agents/*.md` (each) | 800 |
 | `job_docs/core/tailoring_method.md` | 1,400 |
@@ -126,6 +126,15 @@ class TestEstimateTokens(unittest.TestCase):
         prose = release_audit.estimate_tokens(self.PROSE) / len(self.PROSE.split())
         dense = release_audit.estimate_tokens(self.DENSE) / len(self.DENSE.split())
         self.assertGreater(dense, prose * 2)
+
+    def test_long_words_cost_more_than_short_ones(self):
+        # Pins the >6-letter sub-word split, which is otherwise unexercised.
+        self.assertGreater(release_audit.estimate_tokens("internationalization"),
+                           release_audit.estimate_tokens("cat"))
+
+    def test_newlines_are_counted(self):
+        self.assertGreater(release_audit.estimate_tokens("a\n\n\nb"),
+                           release_audit.estimate_tokens("a b"))
 
 
 # --------------------------------------------------------------------------

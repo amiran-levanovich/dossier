@@ -127,9 +127,10 @@ per-run taxes and get no hard budget — but the same restraint applies.
 
 **The unit is tokens, and the count is an estimate.** Tokens are what a run pays, and
 words price the wrong thing. Markdown-free English prose runs about 1.3 tokens per word;
-a table row of backticked paths runs nearer 4. A word budget therefore under-prices
-exactly the dense markup these docs are full of — tables, paths, template blocks — and
-over-prices plain explanation, which is backwards.
+a table row of backticked paths runs nearer 4. Across the docs in this table the figure
+is **1.9 to 3.2**, since they mix both. A word budget therefore under-prices exactly the
+dense markup these docs are full of — tables, paths, template blocks — and over-prices
+plain explanation, which is backwards.
 
 No tokenizer ships in the standard library and `scripts/` takes no dependencies, so
 `release_audit.estimate_tokens` approximates a BPE pre-tokenizer: letter runs, digit
@@ -144,10 +145,12 @@ word budget and is at 99.8% of its token budget, `application-verifier.md` 99.9%
 Other files under a shared row necessarily moved, because one budget cannot track several
 files at once — that repricing is the point. No budget was raised as a convenience.
 
-Ported from the sibling `redgreen` repo, whose review of the same change found two things
-worth carrying: whitespace must be priced or padding is free, and a group budget cannot
-preserve every file's fill, only the fullest one's. Both repos now budget C7 in tokens, so
-the class means the same thing in each — though the numbers are still repo-specific.
+Ported from the sibling `redgreen` repo, whose review of the same change found three
+things worth carrying: whitespace must be priced or padding is free; a group budget
+preserves only the fullest file's fill, not every file's; and quoting the 1.3 prose figure
+alone is misleading when the docs being budgeted run far higher. The largest shift here
+was `rendering.md`, 25.2% → 37.3% of its budget. Both repos now budget C7 in tokens, so
+the class means the same thing in each — though the numbers stay repo-specific.
 
 ## 6. Release audit — recurring, before every version bump
 
