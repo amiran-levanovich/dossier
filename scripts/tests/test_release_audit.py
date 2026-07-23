@@ -403,3 +403,40 @@ class TestMain(TmpMixin):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --------------------------------------------------------------------------
+# The opt-out marker must be anchored to an HTML comment
+#
+# Unanchored, any prose mentioning the marker silences the check — and §4/§6
+# now teach maintainers to write that exact string, so a doc explaining the
+# marker would exempt itself from the check it was explaining.
+# --------------------------------------------------------------------------
+class TestAuditOkAnchoring(TmpMixin):
+    def test_marker_in_an_html_comment_opts_out(self):
+        self.assertTrue(release_audit._audit_ok("<!-- audit-ok: C7 — why -->", "C7"))
+
+    def test_marker_in_plain_prose_does_not_opt_out(self):
+        self.assertFalse(release_audit._audit_ok("see the audit-ok: C7 marker", "C7"))
+
+    def test_marker_quoted_in_a_code_fence_does_not_opt_out(self):
+        self.assertFalse(release_audit._audit_ok("```\naudit-ok: C7\n```", "C7"))
+
+    def test_multi_check_marker_covers_each_listed_check(self):
+        text = "<!-- audit-ok: C2 C3 C4 C7 — kernel -->"
+        for check in ("C2", "C3", "C4", "C7"):
+            self.assertTrue(release_audit._audit_ok(text, check), check)
+
+    def test_marker_does_not_cover_an_unlisted_check(self):
+        self.assertFalse(release_audit._audit_ok("<!-- audit-ok: C2 C3 -->", "C7"))
+
+    def test_comment_spanning_lines_still_works(self):
+        self.assertTrue(release_audit._audit_ok(
+            "<!--\naudit-ok: C7 — deliberately over budget\n-->", "C7"))
+
+    def test_prose_mention_does_not_silence_a_real_check(self):
+        # End to end: a doc that merely documents the marker stays budgeted.
+        self.write("job_docs/core/x.md",
+                   "word " * 40 + "\nAdd `audit-ok: C7` to opt a doc out.")
+        v = release_audit.check_doc_weights([("job_docs/core/*.md", 5)], self.root)
+        self.assertEqual(len(v), 1)
