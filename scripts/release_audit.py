@@ -58,6 +58,7 @@ SKILLS_GLOB = ".claude/skills/*/SKILL.md"
 CORE_GLOB = "job_docs/core/*.md"
 
 _BACKTICKED = re.compile(r"`([^`]+)`")
+_HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _BUDGET_CELL = re.compile(r"^\d{1,3}(?:[,\s]\d{3})*$|^\d+$")
 _TOKEN_PIECE = re.compile(r"[A-Za-z]+(?:'[A-Za-z]+)?|\d{1,3}|\s+|[^\sA-Za-z\d]")
 _MODEL_INHERIT = re.compile(r"^\s*model:\s*inherit\s*$", re.MULTILINE)
@@ -98,8 +99,15 @@ _C2_BUDGET = re.compile(
 
 
 def _audit_ok(text: str, check: str) -> bool:
-    """A file opts out of one check with a greppable `audit-ok: <CHECK>` marker."""
-    return re.search(rf"audit-ok:[^\n]*\b{check}\b", text) is not None
+    """A file opts out of one check with an `audit-ok: <CHECK>` marker.
+
+    The marker only counts inside an HTML comment. Unanchored it matched
+    anywhere, so prose merely mentioning it silenced the check — and §4 and §6
+    teach maintainers to write that exact string, which would let a doc
+    explaining the opt-out exempt itself from the check it was explaining.
+    """
+    pattern = re.compile(rf"audit-ok:[^\n]*\b{re.escape(check)}\b")
+    return any(pattern.search(comment) for comment in _HTML_COMMENT.findall(text))
 
 
 @dataclass(frozen=True)
