@@ -105,13 +105,20 @@ rule kills one taxonomy class at the design stage:
       cheapest-to-avoid findings (exact keyword spelling, no equivalency language,
       trace every claim) so round 1 is usually CLEAN. (C6)
 - [ ] **Token budget respected** — the edit keeps the doc inside its §5 budget; if new
-      substance needs room, cut old substance or split the doc so runs load less. (C7)
+      substance needs room, cut old substance or split the doc so runs load less. A doc
+      that is deliberately over budget may carry an `audit-ok: C7` marker instead, with
+      the reason — that is an argued exception, not a way round the rule. (C7)
 
 ## 5. Doc weight budgets
 
 These files are loaded on every application run (directly or by an agent). Keep them at
 or under budget; `scripts/release_audit.py` enforces this table and parses it *from this
 file*, so the doc is the single source of truth and the script can never drift from it.
+
+A row whose budget cell is anything but a bare number fails the audit loudly rather than
+being skipped, and so does a missing copy of this file. C1–C4 read the repo and cannot
+silently vanish; C7 reads a parsed table, so every way the table can go wrong is a way the
+check would otherwise disappear at exit 0.
 
 | File | Budget (tokens) |
 |---|---|
@@ -167,8 +174,9 @@ no script can stand in for. Read the numbers, don't just watch for green.
    - **C7** each budgeted doc is at or under its §5 token budget, with the budgets parsed
      from the §5 table itself so doc and script cannot drift.
 
-   A doc that deliberately defers the detail elsewhere opts out per check with a
-   file-level `<!-- audit-ok: C2 C3 C4 — why -->` marker.
+   A doc opts out of a check with a file-level `<!-- audit-ok: C2 C3 C4 C7 — why -->`
+   marker: for C2–C4 that means the detail lives in another doc, for C7 it means the doc
+   is deliberately over budget. Either way the marker carries the reason.
 2. `python3 scripts/privacy_scan.py` → exit 0. The §3.4 personal-data boundary.
 3. `python3 scripts/eval_run.py` → Tier-1 golden fixtures match their blessed snapshots.
 4. One live smoke run (a real or synthetic posting): score it with
