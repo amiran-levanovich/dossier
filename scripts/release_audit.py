@@ -16,7 +16,7 @@ Checks:
       search budget somewhere in the file (v2.2.0 unbudgeted-search incident).
   C4  every agent/core doc with fix/verify-loop language names continuation
       (SendMessage / "continue") somewhere (v2.1.0 respawn incident).
-  C7  each budgeted doc is at or under its word budget. The budgets are parsed
+  C7  each budgeted doc is at or under its token budget. The budgets are parsed
       FROM the §5 table in TOKEN_ECONOMY.md, so the doc stays the single source
       of truth and the script can never drift from it.
 
@@ -55,6 +55,7 @@ SKILLS_GLOB = ".claude/skills/*/SKILL.md"
 CORE_GLOB = "job_docs/core/*.md"
 
 _BACKTICKED = re.compile(r"`([^`]+)`")
+_TOKEN_PIECE = re.compile(r"[A-Za-z]+(?:'[A-Za-z]+)?|\d{1,3}|\s+|[^\sA-Za-z\d]")
 _MODEL_INHERIT = re.compile(r"^\s*model:\s*inherit\s*$", re.MULTILINE)
 _SECTION5 = re.compile(r"^##\s*5\b")
 _NEXT_SECTION = re.compile(r"^##\s")
@@ -104,9 +105,33 @@ class Violation:
     message: str
 
 
-def word_count(text: str) -> int:
-    """Whitespace-token count, matching `wc -w` (the §2 sweep command)."""
-    return len(text.split())
+def estimate_tokens(text: str) -> int:
+    """Estimate the tokens a doc costs when loaded. Not exact — deliberately.
+
+    Budgets are in tokens because tokens are what a run pays, and words price
+    the wrong thing: markdown-free prose runs about 1.3 tokens per word, a table
+    row of backticked paths nearer 4, and the docs in the §5 table 1.9-3.2 since
+    they mix both. A word budget under-prices exactly that dense markup.
+
+    No tokenizer ships in the standard library and `scripts/` takes no
+    dependencies, so this approximates a BPE pre-tokenizer: letter runs, digit
+    groups of up to three, each symbol on its own, runs over six letters split
+    further, and whitespace runs priced. A lone space is free because BPE folds
+    it into the following token; longer runs are not, since leaving them free
+    would let any doc be padded past its budget at zero cost.
+
+    A drift detector, not a billing meter. Deterministic, monotonic, and right
+    about which text is expensive is the whole specification.
+    """
+    total = 0
+    for piece in _TOKEN_PIECE.findall(text):
+        if piece[:1].isalpha() and len(piece) > 6:
+            total += -(-len(piece) // 5)  # ceil: long words split into sub-tokens
+        elif piece.isspace():
+            total += 0 if piece == " " else max(1, -(-len(piece) // 8))
+        else:
+            total += 1
+    return total
 
 
 def parse_budgets(token_economy_text: str) -> list[tuple[str, int]]:
@@ -157,10 +182,10 @@ def check_doc_weights(budgets: list[tuple[str, int]], root: Path) -> list[Violat
         for path in sorted(root.glob(glob)):
             if not path.is_file():
                 continue
-            count = word_count(path.read_text(encoding="utf-8"))
+            count = estimate_tokens(path.read_text(encoding="utf-8"))
             if count > budget:
                 rel = path.relative_to(root).as_posix()
-                violations.append(Violation("C7", rel, f"{count} words > budget {budget} (over by {count - budget})"))
+                violations.append(Violation("C7", rel, f"{count} tokens > budget {budget} (over by {count - budget})"))
     return violations
 
 

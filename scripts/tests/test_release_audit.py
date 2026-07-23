@@ -7,7 +7,7 @@ Stdlib only. These tests are the contract. They cover every check in the gate:
   C2  a per-item read instruction carries a batch discipline and a call budget
   C3  a doc mentioning WebSearch/WebFetch carries a numeric budget
   C4  a doc with loop language names continuation
-  C7  each budgeted doc is at or under its §5 word budget
+  C7  each budgeted doc is at or under its §5 token budget
 The §5 budgets are parsed FROM TOKEN_ECONOMY.md so the doc stays the single
 source of truth (the script never hard-codes a number).
 """
@@ -38,7 +38,7 @@ TOKEN_ECON_SAMPLE = """\
 
 Some prose about the sweep.
 
-| File | Budget (words) |
+| File | Budget (tokens) |
 |---|---|
 | `.claude/agents/*.md` (each) | 800 |
 | `job_docs/core/tailoring_method.md` | 1,400 |
@@ -82,10 +82,59 @@ class TestParseBudgets(unittest.TestCase):
         self.assertEqual(budgets["job_docs/core/tailoring_method.md"], 1400)
 
 
-class TestWordCount(unittest.TestCase):
-    def test_matches_wc_w(self):
-        self.assertEqual(release_audit.word_count("one two three"), 3)
-        self.assertEqual(release_audit.word_count("  spaced \n out\ttokens "), 3)
+class TestEstimateTokens(unittest.TestCase):
+    """Budgets are in tokens because tokens are what a run actually pays.
+
+    Ported from the sibling `redgreen` repo, including the hole its review
+    found: a character class that skips whitespace makes padding free and the
+    monotonicity claim false. These pin the corrected contract.
+    """
+
+    PROSE = ("The quick brown fox jumps over the lazy dog and then considers "
+             "whether the arrangement was truly necessary at all.")
+    DENSE = "| `job_docs/core/tailoring_method.md` (the pipeline) | 1,400 |"
+
+    def test_empty_is_zero(self):
+        self.assertEqual(release_audit.estimate_tokens(""), 0)
+
+    def test_deterministic(self):
+        self.assertEqual(release_audit.estimate_tokens(self.PROSE),
+                         release_audit.estimate_tokens(self.PROSE))
+
+    def test_monotonic(self):
+        self.assertGreater(release_audit.estimate_tokens(self.PROSE + " one more clause"),
+                           release_audit.estimate_tokens(self.PROSE))
+
+    def test_whitespace_is_not_free(self):
+        self.assertGreater(release_audit.estimate_tokens(" " * 10000), 0)
+        self.assertGreater(release_audit.estimate_tokens("\t" * 500), 0)
+
+    def test_monotonic_under_whitespace_too(self):
+        self.assertGreater(release_audit.estimate_tokens("a" + " " * 5000 + "b"),
+                           release_audit.estimate_tokens("a b"))
+
+    def test_single_spaces_between_words_stay_free(self):
+        self.assertEqual(release_audit.estimate_tokens("alpha beta gamma"),
+                         release_audit.estimate_tokens("alpha|beta|gamma") - 2)
+
+    def test_prose_lands_near_the_known_ratio(self):
+        ratio = release_audit.estimate_tokens(self.PROSE) / len(self.PROSE.split())
+        self.assertGreater(ratio, 1.1)
+        self.assertLess(ratio, 1.6)
+
+    def test_dense_markup_costs_more_per_word_than_prose(self):
+        prose = release_audit.estimate_tokens(self.PROSE) / len(self.PROSE.split())
+        dense = release_audit.estimate_tokens(self.DENSE) / len(self.DENSE.split())
+        self.assertGreater(dense, prose * 2)
+
+    def test_long_words_cost_more_than_short_ones(self):
+        # Pins the >6-letter sub-word split, which is otherwise unexercised.
+        self.assertGreater(release_audit.estimate_tokens("internationalization"),
+                           release_audit.estimate_tokens("cat"))
+
+    def test_newlines_are_counted(self):
+        self.assertGreater(release_audit.estimate_tokens("a\n\n\nb"),
+                           release_audit.estimate_tokens("a b"))
 
 
 # --------------------------------------------------------------------------

@@ -24,7 +24,7 @@ against this list first — most "slow run" reports are one of these wearing a n
 | C4 | **Respawn instead of continue** | Fix/re-verify rounds launch fresh agents that re-read all inputs cold instead of continuing (SendMessage) an agent that already holds them | Each verify round costs as much as the first |
 | C5 | **Over-broad context passing** | Whole directories or irrelevant standards passed to agents (whole KB instead of the INDEX selection; `dach_conventions.md` outside DACH) | Agent input lists longer than the task needs; "just in case" files |
 | C6 | **Loop multipliers** | The verify→fix→re-verify loop multiplies every other class: a C2 verifier in a 3-round loop is 3× the damage | More than 2 verify rounds as the norm, not the exception |
-| C7 | **Doc weight creep** | Skill/agent definitions and standards docs are read on *every* run — every added word is a per-application tax, forever | Doc word counts drifting up release over release |
+| C7 | **Doc weight creep** | Skill/agent definitions and standards docs are read on *every* run — every added token is a per-application tax, forever | Doc token counts drifting up release over release |
 
 ## 2. Measurement — how to identify issues (before guessing)
 
@@ -44,9 +44,9 @@ session to capture the baseline this doc keeps asking for.
    over ~2 minutes is an anomaly worth a transcript look.
 4. **WebSearch/WebFetch count per application.** Target: ≤ 2 gate searches (5-cap only
    when uncertain), 0 new Step-4 searches by default, ≤ 1 WebFetch.
-5. **Doc weight sweep** (repo-side, at release time):
-   `find . -name "*.md" -not -path "./.git/*" | xargs wc -w | sort -rn`
-   against the budget table in §5.
+5. **Doc weight sweep** (repo-side, at release time): `python3 scripts/release_audit.py`,
+   which enforces the §5 table. `wc -w` no longer matches the unit — budgets are in
+   estimated tokens, so the script is the only thing that measures them correctly.
 
 **When the user reports a slow/expensive run:** get the numbers above from that session
 first, map to a taxonomy class, and only then edit docs. The v2.2.0 verifier fix was
@@ -104,25 +104,53 @@ rule kills one taxonomy class at the design stage:
 - [ ] **Writers pre-empt the loop** — writer instructions encode the verifier's
       cheapest-to-avoid findings (exact keyword spelling, no equivalency language,
       trace every claim) so round 1 is usually CLEAN. (C6)
-- [ ] **Word budget respected** — the edit keeps the doc inside its §5 budget; if new
+- [ ] **Token budget respected** — the edit keeps the doc inside its §5 budget; if new
       substance needs room, cut old substance or split the doc so runs load less. (C7)
 
 ## 5. Doc weight budgets
 
 These files are loaded on every application run (directly or by an agent). Keep them at
-or under budget; check with the sweep command in §2.5 before each release.
+or under budget; `scripts/release_audit.py` enforces this table and parses it *from this
+file*, so the doc is the single source of truth and the script can never drift from it.
 
-| File | Budget (words) |
+| File | Budget (tokens) |
 |---|---|
-| `.claude/skills/*/SKILL.md` (each — thin routers) | 500 |
-| `.claude/agents/*.md` (each) | 800 |
-| `job_docs/core/tailoring_method.md` | 1,400 |
-| `job_docs/core/fit_check.md` | 1,400 |
-| `job_docs/standards/*` (each) | 1,300 |
-| `job_docs/core/quickref.md` (the compaction floor) | 450 |
+| `.claude/skills/*/SKILL.md` (each — thin routers) | 1,150 |
+| `.claude/agents/*.md` (each) | 1,640 |
+| `job_docs/core/tailoring_method.md` | 2,950 |
+| `job_docs/core/fit_check.md` | 3,050 |
+| `job_docs/standards/*` (each) | 2,830 |
+| `job_docs/core/quickref.md` (the compaction floor) | 1,150 |
 
 Docs read only occasionally (`lifecycle/*`, `interview_protocol.md`, README) are not
 per-run taxes and get no hard budget — but the same restraint applies.
+
+**The unit is tokens, and the count is an estimate.** Tokens are what a run pays, and
+words price the wrong thing. Markdown-free English prose runs about 1.3 tokens per word;
+a table row of backticked paths runs nearer 4. Across the docs in this table the figure
+is **1.9 to 3.2**, since they mix both. A word budget therefore under-prices exactly the
+dense markup these docs are full of — tables, paths, template blocks — and over-prices
+plain explanation, which is backwards.
+
+No tokenizer ships in the standard library and `scripts/` takes no dependencies, so
+`release_audit.estimate_tokens` approximates a BPE pre-tokenizer: letter runs, digit
+groups of up to three, each symbol on its own, runs over six letters split further, and
+whitespace runs priced (a lone space is free, since BPE folds it into the next token, but
+longer runs are not — leaving them free would let a doc be padded past its budget at zero
+cost). It is a drift detector, not a billing meter.
+
+**What the conversion preserved.** Each row's budget was re-derived from the *fullest*
+file under it, so that file's fill is unchanged: `tailoring_method.md` was at 99.9% of its
+word budget and is at 99.8% of its token budget, `application-verifier.md` 99.9% → 99.7%.
+Other files under a shared row necessarily moved, because one budget cannot track several
+files at once — that repricing is the point. No budget was raised as a convenience.
+
+Ported from the sibling `redgreen` repo, whose review of the same change found three
+things worth carrying: whitespace must be priced or padding is free; a group budget
+preserves only the fullest file's fill, not every file's; and quoting the 1.3 prose figure
+alone is misleading when the docs being budgeted run far higher. The largest shift here
+was `rendering.md`, 25.2% → 37.3% of its budget. Both repos now budget C7 in tokens, so
+the class means the same thing in each — though the numbers stay repo-specific.
 
 ## 6. Release audit — recurring, before every version bump
 
@@ -136,7 +164,7 @@ no script can stand in for. Read the numbers, don't just watch for green.
      batch discipline *and* a numeric call budget in that file.
    - **C3** every skill/core doc mentioning `WebSearch`/`WebFetch` states a numeric budget.
    - **C4** every agent/core doc with loop language names continuation as the default.
-   - **C7** each budgeted doc is at or under its §5 word budget, with the budgets parsed
+   - **C7** each budgeted doc is at or under its §5 token budget, with the budgets parsed
      from the §5 table itself so doc and script cannot drift.
 
    A doc that deliberately defers the detail elsewhere opts out per check with a
