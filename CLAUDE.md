@@ -23,6 +23,7 @@ job_docs/
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
 ├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · master_documents
 └── templates/               # cv_template.md
+docs/agents/                 # per-repo config for the engineering skills: issue-tracker · triage-labels · domain
 scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · master_diff · session_metrics (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
 ```
@@ -34,3 +35,17 @@ README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN
 - **Versioning**: bump `version` in `plugin.json` on a meaningful change (breaking → major; currently 2.x). Bump with a targeted line edit — a JSON load/dump round-trip reformats the manifest. After the bump's PR merges, tag `main` as `v<version>` and publish a GitHub release; notes end with the consumer update commands (`/plugin marketplace update dossier`, `/plugin update dossier@dossier`). Pre-split history carries `v1.x` tags migrated from `job-workflow-v1.x`.
 - **Git**: feature branch → PR into `main` (never commit to `main`); [Conventional Commits](https://www.conventionalcommits.org), subject ≤ 60 chars.
 - When editing a doc, update README.md and this layout if the structure changed; run the verification checks above before committing.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues on `amiran-levanovich/dossier`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, each label string equal to its name. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
