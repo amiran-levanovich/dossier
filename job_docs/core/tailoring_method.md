@@ -55,7 +55,7 @@ If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets 
 
 `knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to `application-writer`; its claims come from verified KB entries only.
 
-**With a master CV** (`master_cv.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md`. If it checks VERIFIED, the selection above is **replaced, not supplemented**: `application-writer` gets `constraints.md`, `profile.md`, `goals.md`, the files backing planned CV edits (named from the `## Fit` block — often none, since the master already encodes the roles) and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED master is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification. The letter has no exemplar.
+**With a master CV** (`master_cv.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md`. If it checks VERIFIED, the selection above is **replaced, not supplemented**: `application-writer` gets `constraints.md`, `profile.md`, `goals.md`, the files backing planned CV edits (named from the `## Fit` block — often none, since the master already encodes the roles) and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED master is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification.
 
 ## Step 6 — Dispatch the writer
 
@@ -67,25 +67,26 @@ First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_
 
 With a master CV, also run `scripts/master_diff.py cv.md --master master_cv.md` — VERBATIM lines from a VERIFIED master need no claim judgment; CHANGED lines are the tailoring and get judged in full.
 
-Then launch **`application-verifier`** with the same inputs plus both documents and trace files, **pasting the trace-check, ledger, master-diff, and Step-3 coverage reports into its prompt** — it consumes them and spends its budget judging the NEW claims. It returns CLEAN or severity-ordered findings.
+Then launch **`application-verifier`** with the same inputs plus both documents and trace files, **pasting the trace-check, ledger, master-diff, and Step-3 coverage reports into its prompt** — it consumes them and spends its budget judging the NEW claims, returning CLEAN or severity-ordered findings.
 
 - Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
 - Re-verify rounds **continue the same verifier** (SendMessage: which files changed and how) — it re-reads only the changed files but re-runs every check on the whole package. For either agent, launch fresh only if the continuation fails or the KB selection changed.
+- **Three verifier rounds, maximum.** Findings still open after the third have a structural cause — a KB gap, a claim that needs an override, a standards conflict — not a draft another round fixes. Stop and present the open findings, what each round changed, and that diagnosis.
 - On CLEAN, run `scripts/claim_ledger.py record` (same arguments) — verified claims skip re-judgment in the next application.
-- Never present documents while BLOCKER or MAJOR findings are open. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
+- Never present documents while BLOCKER or MAJOR findings are open; at the cap, sending anyway is the user's explicit call. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
 
 ## Step 8 — Present and close
 
 Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how handled, verifier result (including the override INFO line if any). Then:
 
 - Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 2 gate, a dated `--next-action` (default two weeks out), and an override note in `--notes` if the user went against the verdict.
-- Offer rendering **only if the user wants a file format** — options and caveats in `standards/rendering.md`. Markdown is the deliverable by default.
+- Offer rendering **only if the user wants a file format** — `standards/rendering.md`. Markdown is the deliverable by default.
 
 ---
 
 ## User-directed overrides
 
-When the user explicitly asks to include something the KB can't back, follow `core/override_protocol.md` exactly: warn once → confirm → get details → record in `applications/<company>/overrides.md` (never in `knowledge/`). Trace lines may then cite `overrides.md`; the verifier reports override-sourced claims as one INFO line, never as findings.
+When the user explicitly asks to include something the KB can't back, follow `core/override_protocol.md` exactly. Trace lines may then cite `overrides.md`; the verifier reports override-sourced claims as one INFO line, never as findings.
 
 ---
 
@@ -95,8 +96,7 @@ When the user explicitly asks to include something the KB can't back, follow `co
 
 ```markdown
 - "<the bullet / sentence, abbreviated>" → roles/acme.md#achievements
-- "<...>" → skills.md#databases
 - "<...>" → overrides.md (user-directed, 2026-07-07)
 ```
 
-`#anchor` is a **lowercase GitHub slug** of the heading (`## Data & infra` → `#data--infra`); one canonical target per line. KB paths resolve against `knowledge/` (leading `knowledge/` prefix fine); `overrides.md`/`notes.md`/`jd.md` resolve against the application folder — `overrides.md` existence-only, the rest anchor-checked. Never cite `cv.md`/`cover.md`: a document can't source its own claims. Structural/neutral text (headings, `profile.md` contact lines, logistics phrasing) needs no trace line; anything asserting experience, a skill, an outcome, or a credential does.
+`#anchor` is a **lowercase GitHub slug** of the heading (`## Data & infra` → `#data--infra`); one canonical target per line. KB paths resolve against `knowledge/` (leading `knowledge/` prefix fine); `overrides.md`/`notes.md`/`jd.md` resolve against the application folder — `overrides.md` existence-only, the rest anchor-checked. Never cite `cv.md`/`cover.md`: a document can't source its own claims. Structural/neutral text needs no trace line; anything asserting experience, a skill, an outcome, or a credential does.

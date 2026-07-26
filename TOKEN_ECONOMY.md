@@ -23,7 +23,7 @@ against this list first — most "slow run" reports are one of these wearing a n
 | C3 | **Web content bloat** | WebFetch of a job posting pulls 10–30k tokens of nav/footer/HTML noise; WebSearch budgets unstated or generous by default | Long orchestrator turns before any writing starts; searches answering questions the JD/KB already answered |
 | C4 | **Respawn instead of continue** | Fix/re-verify rounds launch fresh agents that re-read all inputs cold instead of continuing (SendMessage) an agent that already holds them | Each verify round costs as much as the first |
 | C5 | **Over-broad context passing** | Whole directories or irrelevant standards passed to agents (whole KB instead of the INDEX selection; `dach_conventions.md` outside DACH) | Agent input lists longer than the task needs; "just in case" files |
-| C6 | **Loop multipliers** | The verify→fix→re-verify loop multiplies every other class: a C2 verifier in a 3-round loop is 3× the damage | More than 2 verify rounds as the norm, not the exception |
+| C6 | **Loop multipliers** | The verify→fix→re-verify loop multiplies every other class: a C2 verifier in a 3-round loop is 3× the damage. Capped at **three rounds** since v3.1.0 — past that the cause is structural and the findings go to the user | More than 2 verify rounds as the norm, not the exception |
 | C7 | **Doc weight creep** | Skill/agent definitions and standards docs are read on *every* run — every added token is a per-application tax, forever | Doc token counts drifting up release over release |
 
 ## 2. Measurement — how to identify issues (before guessing)
