@@ -39,8 +39,8 @@ session to capture the baseline this doc keeps asking for.
    (`session_metrics.py` does this). Past ~20 calls for any dossier agent, something is
    wrong (usually C2).
 2. **Verify rounds per application.** Read off the session. Target: 1–2. Three or more
-   means either writers are under-instructed or the verifier is flagging style noise.
-3. **Wall-clock per stage.** Capture→gate→research→writers→verify. Any single stage
+   means either the writer is under-instructed or the verifier is flagging style noise.
+3. **Wall-clock per stage.** Capture→gate→research→write→verify. Any single stage
    over ~2 minutes is an anomaly worth a transcript look.
 4. **WebSearch/WebFetch count per application.** Target: ≤ 2 gate searches (5-cap only
    when uncertain), 0 new Step-4 searches by default, ≤ 1 WebFetch.
@@ -211,6 +211,16 @@ Recognize regressions by knowing what already burned us:
   files; cover: `profile.md` + `goals.md` + value-prop evidence), writer contracts
   read master-first with on-demand single-file reads.
 
+- **v3.0.0** — `cv-tailor` and `cover-letter-writer` each read `jd.md`, `overrides.md`
+  and the same KB slice separately (C5), and nothing checked the two documents against
+  each other, so a contradiction surfaced only as a verifier finding — a whole extra
+  round (C6) → merged into `application-writer`, which reads those inputs once and picks
+  the lead evidence once. The merged file is over the per-agent budget row and carries an
+  `audit-ok: C7` marker: 2,350 tokens in one agent against 3,097 across two is a system
+  reduction the row cannot see. The cover frame exemplar was removed the same release —
+  its verbatim shortcut was buying tokens on exactly the generic phrasing that makes a
+  letter swappable between companies.
+
 If a symptom matches a log entry, first check whether the fix's wording was weakened or
 worked around by a later edit.
 
@@ -237,12 +247,11 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   auto-invalidates; app-local sources are never carried over. (shrinks the verifier's
   judgment set across applications — C2/C6.)
 - **Master-CV subset check** (`master_diff.py` + ledger `--document` records, v2.5.0) —
-  with exemplar documents (`lifecycle/master_documents.md`: one verified master CV +
-  cover frame, built once at intake close), the writers subtract/edit instead of
-  regenerating and this script proves which cv.md lines are verbatim from a
-  hash-VERIFIED master; only CHANGED lines get judged. Turns per-application generation
-  and judgment into a delta against a one-time investment. (C5 for the writers' inputs,
-  C6 for the verifier's judgment set.)
+  with the exemplar (`lifecycle/master_documents.md`: one verified master CV, built once
+  at intake close), `application-writer` subtracts/edits instead of regenerating and this
+  script proves which cv.md lines are verbatim from a hash-VERIFIED master; only CHANGED
+  lines get judged. Turns per-application generation and judgment into a delta against a
+  one-time investment. (C5 for the writer's inputs, C6 for the verifier's judgment set.)
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully

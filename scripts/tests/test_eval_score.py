@@ -103,7 +103,7 @@ class TestMetricsFromStats(unittest.TestCase):
             "sidechain_tools": Counter({"Grep": 4}),
             "web_fetch": 1,
             "web_search": 2,
-            "subagents": Counter({"cv-tailor": 1, "application-verifier": 2}),
+            "subagents": Counter({"application-writer": 1, "application-verifier": 2}),
         }
         m = eval_score.metrics_from_stats(stats)
         self.assertEqual(m["web_fetch"], 1)

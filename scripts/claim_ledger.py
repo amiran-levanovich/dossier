@@ -208,7 +208,7 @@ def main(argv=None):
         "--document",
         action="append",
         default=[],
-        help="exemplar document (master_cv.md / cover_frame.md) to record/check by content hash",
+        help="exemplar document (master_cv.md) to record/check by content hash",
     )
     ap.add_argument(
         "--ledger",

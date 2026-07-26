@@ -17,15 +17,17 @@ Verification = JSON validates (`python3 -c 'import json…'`), markdown links re
 └── plugin.json              # the plugin manifest (name: dossier)
 .claude/
 ├── skills/                  # thin routers: job-intake · job-goals · job-apply
-└── agents/                  # cv-tailor · cover-letter-writer · application-verifier · interview-briefer
+└── agents/                  # application-writer · application-verifier · interview-briefer
 job_docs/
 ├── core/                    # job_workflow.md (kernel) · kb_schema.md · interview_protocol.md · tailoring_method.md · override_protocol.md · fit_check.md · orchestration.md · quickref.md
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
 ├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · master_documents
 └── templates/               # cv_template.md
+docs/adr/                    # architecture decisions — why the shape is the shape
 docs/agents/                 # per-repo config for the engineering skills: issue-tracker · triage-labels · domain
 scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · master_diff · session_metrics (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
+CONTEXT.md                   # the glossary — the vocabulary docs/skills/agents must all use
 ```
 
 ## Maintenance conventions
@@ -34,6 +36,7 @@ README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN
 - **Skills are thin pointers**, not content: a skill's `SKILL.md` detects context and routes to the authoritative `job_docs/` file. Put substance in the docs, not the skill. Path resolution: project-root copy first, else `../../../job_docs/…` relative to the skill dir.
 - **Versioning**: bump `version` in `plugin.json` on a meaningful change (breaking → major; currently 2.x). Bump with a targeted line edit — a JSON load/dump round-trip reformats the manifest. After the bump's PR merges, tag `main` as `v<version>` and publish a GitHub release; notes end with the consumer update commands (`/plugin marketplace update dossier`, `/plugin update dossier@dossier`). Pre-split history carries `v1.x` tags migrated from `job-workflow-v1.x`.
 - **Git**: feature branch → PR into `main` (never commit to `main`); [Conventional Commits](https://www.conventionalcommits.org), subject ≤ 60 chars.
+- **Use `CONTEXT.md`'s vocabulary.** It is the glossary, not a spec — when a doc, skill, or agent names a domain concept, use the term defined there and avoid the listed synonyms. A concept missing from it is a signal: either the language is being invented (reconsider) or the glossary has a gap. Decisions that a future reader would find surprising go in `docs/adr/`; contradicting an existing ADR is fine, but say so out loud rather than silently overriding it.
 - When editing a doc, update README.md and this layout if the structure changed; run the verification checks above before committing.
 
 ## Agent skills
