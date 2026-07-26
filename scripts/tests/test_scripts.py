@@ -296,7 +296,7 @@ class TestSessionMetrics(TmpMixin):
                 "cache_creation_input_tokens": 5, "cache_read_input_tokens": 200},
                 "content": [{"type": "tool_use", "name": "Read"},
                             {"type": "tool_use", "name": "WebSearch"},
-                            {"type": "tool_use", "name": "Task", "input": {"subagent_type": "cv-tailor"}}]}},
+                            {"type": "tool_use", "name": "Task", "input": {"subagent_type": "application-writer"}}]}},
             {"type": "assistant", "isSidechain": True, "message": {"usage": {"output_tokens": 10},
                 "content": [{"type": "tool_use", "name": "Grep"}]}},
             {"type": "user", "message": {}},
@@ -308,7 +308,7 @@ class TestSessionMetrics(TmpMixin):
         self.assertEqual(s["assistant_turns"], 1)
         self.assertEqual(s["sidechain_turns"], 1)
         self.assertEqual(s["web_search"], 1)
-        self.assertEqual(s["subagents"]["cv-tailor"], 1)
+        self.assertEqual(s["subagents"]["application-writer"], 1)
         self.assertEqual(s["tokens"]["input_tokens"], 100)
         self.assertEqual(s["malformed"], 1)
 

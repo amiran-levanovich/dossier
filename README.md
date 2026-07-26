@@ -26,7 +26,7 @@ CV ───▶ │ job-intake │ ──────▶ │ job-goals │ ─�
         (verified KB)        (search targets)     (CV + letter + traces)
 ```
 
-1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped. Closes by offering the **master-documents build** (below) — the one-time investment that makes every later application cheaper.
+1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped. Closes by offering the **master-CV build** (below) — the one-time investment that makes every later application cheaper.
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line:
 
@@ -46,11 +46,11 @@ posting (URL or pasted text)
    ▼
  company research ──▶ notes.md
    │
-   ├──────────────────┬─────────────────────┐   parallel sub-agents,
-   ▼                  ▼                     │   targeted KB files only
- cv-tailor        cover-letter-writer       │
- cv.md + trace    cover.md + trace          │
-   └──────────────────┴─────────────────────┘
+   ▼
+ application-writer ── one agent, targeted KB files only
+   │  cv.md + trace · cover.md + trace — both lead with the
+   │  same evidence; mandatory anti-slop pass over the letter
+   │  before either file is written
    ▼
  application-verifier ──▶ findings ──▶ fix ──▶ re-verify ─┐
    ▲                     (same agents continued, not      │
@@ -60,14 +60,19 @@ posting (URL or pasted text)
  present + tracker.csv row (fit score recorded)
 ```
 
-## The exemplars — master CV + cover frame
+## The exemplar — master CV
 
-Since v2.5.0 the writers don't have to regenerate from scratch. At intake's close (user's call), the pipeline builds two exemplars in the job folder and verifies them **once, at full rigor** (`lifecycle/master_documents.md`):
+Since v2.5.0 the writer doesn't have to regenerate the CV from scratch. At intake's close (user's call), the pipeline builds one exemplar in the job folder and verifies it **once, at full rigor** (`lifecycle/master_documents.md`):
 
-- **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, canonical spellings, fully traced. Per application, `cv-tailor` **subtracts and makes bounded edits** instead of writing: dropping/reordering verified bullets can't introduce claims, so it's free; anything reworded is CHANGED — `scripts/master_diff.py` proves the split mechanically — and gets judged normally.
-- **`cover_frame.md`** — the fixed letter scaffolding (salutation, pitch framing, logistics close, sign-off), verified once. The writer generates only the why-this-company paragraph and the value proposition per application.
+- **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, canonical spellings, fully traced. Per application, `application-writer` **subtracts and makes bounded edits** instead of writing: dropping/reordering verified bullets can't introduce claims, so it's free; anything reworded is CHANGED — `scripts/master_diff.py` proves the split mechanically — and gets judged normally.
 
-The claim ledger records each exemplar's content hash on CLEAN: edit a master and the verbatim shortcut switches off until it's re-verified. One master only, in the search's primary language. No exemplars → the pipeline runs exactly as before.
+**The cover letter has no exemplar, on purpose** (removed in v3.0.0). A CV is a superset you subtract from, so verbatim lines stay true across companies. A letter's stable parts are exactly what makes it swappable between companies — the defect `standards/cover_letter_rules.md` exists to prevent — and the anti-slop pass would rewrite reused phrasing anyway.
+
+The claim ledger records the exemplar's content hash on CLEAN: edit the master and the verbatim shortcut switches off until it's re-verified. One master only, in the search's primary language. No master → the pipeline runs exactly as before.
+
+## The anti-slop pass
+
+A letter that reads as machine-written is a defect, so `application-writer` runs a mandatory prose pass over the letter draft **before** writing `cover.md` and its trace — the traces then quote final text. It uses the `humanizer` skill when the session has one, and the checklist in `standards/cover_letter_rules.md` when it doesn't: **the pass never skips, only its instrument is optional.** The pass edits prose, never claims — a "humanized" letter that gained a claim is a traceability BLOCKER, not a style win. `application-verifier` checks the same anti-slop rules either way: a banned pattern is a MAJOR, a voice note is a MINOR. The CV is out of scope; its ATS exact-spelling and master-verbatim rules outrank prose polish.
 
 ## After you apply — the lifecycle
 
@@ -120,8 +125,7 @@ knowledge/
 
 | Agent                  | Role                                                                     |
 | :--------------------- | :----------------------------------------------------------------------- |
-| `cv-tailor`            | Tailored ATS-safe `cv.md` + `cv_trace.md` from selected KB files         |
-| `cover-letter-writer`  | 6-part, <300-word, company-specific `cover.md` + trace                   |
+| `application-writer`   | The whole package from selected KB files: ATS-safe `cv.md` + a 6-part, <300-word `cover.md`, both traced, both leading with the same evidence |
 | `application-verifier` | The gate: traceability, ATS, standards — CLEAN or findings; never edits  |
 | `interview-briefer`    | Stage-specific interview `prep.md` — claims-aware, gaps flagged honestly |
 
@@ -137,7 +141,7 @@ knowledge/
 | `core/fit_check.md`                          | The pre-application gate: liveness, constraints kill-switch, evidence-cited fit score, comp-reliability weighting, legitimacy tier |
 | `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
 | `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |
-| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `master_documents` (build/maintain the master CV + cover frame exemplars) |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `master_documents` (build/maintain the master CV exemplar) |
 | `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
 ## The scripts layer (`scripts/`)
@@ -148,7 +152,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | :-------------------- | :------------------------------------------------------------------------------------------- |
 | `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords vs the KB, bucketed COVERED / UNVERIFIED / GAP |
 | `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
-| `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records exemplar-document hashes (`--document`) |
+| `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records the master CV's hash (`--document`) |
 | `master_diff.py`      | Re-judging master-CV content — proves which cv.md lines are verbatim from a verified `master_cv.md`; only CHANGED lines need judgment |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
 | `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |

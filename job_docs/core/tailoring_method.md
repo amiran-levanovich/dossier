@@ -51,21 +51,21 @@ Start from what the fit gate found — its findings usually cover this step, so 
 
 Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Never pass the whole KB — targeted context makes tailoring sharp.
 
-If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writers' KB selection when any asset qualifies; leave it out when none does.
+If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writer's KB selection when any asset qualifies; leave it out when none does.
 
-`knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to the writer agents; their claims come from verified KB entries only.
+`knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to `application-writer`; its claims come from verified KB entries only.
 
-**With exemplar documents** (`master_cv.md` / `cover_frame.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md --document cover_frame.md`. For each document that checks VERIFIED, the selection above is **replaced, not supplemented**: `cv-tailor` gets `constraints.md` plus only the files backing planned edits, named from the `## Fit` block — often none, since the master already encodes the roles; `cover-letter-writer` gets `profile.md`, `goals.md`, and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies to both. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED document is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification.
+**With a master CV** (`master_cv.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md`. If it checks VERIFIED, the selection above is **replaced, not supplemented**: `application-writer` gets `constraints.md`, `profile.md`, `goals.md`, the files backing planned CV edits (named from the `## Fit` block — often none, since the master already encodes the roles) and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED master is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification. The letter has no exemplar.
 
-## Step 6 — Dispatch the writers (parallel)
+## Step 6 — Dispatch the writer
 
-Launch **`cv-tailor`** and **`cover-letter-writer`** in one message, each with: the `jd.md` path, the selected KB file paths, `notes.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies, `templates/cv_template.md` for the CV), the output paths, `overrides.md` if it exists — and the exemplar paths (`master_cv.md` + trace for the CV, `cover_frame.md` + trace for the letter) when they check VERIFIED. Each agent writes its document **plus a trace file** mapping every claim to its source.
+Launch **`application-writer`** with: the `jd.md` path, the selected KB file paths, `notes.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `templates/cv_template.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the four output paths, `overrides.md` if it exists — and `master_cv.md` + its trace when the master checks VERIFIED. One agent writes both documents **plus a trace file each**, so CV and letter lead with the same evidence. Before writing, it runs the **mandatory anti-slop pass** over the letter draft — the `humanizer` skill when the session has it, else the checklist in `standards/cover_letter_rules.md` — so the traces quote final text.
 
 ## Step 7 — The verifier gate (loop until CLEAN)
 
 First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`; fix dangling traces now. Then the **ledger pre-check** — `scripts/claim_ledger.py check` (same arguments) — which marks claims already judged in an earlier CLEAN round against unchanged KB sources PRE-VERIFIED.
 
-With exemplars, also run `scripts/master_diff.py cv.md --master master_cv.md` — VERBATIM lines from a VERIFIED master need no claim judgment; CHANGED lines are the tailoring and get judged in full.
+With a master CV, also run `scripts/master_diff.py cv.md --master master_cv.md` — VERBATIM lines from a VERIFIED master need no claim judgment; CHANGED lines are the tailoring and get judged in full.
 
 Then launch **`application-verifier`** with the same inputs plus both documents and trace files, **pasting the trace-check, ledger, master-diff, and Step-3 coverage reports into its prompt** — it consumes them and spends its budget judging the NEW claims. It returns CLEAN or severity-ordered findings.
 

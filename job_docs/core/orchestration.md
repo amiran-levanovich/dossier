@@ -16,9 +16,13 @@ This plugin assumes **nothing is installed**. The workflow runs end-to-end with 
 | `WebFetch`        | Pull the full text of a job posting from its URL (Step 1 of `core/tailoring_method.md`)                                                     |
 | `WebSearch`       | Fit-gate research — comp, legitimacy signals (2 queries default, 5 max, `core/fit_check.md`); company research before writing (Step 4); market checks  |
 | `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), override confirmation, judgment calls                                                   |
-| Agent tool        | Dispatch `cv-tailor`, `cover-letter-writer`, `application-verifier`, `interview-briefer`; `general-purpose` for multi-step company research |
+| Agent tool        | Dispatch `application-writer`, `application-verifier`, `interview-briefer`; `general-purpose` for multi-step company research |
 
 ## Advised skills
+
+### Anti-slop prose pass — `humanizer`
+- **Adds:** the instrument for the letter's mandatory anti-slop pass (`standards/cover_letter_rules.md`) — a maintained pattern catalogue `application-writer` runs over the draft before writing `cover.md`.
+- **Without it:** the writer applies the anti-slop checklist in `cover_letter_rules.md` by hand, and `application-verifier` checks the same rules either way. **The pass never skips — only its instrument is optional.**
 
 ### Document rendering — `pdf`, `docx` (Anthropic skills)
 - **Adds:** rendering `cv.md` / `cover.md` to a submittable file when a portal demands one. Only invoked on user request — see `standards/rendering.md` for options and market caveats.

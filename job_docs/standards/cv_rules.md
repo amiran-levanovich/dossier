@@ -1,6 +1,6 @@
 # CV Rules — writing standards for every generated CV
 
-Read together with `standards/ats_rules.md` (machine pass) and, for the German-speaking market, `standards/dach_conventions.md`. The skeleton is `templates/cv_template.md`. These rules bind the `cv-tailor` agent and any manual CV edit; the `application-verifier` checks against them.
+Read together with `standards/ats_rules.md` (machine pass) and, for the German-speaking market, `standards/dach_conventions.md`. The skeleton is `templates/cv_template.md`. These rules bind the `application-writer` agent and any manual CV edit; the `application-verifier` checks against them.
 
 ## Substance
 

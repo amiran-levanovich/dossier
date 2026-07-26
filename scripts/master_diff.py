@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Master-CV subset check — prove which cv.md lines are verbatim from master.
 
-With a verified `master_cv.md` (see lifecycle/master_documents.md), cv-tailor's
+With a verified `master_cv.md` (see lifecycle/master_documents.md), application-writer's
 contract is subtract + bounded edits: dropping and reordering master bullets is
 always safe (no new claims can appear), while anything reworded is new content
 that must be judged. This script draws that line mechanically:
