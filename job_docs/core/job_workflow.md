@@ -69,7 +69,7 @@ Gather context silently before responding; never ask for what a file can answer.
 There is no commit hook and nothing deterministic to check. The bar is held by three mechanisms, all defined in `core/tailoring_method.md`:
 
 1. **Traceability.** Every claim in a generated CV or cover letter maps to a knowledge-base entry (or an explicit user-directed override) via a trace file. Untraceable claims are defects.
-2. **The verifier gate.** The `application-verifier` agent reviews every application package with fresh eyes — traceability, ATS compliance, standards — and the fix→re-verify loop runs until it returns CLEAN. Nothing ships on a round with open findings.
+2. **The verifier gate.** The `application-verifier` agent reviews every application package with fresh eyes — traceability, ATS compliance, standards — and the fix→re-verify loop runs until it returns CLEAN, capped at three rounds. Nothing ships on a round with open findings; a package still failing at the cap has a structural cause and goes to the user with the findings, not around them.
 3. **Verified knowledge only.** Knowledge-base entries seeded from a CV start as `unverified` claims; only interview-confirmed entries feed tailoring (see `core/kb_schema.md`).
 
 ---

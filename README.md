@@ -54,7 +54,9 @@ posting (URL or pasted text)
    ▼
  application-verifier ──▶ findings ──▶ fix ──▶ re-verify ─┐
    ▲                     (same agents continued, not      │
-   └──────────────────────respawned)◀─────────────────────┘
+   │                      respawned; 3 rounds max —       │
+   │                      then the findings go to you)    │
+   └────────────────────────────◀─────────────────────────┘
    │ CLEAN
    ▼
  present + tracker.csv row (fit score recorded)

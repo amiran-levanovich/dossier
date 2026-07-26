@@ -42,6 +42,10 @@ _Avoid_: main selling point, key achievement
 `application-verifier`. It returns CLEAN or severity-ordered findings and never edits. Nothing reaches the user on a round with open BLOCKER or MAJOR findings.
 _Avoid_: review step, QA, checker
 
+**Round cap**:
+Three verifier rounds per application. Findings still open at the cap have a structural cause — a knowledge-base gap, a claim needing an override, a standards conflict — so the loop stops and the findings go to the user rather than into a fourth round.
+_Avoid_: retry limit, max attempts
+
 ## The maintenance layer
 
 **Advised skill**:
