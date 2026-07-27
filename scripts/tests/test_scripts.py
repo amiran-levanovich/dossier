@@ -7,6 +7,8 @@ scripts + their tests, not a third-party test framework).
 
 import csv
 import io
+import json
+import re
 import sys
 import tempfile
 import unittest
@@ -19,6 +21,7 @@ import _common  # noqa: E402
 import ats_coverage  # noqa: E402
 import claim_ledger  # noqa: E402
 import master_diff  # noqa: E402
+import master_slots  # noqa: E402
 import session_metrics  # noqa: E402
 import tracker  # noqa: E402
 import trace_check  # noqa: E402
@@ -187,6 +190,16 @@ class TestTraceCheck(TmpMixin):
         _, ok, findings = trace_check.check_file(trace, kb, trace.parent)
         self.assertEqual(ok, 0)
         self.assertEqual(findings[0][1], "FILE")
+
+    def test_slot_id_prefix_stripped_from_claim(self):
+        # Boundary guard for ADR-0003: the leading `[slot-id]` is addressing and
+        # never reaches the claim, but brackets inside the quoted claim itself
+        # are content and must survive untouched.
+        stamped = list(trace_check.parse_trace_file('- [b-a3f91c] "led work" → skills.md#databases\n'))
+        plain = list(trace_check.parse_trace_file('- "led work" → skills.md#databases\n'))
+        self.assertEqual(stamped[0][0].claim, plain[0][0].claim)
+        kept = list(trace_check.parse_trace_file('- "[legacy] billing rewrite" → skills.md#databases\n'))
+        self.assertEqual(kept[0][0].claim, '"[legacy] billing rewrite"')
 
     def test_malformed_line(self):
         kb = self._kb()
@@ -479,6 +492,27 @@ class TestClaimLedger(TmpMixin):
         self.assertEqual(rc, 0)
         self.assertTrue((kb.parent / ".claim_ledger.json").is_file())
 
+    def test_slot_id_prefix_does_not_invalidate_the_ledger(self):
+        # A stamped exemplar trace (ADR-0003) carries a `[slot-id]` prefix on
+        # every line. The id addresses the slot; it is not part of the claim, so
+        # keys must be identical to the unstamped file's. Get this wrong and
+        # every entry in every user's ledger silently stops matching.
+        kb = self._kb()
+        ledger = self.root / "ledger.json"
+        plain = self.write(
+            "app/cv_trace.md",
+            '- "led work" → roles/acme.md#achievements\n- "db" → skills.md#databases\n',
+        )
+        self._run("record", plain, kb, ledger)
+        stamped = self.write(
+            "master/master_cv_trace.md",
+            '- [b-a3f91c] "led work" → roles/acme.md#achievements\n'
+            '- [b-7c02de] "db" → skills.md#databases\n',
+        )
+        _, out = self._run("check", stamped, kb, ledger)
+        self.assertIn("pre-verified: 2", out)
+        self.assertIn("new: 0", out)
+
     def test_missing_kb_dir_is_an_io_error(self):
         trace = self.write("app/cv_trace.md", '- "x" → skills.md#databases\n')
         buf = io.StringIO()
@@ -647,6 +681,447 @@ class TestClaimLedgerDocuments(TmpMixin):
         self.assertEqual(rc, 0)
         self.assertIn("pre-verified: 1", out)
         self.assertIn("not recorded", out)
+
+
+class TestMasterSlots(TmpMixin):
+    """Contract (ADR-0003): the exemplar decomposes into slots — blocks that
+    carry their heading, dates and descriptor as one atomic unit, and bullets
+    scoped inside a block so a bullet can never be assembled under another
+    employer. Ids hash the slot's own text, so editing one slot renames only
+    that slot."""
+
+    MASTER = (
+        "# Jane Smith\n"
+        "Senior Backend Engineer\n\n"
+        "Berlin, Germany · jane@example.com\n\n"
+        "## Summary\n"
+        "Ten years building payment systems.\n\n"
+        "## Experience\n\n"
+        "### Senior Engineer — Acme, Berlin\n"
+        "06/2021 – present\n"
+        "*B2B SaaS for hotel operations, ~80 people*\n\n"
+        "- Built the billing pipeline serving 2M users\n"
+        "- Cut p95 latency from 400ms to 90ms\n\n"
+        "### Engineer — Beta, Munich\n"
+        "01/2018 – 05/2021\n"
+        "*Logistics marketplace, ~200 people*\n\n"
+        "- Contributed to the Kafka migration\n\n"
+        "## Skills\n"
+        "**Backend:** Ruby, Rails, PostgreSQL\n"
+        "**Infra:** Docker, Kubernetes\n"
+    )
+
+    def _extract(self, master_rel="master_cv.md", text=None):
+        master = self.write(master_rel, self.MASTER if text is None else text)
+        out_path = self.root / "slots.json"
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["extract", str(master), "--out", str(out_path)])
+        self.assertEqual(rc, 0, buf.getvalue())
+        import json
+        return json.loads(out_path.read_text(encoding="utf-8"))
+
+    def test_experience_block_is_atomic_with_its_heading_dates_descriptor(self):
+        smap = self._extract()
+        exp = [b for b in smap["blocks"] if b["kind"] == "experience"]
+        self.assertEqual(len(exp), 2)
+        self.assertEqual(exp[0]["company"], "Acme")
+        self.assertEqual(exp[0]["role"], "Senior Engineer")
+        self.assertEqual(exp[0]["dates"], "06/2021 – present")
+        self.assertEqual(exp[0]["descriptor"], "*B2B SaaS for hotel operations, ~80 people*")
+
+    def test_bullets_are_scoped_inside_their_block(self):
+        smap = self._extract()
+        exp = [b for b in smap["blocks"] if b["kind"] == "experience"]
+        self.assertEqual([b["text"] for b in exp[0]["bullets"]],
+                         ["Built the billing pipeline serving 2M users",
+                          "Cut p95 latency from 400ms to 90ms"])
+        self.assertEqual([b["text"] for b in exp[1]["bullets"]],
+                         ["Contributed to the Kafka migration"])
+        # Every bullet id is reachable only through its parent block.
+        top_level_ids = {b["id"] for b in smap["blocks"]}
+        for block in exp:
+            for bullet in block["bullets"]:
+                self.assertNotIn(bullet["id"], top_level_ids)
+
+    def test_editing_one_bullet_renames_only_that_slot(self):
+        before = self._extract()
+        edited = self.MASTER.replace(
+            "- Cut p95 latency from 400ms to 90ms",
+            "- Cut p95 latency from 400ms to 75ms",
+        )
+        after = self._extract("master2.md", edited)
+
+        def ids(smap):
+            out = {}
+            for block in smap["blocks"]:
+                out[block["id"]] = block.get("text", block["kind"])
+                for bullet in block.get("bullets", []):
+                    out[bullet["id"]] = bullet["text"]
+            return out
+
+        before_ids, after_ids = ids(before), ids(after)
+        gone = set(before_ids) - set(after_ids)
+        added = set(after_ids) - set(before_ids)
+        self.assertEqual(len(gone), 1)
+        self.assertEqual(len(added), 1)
+        self.assertEqual(before_ids[gone.pop()], "Cut p95 latency from 400ms to 90ms")
+        self.assertEqual(after_ids[added.pop()], "Cut p95 latency from 400ms to 75ms")
+
+    def test_inserting_a_bullet_leaves_existing_ids_untouched(self):
+        # The whole reason ids hash text instead of position (ADR-0003).
+        before = self._extract()
+        inserted = self.MASTER.replace(
+            "- Built the billing pipeline serving 2M users",
+            "- Led the platform team\n- Built the billing pipeline serving 2M users",
+        )
+        after = self._extract("master3.md", inserted)
+        before_bullets = {b["id"] for blk in before["blocks"] for b in blk.get("bullets", [])}
+        after_bullets = {b["id"] for blk in after["blocks"] for b in blk.get("bullets", [])}
+        self.assertTrue(before_bullets < after_bullets)
+        self.assertEqual(len(after_bullets - before_bullets), 1)
+
+    TRACE = (
+        '- "ten years on payment systems" → roles/acme.md#context\n'
+        '- "billing pipeline for 2M users" → roles/acme.md#achievements\n'
+        '- "cut p95 latency" → roles/acme.md#achievements\n'
+        '- "kafka migration" → roles/beta.md#achievements\n'
+    )
+
+    def _stamp(self, trace_text=None, master_text=None):
+        master = self.write("master_cv.md", self.MASTER if master_text is None else master_text)
+        trace = self.write("master_cv_trace.md", self.TRACE if trace_text is None else trace_text)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["stamp", str(trace), "--master", str(master)])
+        return rc, buf.getvalue(), trace, master
+
+    def test_stamp_writes_ids_in_place_without_touching_the_claims(self):
+        rc, out, trace, master = self._stamp()
+        self.assertEqual(rc, 0, out)
+        lines = [ln for ln in trace.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        self.assertEqual(len(lines), 4)
+        for line in lines:
+            self.assertRegex(line, r"^- \[[a-z]+-[0-9a-f]{6}\] \"")
+        # Claims and targets survive verbatim — trace_check must see no change.
+        stripped = [trace_check.SLOT_ID_PREFIX_RE.sub("", ln[2:].strip(), count=1) for ln in lines]
+        self.assertEqual(stripped, [ln[2:].strip() for ln in self.TRACE.splitlines() if ln.strip()])
+
+    def test_stamp_is_idempotent_and_leaves_the_exemplar_untouched(self):
+        rc, _, trace, master = self._stamp()
+        self.assertEqual(rc, 0)
+        first, master_before = trace.read_text(encoding="utf-8"), master.read_text(encoding="utf-8")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["stamp", str(trace), "--master", str(master)])
+        self.assertEqual(rc, 0, buf.getvalue())
+        self.assertEqual(trace.read_text(encoding="utf-8"), first)
+        self.assertEqual(master.read_text(encoding="utf-8"), master_before)
+
+    def test_stamp_pairs_bullets_with_the_ids_from_the_slot_map(self):
+        rc, _, trace, master = self._stamp()
+        self.assertEqual(rc, 0)
+        smap = json.loads(  # ids the stamped trace must agree with
+            master_slots.json.dumps(master_slots.build_slot_map(
+                master.name, master.read_text(encoding="utf-8"))))
+        by_text = {b["text"]: b["id"]
+                   for blk in smap["blocks"] for b in blk.get("bullets", [])}
+        stamped = {claim: sid for sid, claim in re.findall(
+            r"^- \[([^\]]+)\] (\".*?\")", trace.read_text(encoding="utf-8"), re.M)}
+        self.assertEqual(stamped['"billing pipeline for 2M users"'],
+                         by_text["Built the billing pipeline serving 2M users"])
+        self.assertEqual(stamped['"kafka migration"'],
+                         by_text["Contributed to the Kafka migration"])
+
+    def test_stamp_refuses_a_trace_line_that_matches_no_slot(self):
+        # A claim no slot supports means the trace and the exemplar disagree —
+        # stamping ids onto that is how a claim gets bound to the wrong source.
+        bad = self.TRACE + '- "shipped the mobile app" → roles/acme.md#achievements\n'
+        rc, out, trace, _ = self._stamp(trace_text=bad)
+        self.assertEqual(rc, 1)
+        self.assertIn("shipped the mobile app", out)
+        self.assertEqual(trace.read_text(encoding="utf-8"), bad)
+
+    def test_stamp_refuses_an_out_of_order_trace(self):
+        lines = [ln for ln in self.TRACE.splitlines() if ln.strip()]
+        swapped = "\n".join([lines[0], lines[3], lines[1], lines[2]]) + "\n"
+        rc, out, trace, _ = self._stamp(trace_text=swapped)
+        self.assertEqual(rc, 1)
+        self.assertEqual(trace.read_text(encoding="utf-8"), swapped)
+
+    def _assemble(self, plan):
+        """Stamp the exemplar, then assemble an edit plan against it."""
+        master = self.write("master_cv.md", self.MASTER)
+        trace = self.write("master_cv_trace.md", self.TRACE)
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(master_slots.main(["stamp", str(trace), "--master", str(master)]), 0)
+        plan_path = self.root / "plan.json"
+        plan_path.write_text(json.dumps(plan), encoding="utf-8")
+        out_dir = self.root / "app"
+        out_dir.mkdir(exist_ok=True)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["assemble", str(plan_path), "--master", str(master),
+                                    "--trace", str(trace), "--out-dir", str(out_dir)])
+        return rc, buf.getvalue(), out_dir
+
+    def _ids(self):
+        smap = master_slots.build_slot_map("master_cv.md", self.MASTER)
+        blocks = {b["kind"]: b for b in smap["blocks"]}
+        exp = [b for b in smap["blocks"] if b["kind"] == "experience"]
+        return {
+            "headline": blocks["headline"]["id"],
+            "summary": blocks["summary"]["id"],
+            "acme": exp[0]["id"],
+            "beta": exp[1]["id"],
+            "billing": exp[0]["bullets"][0]["id"],
+            "latency": exp[0]["bullets"][1]["id"],
+            "kafka": exp[1]["bullets"][0]["id"],
+            "skills": [b["id"] for b in smap["blocks"] if b["kind"] == "skills"],
+        }
+
+    def test_assemble_keeps_slots_byte_verbatim_in_plan_order(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [
+                {"id": i["headline"]}, {"id": i["summary"]},
+                # latency before billing — reordering is free and lossless
+                {"id": i["acme"], "bullets": [i["latency"], i["billing"]]},
+                {"id": i["skills"][0]},
+            ],
+        })
+        self.assertEqual(rc, 0, out)
+        cv = (out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("- Cut p95 latency from 400ms to 90ms", cv)
+        self.assertIn("- Built the billing pipeline serving 2M users", cv)
+        self.assertLess(cv.index("Cut p95"), cv.index("Built the billing"))
+        self.assertIn("### Senior Engineer — Acme, Berlin", cv)
+        self.assertIn("*B2B SaaS for hotel operations, ~80 people*", cv)
+        # Beta was not ordered, so it is gone entirely — heading and bullet.
+        self.assertNotIn("Beta", cv)
+        self.assertNotIn("Kafka", cv)
+
+    def test_assemble_inherits_trace_lines_by_id_for_kept_slots(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"]]}],
+        })
+        self.assertEqual(rc, 0, out)
+        cv_trace = (out_dir / "cv_trace.md").read_text(encoding="utf-8")
+        # The claim comes from the exemplar's trace, and the id does NOT ride
+        # along into the application's trace file.
+        self.assertIn('- "billing pipeline for 2M users" → roles/acme.md#achievements', cv_trace)
+        self.assertNotIn("[", cv_trace)
+
+    def test_assemble_applies_patches_and_new_slots_with_their_own_traces(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"], "new-1"]}],
+            "patch": [{"id": i["billing"], "text": "Built the billing pipeline serving 2M users on Rails",
+                       "trace": "roles/acme.md#achievements"}],
+            "new": [{"id": "new-1", "text": "Owned the payment reconciliation service",
+                     "trace": "roles/acme.md#achievements"}],
+        })
+        self.assertEqual(rc, 0, out)
+        cv = (out_dir / "cv.md").read_text(encoding="utf-8")
+        cv_trace = (out_dir / "cv_trace.md").read_text(encoding="utf-8")
+        self.assertIn("- Built the billing pipeline serving 2M users on Rails", cv)
+        self.assertNotIn("- Built the billing pipeline serving 2M users\n", cv)
+        self.assertIn("- Owned the payment reconciliation service", cv)
+        self.assertIn('- "Built the billing pipeline serving 2M users on Rails" → roles/acme.md#achievements', cv_trace)
+        self.assertIn('- "Owned the payment reconciliation service" → roles/acme.md#achievements', cv_trace)
+
+    def test_assemble_reports_counts_and_length(self):
+        i = self._ids()
+        rc, out, _ = self._assemble({
+            "order": [{"id": i["summary"]}, {"id": i["acme"], "bullets": [i["billing"]]}],
+            "patch": [{"id": i["summary"], "text": "Ten years building payment systems, now on Rails.",
+                       "trace": "roles/acme.md#context"}],
+        })
+        self.assertEqual(rc, 0, out)
+        self.assertIn("kept: 2", out)
+        self.assertIn("patched: 1", out)
+        self.assertIn("new: 0", out)
+        # 9 slots in the exemplar (6 blocks + 3 bullets); summary, acme and the
+        # billing bullet survive, so 6 are dropped.
+        self.assertIn("dropped: 6", out)
+        self.assertRegex(out, r"lines: \d+\s+words: \d+\s+est\. pages: ~[\d.]+")
+
+    def test_assemble_refuses_a_bullet_from_another_block(self):
+        # The safety property ADR-0003 is built on: a bullet must be
+        # unrepresentable outside its own employer's block, because a trace maps
+        # claim → KB source and would never catch the misattribution.
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["kafka"]]}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("does not belong to", out)
+        self._assert_no_output(out_dir)
+
+    def test_assemble_refuses_a_new_slot_that_is_never_placed(self):
+        # A new slot only exists as a bullet inside a block. One that is never
+        # placed would get a trace line for content absent from cv.md.
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"]]}, {"id": "new-blk"}],
+            "new": [{"id": "new-blk", "text": "**Infra:** Docker", "trace": "skills.md#infra"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("new-blk", out)
+        self._assert_no_output(out_dir)
+
+    def test_extract_carries_the_inherited_trace_target_inline(self):
+        # application-writer is told the slot map carries each slot's trace
+        # target; without it the writer cannot reuse a source for a patch.
+        master = self.write("master_cv.md", self.MASTER)
+        trace = self.write("master_cv_trace.md", self.TRACE)
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(master_slots.main(["stamp", str(trace), "--master", str(master)]), 0)
+            out_path = self.root / "slots.json"
+            self.assertEqual(master_slots.main(
+                ["extract", str(master), "--trace", str(trace), "--out", str(out_path)]), 0)
+        smap = json.loads(out_path.read_text(encoding="utf-8"))
+        exp = [b for b in smap["blocks"] if b["kind"] == "experience"]
+        self.assertEqual(exp[0]["bullets"][0]["trace"], "roles/acme.md#achievements")
+        self.assertEqual(exp[1]["bullets"][0]["trace"], "roles/beta.md#achievements")
+
+    def test_assemble_requires_a_trace_file(self):
+        # Without it every kept slot would silently lose its trace line while
+        # cv.md still asserts the claim.
+        i = self._ids()
+        master = self.write("master_cv.md", self.MASTER)
+        plan = self.root / "p.json"
+        plan.write_text(json.dumps({"order": [{"id": i["acme"], "bullets": [i["billing"]]}]}),
+                        encoding="utf-8")
+        with self.assertRaises(SystemExit):
+            with redirect_stdout(io.StringIO()):
+                master_slots.main(["assemble", str(plan), "--master", str(master),
+                                   "--out-dir", str(self.root / "app")])
+
+    def test_ascii_arrow_trace_lines_are_handled(self):
+        # _common.TRACE_ARROWS exists so a hand-edited trace still parses.
+        i = self._ids()
+        master = self.write("master_cv.md", self.MASTER)
+        trace = self.write("master_cv_trace.md", self.TRACE.replace("→", "->"))
+        with redirect_stdout(io.StringIO()):
+            self.assertEqual(master_slots.main(["stamp", str(trace), "--master", str(master)]), 0)
+        plan = self.root / "p.json"
+        plan.write_text(json.dumps({
+            "order": [{"id": i["acme"], "bullets": [i["billing"]]}],
+            "patch": [{"id": i["billing"], "text": "Built the billing pipeline for 2M users"}],
+        }), encoding="utf-8")
+        out_dir = self.root / "app"
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["assemble", str(plan), "--master", str(master),
+                                    "--trace", str(trace), "--out-dir", str(out_dir)])
+        self.assertEqual(rc, 0, buf.getvalue())
+        self.assertEqual(
+            (out_dir / "cv_trace.md").read_text(encoding="utf-8").strip(),
+            '- "Built the billing pipeline for 2M users" → roles/acme.md#achievements')
+
+    def _assert_no_output(self, out_dir):
+        self.assertFalse((out_dir / "cv.md").exists(), "a partial cv.md reached disk")
+        self.assertFalse((out_dir / "cv_trace.md").exists())
+
+    def test_assemble_refuses_an_unknown_slot_id(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"], "b-deadbe"]}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("unknown slot id", out)
+        self.assertIn("b-deadbe", out)
+        self._assert_no_output(out_dir)
+
+    def test_assemble_refuses_a_duplicate_slot_id(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"], i["billing"]]}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("duplicate slot id", out)
+        self._assert_no_output(out_dir)
+
+    def test_assemble_refuses_an_id_in_both_order_and_drop(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"]]}],
+            "drop": [i["billing"]],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("both order[] and drop[]", out)
+        self._assert_no_output(out_dir)
+
+    def test_assemble_refuses_a_new_slot_without_a_trace_target(self):
+        # An untraced claim is the one thing that must never reach cv.md — the
+        # verifier would have nothing to judge it against.
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": ["new-1"]}],
+            "new": [{"id": "new-1", "text": "Shipped the mobile app"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("no trace target", out)
+        self._assert_no_output(out_dir)
+
+    def test_assemble_reports_every_fault_at_once(self):
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"], i["billing"], "b-deadbe"]}],
+            "new": [{"id": "new-1", "text": "Shipped the mobile app"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("3 fault(s)", out)
+        self._assert_no_output(out_dir)
+
+    def test_assembled_cv_is_pure_verbatim_under_master_diff(self):
+        # ADR-0003: master_diff stops being discovery and becomes the
+        # assembler's self-test. A plan that only keeps, drops and reorders must
+        # come back 100% verbatim — anything else means the assembler altered
+        # bytes it was supposed to copy.
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [
+                {"id": i["headline"]}, {"id": i["summary"]},
+                {"id": i["acme"], "bullets": [i["latency"], i["billing"]]},
+                {"id": i["beta"], "bullets": [i["kafka"]]},
+                {"id": i["skills"][0]},
+            ],
+        })
+        self.assertEqual(rc, 0, out)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_diff.main([str(out_dir / "cv.md"), "--master", str(self.root / "master_cv.md")])
+        self.assertEqual(rc, 0)
+        self.assertIn("pure subtract/reorder of the master", buf.getvalue())
+
+    def test_patched_text_shows_up_as_changed_under_master_diff(self):
+        # The complement: a reworded bullet must NOT hide inside the verbatim
+        # count — it is new content and the verifier has to judge it.
+        i = self._ids()
+        rc, out, out_dir = self._assemble({
+            "order": [{"id": i["acme"], "bullets": [i["billing"]]}],
+            "patch": [{"id": i["billing"], "text": "Built the billing pipeline serving 3M users",
+                       "trace": "roles/acme.md#achievements"}],
+        })
+        self.assertEqual(rc, 0, out)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            master_diff.main([str(out_dir / "cv.md"), "--master", str(self.root / "master_cv.md")])
+        self.assertIn("[CHANGED]", buf.getvalue())
+        self.assertIn("3M users", buf.getvalue())
+
+    def test_headline_summary_and_skills_are_slots(self):
+        smap = self._extract()
+        kinds = {b["kind"] for b in smap["blocks"]}
+        self.assertIn("headline", kinds)
+        self.assertIn("summary", kinds)
+        skills = [b for b in smap["blocks"] if b["kind"] == "skills"]
+        self.assertEqual([b["text"] for b in skills],
+                         ["**Backend:** Ruby, Rails, PostgreSQL",
+                          "**Infra:** Docker, Kubernetes"])
 
 
 if __name__ == "__main__":

@@ -30,6 +30,18 @@ _Avoid_: source map, citations, provenance file
 A document built once, verified at full rigor, and reused across applications — `master_cv.md` and nothing else. The cover letter has no exemplar (ADR-0001).
 _Avoid_: master document, template, boilerplate
 
+**Slot**:
+An addressable unit of the exemplar — a block (one role, project, education, or skills entry, inseparable from its heading and dates) or a bullet inside one. Identified by a hash of its own text.
+_Avoid_: anchor, field, placeholder, section
+
+**Slot map**:
+The exemplar's slots with their ids, text, and trace targets. Takes the place of the exemplar and its trace file among the writer's inputs.
+_Avoid_: extract, manifest, index
+
+**Edit plan**:
+What the writer emits in place of a CV when an exemplar is verified — slot order, patched text, new slots, drops. An intermediate, never part of the application package.
+_Avoid_: manifest, patch set, diff
+
 **Anti-slop pass**:
 The mandatory prose pass over the letter draft, before `cover.md` and its trace are written. Uses the `humanizer` skill when the session has it, the checklist in `standards/cover_letter_rules.md` when it doesn't. The pass never skips; only its instrument is optional.
 _Avoid_: humanizing, polish, style pass

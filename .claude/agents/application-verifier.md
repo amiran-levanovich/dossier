@@ -18,7 +18,7 @@ re-verify until you return CLEAN; do not soften findings to end the loop.
 - **Standards paths** — `cv_rules.md`, `ats_rules.md`, `cover_letter_rules.md`;
   plus `dach_conventions.md` when the market applies
 - **Script reports** (optional) — pasted `trace_check`, `claim_ledger check`,
-  `master_diff`, and `ats_coverage` output; consume, never redo their bookkeeping
+  `master_diff`, `master_slots`, `ats_coverage` output; consume, never redo
 
 If any input is missing, name it and stop — never verify against guessed files.
 

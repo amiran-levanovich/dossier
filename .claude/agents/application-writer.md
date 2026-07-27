@@ -27,8 +27,9 @@ experience, skills, metrics, or credentials they don't contain.
   `cover_letter_rules.md`; plus `dach_conventions.md` when the market applies
 - **Output paths** — for `cv.md`, `cv_trace.md`, `cover.md`, `cover_trace.md`
 - **overrides.md path** — only if user-directed claims exist for this application
-- **Master paths** (optional) — `master_cv.md` + `master_cv_trace.md` when a verified
-  master exists
+- **Slot map path** (optional) — `slots.json` when a verified exemplar exists. It
+  carries every slot's id, text and trace target; the exemplar and its trace are
+  deliberately *not* passed, because the slot map already holds what you need
 - **Language** — the output language (from jd.md)
 
 If any input is missing, name it and stop — never substitute your own assumptions.
@@ -72,16 +73,37 @@ If any input is missing, name it and stop — never substitute your own assumpti
    note. Structural text (headings, profile.md contact lines) needs no trace line.
 8. Run the self-check below, fix what it catches, then write all four files.
 
-## With a master CV: subtract + bounded edits
+## With a slot map: emit an edit plan, not a CV
 
-When the inputs include a verified `master_cv.md`, edit it — don't regenerate — applying
-the same select/reorder/mirror tailoring. Any line not verbatim from the master is new
-content judged in full, so keep edits bounded: never a strength upgrade, never a claim the
-KB can't back. Kept lines copy their `master_cv_trace.md` trace lines unchanged; edited or
-new lines get a fresh one. Provided KB files back your edits, the master covers the rest;
-if an edit needs a source no provided file covers, follow the master trace's citation and
-read **just that one file** — never sweep the KB in master mode. The letter has no
-exemplar: it is written fresh for every company.
+When the inputs include `slots.json`, **do not write `cv.md` or `cv_trace.md`** — write
+`plan.json` instead and the pipeline assembles both. Apply the same select/reorder/mirror
+tailoring, expressed as slot ids:
+
+```json
+{
+  "order": [{"id": "head-1db476"}, {"id": "sum-c52c44"},
+            {"id": "exp-f53151", "bullets": ["b-f6df6e", "b-465917", "new-1"]}],
+  "patch": [{"id": "sum-c52c44", "text": "…", "trace": "roles/acme.md#context"}],
+  "new":   [{"id": "new-1", "text": "…", "trace": "roles/acme.md#achievements"}],
+  "drop":  ["exp-f07956"]
+}
+```
+
+- **`order`** is the whole document: blocks in output order, each block's surviving bullets
+  in output order. Anything you don't list is cut. Reordering and dropping are free — they
+  can't introduce a claim — so lead with what this posting cares about.
+- **`patch`** reworded slots, **`new`** genuinely new ones. Both are content judged in full,
+  so keep them bounded: never a strength upgrade, never a claim the KB can't back. Both
+  need a `trace` target; a new slot without one is rejected outright.
+- Copy ids **exactly**. An unknown or duplicated id, an id in both `order` and `drop`, or a
+  new slot missing its trace fails assembly and costs a repair round.
+- The slot map's inline `trace` is the kept slot's own; reuse it for a patch only if the
+  reworded claim is still what that source supports. If an edit needs a source no provided
+  file covers, follow that citation and read **just that one file** — never sweep the KB.
+- Headline and summary are tailored on every application, so they are normally `patch`.
+
+The letter is unaffected: it has no exemplar and is written fresh for every company, so
+`cover.md` and `cover_trace.md` are always real files you write.
 
 ## Self-check (before writing the final files)
 
