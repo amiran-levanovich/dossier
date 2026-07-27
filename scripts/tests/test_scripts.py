@@ -1021,6 +1021,49 @@ class TestMasterSlots(TmpMixin):
             (out_dir / "cv_trace.md").read_text(encoding="utf-8").strip(),
             '- "Built the billing pipeline for 2M users" → roles/acme.md#achievements')
 
+    # An exemplar the parser cannot decompose is the dangerous case: it yields an
+    # empty slot map, and every plan guard passes because the plan is fine — it is
+    # the master that was never understood. Real exemplars predate cv_template.md.
+    HEADINGLESS = (
+        "**Jane Smith**\n\n"
+        "Berlin, Germany | jane@example.com\n\n"
+        "---\n\n"
+        "Senior Engineer, Acme (06/2021 - present)\n"
+        "- Built the billing pipeline serving 2M users\n"
+    )
+
+    def test_extract_refuses_an_exemplar_it_cannot_decompose(self):
+        master = self.write("master_cv.md", self.HEADINGLESS)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["extract", str(master), "--out", str(self.root / "s.json")])
+        self.assertEqual(rc, 1)
+        self.assertFalse((self.root / "s.json").exists())
+
+    def test_assemble_refuses_an_exemplar_it_cannot_decompose(self):
+        master = self.write("master_cv.md", self.HEADINGLESS)
+        trace = self.write("master_cv_trace.md", '- "billing pipeline" → roles/acme.md#achievements\n')
+        plan = self.root / "p.json"
+        plan.write_text(json.dumps({"order": []}), encoding="utf-8")
+        out_dir = self.root / "app"
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["assemble", str(plan), "--master", str(master),
+                                    "--trace", str(trace), "--out-dir", str(out_dir)])
+        self.assertEqual(rc, 1)
+        self.assertIn("no slots", buf.getvalue())
+        self._assert_no_output(out_dir)
+
+    def test_stamp_refuses_an_exemplar_it_cannot_decompose(self):
+        master = self.write("master_cv.md", self.HEADINGLESS)
+        trace = self.write("master_cv_trace.md", '- "billing pipeline" → roles/acme.md#achievements\n')
+        before = trace.read_text(encoding="utf-8")
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = master_slots.main(["stamp", str(trace), "--master", str(master)])
+        self.assertEqual(rc, 1)
+        self.assertEqual(trace.read_text(encoding="utf-8"), before)
+
     def _assert_no_output(self, out_dir):
         self.assertFalse((out_dir / "cv.md").exists(), "a partial cv.md reached disk")
         self.assertFalse((out_dir / "cv_trace.md").exists())

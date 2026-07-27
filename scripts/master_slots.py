@@ -252,6 +252,9 @@ def cmd_stamp(args) -> int:
             return 2
 
     smap = build_slot_map(master.name, _common.read_text(master))
+    if not has_slots(smap):
+        print(f"PAIRING {trace_path} → {master}\n  ERROR: {UNSUPPORTED}")
+        return 1
     trace_text = _common.read_text(trace_path)
     pairs, error = pair_trace_to_slots(trace_text, smap)
 
@@ -287,6 +290,9 @@ def cmd_extract(args) -> int:
         print(f"error: exemplar not found: {master}", file=sys.stderr)
         return 2
     smap = build_slot_map(master.name, _common.read_text(master))
+    if not has_slots(smap):
+        print(f"SLOT-MAP {master}\n  ERROR: {UNSUPPORTED}", file=sys.stderr)
+        return 1
     if args.trace:
         bodies = stamped_trace_bodies(_common.read_text(args.trace))
         for slot in _index_slots(smap).values():
@@ -325,6 +331,21 @@ def _index_slots(smap: dict) -> dict[str, dict]:
         for bullet in block.get("bullets", []):
             index[bullet["id"]] = bullet
     return index
+
+
+UNSUPPORTED = (
+    "no slots found — this exemplar is not in the templates/cv_template.md shape\n"
+    "  (`# Name` / `## Section` / `### Role — Company` headings). An exemplar the\n"
+    "  parser cannot decompose would yield an empty slot map and assemble an empty\n"
+    "  CV, so this stops here. Run the previous path instead: pass master_cv.md to\n"
+    "  application-writer directly and check the result with master_diff.py, which\n"
+    "  is line-based and format-agnostic."
+)
+
+
+def has_slots(smap: dict) -> bool:
+    """Whether the exemplar decomposed into anything addressable at all."""
+    return any(block.get("bullets") or "text" in block for block in smap["blocks"])
 
 
 def _bullet_parents(smap: dict) -> dict[str, str]:
@@ -421,6 +442,9 @@ def cmd_assemble(args) -> int:
         return 2
 
     smap = build_slot_map(master.name, _common.read_text(master))
+    if not has_slots(smap):
+        print(f"ASSEMBLE {master} + {plan_path}\n  ERROR: {UNSUPPORTED}\n\nno output written")
+        return 1
     index = _index_slots(smap)
     inherited = stamped_trace_bodies(_common.read_text(args.trace))
 
