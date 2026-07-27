@@ -25,7 +25,7 @@ job_docs/
 └── templates/               # cv_template.md
 docs/adr/                    # architecture decisions — why the shape is the shape
 docs/agents/                 # per-repo config for the engineering skills: issue-tracker · triage-labels · domain
-scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · master_diff · session_metrics (+ _common, tests/)
+scripts/                     # deterministic helpers: ats_coverage · tracker · trace_check · claim_ledger · master_diff · master_slots · session_metrics · release_audit · privacy_scan · machine_summary · eval_run/eval_score (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
 CONTEXT.md                   # the glossary — the vocabulary docs/skills/agents must all use
 ```

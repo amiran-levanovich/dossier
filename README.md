@@ -68,6 +68,8 @@ Since v2.5.0 the writer doesn't have to regenerate the CV from scratch. At intak
 
 - **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, canonical spellings, fully traced. Per application, `application-writer` **subtracts and makes bounded edits** instead of writing: dropping/reordering verified bullets can't introduce claims, so it's free; anything reworded is CHANGED — `scripts/master_diff.py` proves the split mechanically — and gets judged normally.
 
+  Since v3.2.0 the writer doesn't retype the parts it keeps either. `scripts/master_slots.py` decomposes the exemplar into addressable **slots**, and the writer emits an **edit plan** — slot order, patched text, new slots, drops — which the script assembles into `cv.md` and `cv_trace.md`. Kept slots are copied byte-for-byte and inherit their trace lines by slot id, so only genuinely new wording is written, and only new wording is judged (ADR-0003).
+
 **The cover letter has no exemplar, on purpose** (removed in v3.0.0). A CV is a superset you subtract from, so verbatim lines stay true across companies. A letter's stable parts are exactly what makes it swappable between companies — the defect `standards/cover_letter_rules.md` exists to prevent — and the anti-slop pass would rewrite reused phrasing anyway.
 
 The claim ledger records the exemplar's content hash on CLEAN: edit the master and the verbatim shortcut switches off until it's re-verified. One master only, in the search's primary language. No master → the pipeline runs exactly as before.
@@ -156,6 +158,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
 | `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records the master CV's hash (`--document`) |
 | `master_diff.py`      | Re-judging master-CV content — proves which cv.md lines are verbatim from a verified `master_cv.md`; only CHANGED lines need judgment |
+| `master_slots.py`     | Re-typing the exemplar — `extract` decomposes `master_cv.md` into a slot map, `stamp` writes slot ids into its trace, `assemble` turns the writer's edit plan into `cv.md` + `cv_trace.md` (ADR-0003) |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
 | `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |
 

@@ -124,7 +124,7 @@ check would otherwise disappear at exit 0.
 |---|---|
 | `.claude/skills/*/SKILL.md` (each — thin routers) | 1,150 |
 | `.claude/agents/*.md` (each) | 1,640 |
-| `job_docs/core/tailoring_method.md` | 2,950 |
+| `job_docs/core/tailoring_method.md` | 3,150 |
 | `job_docs/core/fit_check.md` | 3,050 |
 | `job_docs/standards/*` (each) | 2,830 |
 | `job_docs/core/quickref.md` (the compaction floor) | 1,150 |
@@ -151,6 +151,12 @@ file under it, so that file's fill is unchanged: `tailoring_method.md` was at 99
 word budget and is at 99.8% of its token budget, `application-verifier.md` 99.9% → 99.7%.
 Other files under a shared row necessarily moved, because one budget cannot track several
 files at once — that repricing is the point. No budget was raised as a convenience.
+
+**Raised since:** `tailoring_method.md` 2,950 → 3,150 in v3.2.0. The doc now documents two
+CV paths rather than one — the edit-plan path of ADR-0003 — and the row was calibrated when
+there was only one. This is a recalibration to a larger method, not headroom for prose: the
++200 per run buys the removal of the writer's whole `cv.md` and `cv_trace.md` output, and
+ADR-0003 commits to measuring that with `session_metrics.py` before the saving is claimed.
 
 Ported from the sibling `redgreen` repo, whose review of the same change found three
 things worth carrying: whitespace must be priced or padding is free; a group budget
@@ -252,6 +258,15 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   script proves which cv.md lines are verbatim from a hash-VERIFIED master; only CHANGED
   lines get judged. Turns per-application generation and judgment into a delta against a
   one-time investment. (C5 for the writer's inputs, C6 for the verifier's judgment set.)
+- **Exemplar slot model** (`master_slots.py`, v3.2.0) — the subset check above still had
+  the writer *retype* every verbatim line and then discovered, after the fact, that it was
+  verbatim. `extract` decomposes the exemplar into addressable slots, the writer emits an
+  **edit plan** (slot order, patched text, new slots, drops) instead of `cv.md`, and
+  `assemble` writes `cv.md` + `cv_trace.md` — copying kept slots byte-for-byte and
+  inheriting their trace lines by slot id. The writer's CV output drops to the changed
+  wording alone, and its inputs lose `master_cv.md` and `master_cv_trace.md` entirely.
+  (C5 for the writer's inputs, C4 for its output; ADR-0003.) **Projected, not yet
+  measured** — see §5's raised-budget note.
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully

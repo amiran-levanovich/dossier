@@ -41,6 +41,15 @@ spent once, calmly, instead of per application under deadline.
    --document master_cv.md --kb-dir knowledge/`. From now on the tailoring
    pipeline (`core/tailoring_method.md`) shrinks KB selection, runs the
    `master_diff.py` subset check, and the verifier judges only changed lines.
+4. **Stamp**: `scripts/master_slots.py stamp master_cv_trace.md --master
+   master_cv.md`. This writes a slot id onto each trace line so per-application
+   assembly can inherit trace lines by id instead of the writer retyping them
+   (ADR-0003). It pairs trace lines to slots **in document order** and validates
+   each pairing, so a trace written out of order fails loudly (exit 1, nothing
+   written) rather than binding a claim to the wrong slot — read the printed
+   pairing table once before moving on. Safe for the ledger: `record` hashes
+   `master_cv.md`, and stamping touches only the trace, so a VERIFIED exemplar
+   stays VERIFIED. Re-running is idempotent.
 
 **No overrides in the master.** User-directed claims
 (`core/override_protocol.md`) are per-application by definition; the master
@@ -50,7 +59,9 @@ holds only KB-backed content.
 
 `claim_ledger.py check --document …` reporting CHANGED means the exemplar was
 edited since verification; the verbatim shortcut is off until it is
-re-verified (steps 2–3 — cheap: unchanged claims are already in the ledger).
+re-verified (steps 2–4 — cheap: unchanged claims are already in the ledger, and
+slot ids hash slot text, so an edit renames only the slots that actually
+changed).
 Triggers to offer a rebuild, always the user's call:
 
 - The KB grew — a new role or a skill worth master inclusion (intake and

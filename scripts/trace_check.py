@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import re
 import sys
 from pathlib import Path
 
@@ -44,6 +45,8 @@ import _common  # noqa: E402
 APP_LOCAL = {"overrides.md", "notes.md", "jd.md"}
 # Of those, the ones checked for existence only (no anchor requirement).
 EXISTENCE_ONLY = {"overrides.md"}
+# Leading `[slot-id]` stamped onto exemplar trace lines by master_slots.py.
+SLOT_ID_PREFIX_RE = re.compile(r"^\[[^\]\s]+\]\s*")
 
 
 class TraceLine:
@@ -65,6 +68,11 @@ def parse_trace_file(text: str):
         if not stripped.startswith("- "):
             continue
         claim = stripped[2:].strip()
+        # A stamped exemplar trace (master_slots.py stamp) prefixes each line
+        # with its slot id. The id addresses the slot, it is not part of the
+        # claim — strip it here so claim text, and therefore every claim_ledger
+        # key, is identical whether or not the file has been stamped.
+        claim = SLOT_ID_PREFIX_RE.sub("", claim, count=1)
         # Split at the LAST arrow — the claim text itself may contain one
         # ("migrated Redis → Kafka"), but the target separator is always the
         # rightmost arrow on the line.
