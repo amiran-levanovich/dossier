@@ -76,7 +76,9 @@ UNSUPPORTED = (
     "  CV, so this stops here."
 )
 
-# Edit-plan keys this module deliberately refuses, and why.
+# Edit-plan keys this module refuses, and why. `patch` is refused permanently —
+# rewording is the thing ADR-0005 removes. `new` is refused only until one-off
+# slots land; the two entries do not change for the same reason.
 REFUSED_OPERATIONS = {
     "patch": ("the writer may not reword a slot (ADR-0005) — drop the slot and "
               "request a one-off instead"),
@@ -146,7 +148,7 @@ def _parse_entry_blocks(section: str, kind: str, lines: list[str]) -> list[dict]
 def build_slot_map(source: str, text: str) -> dict:
     """Decompose an exemplar into its slot map."""
     blocks: list[dict] = []
-    header: dict = {"name": "", "contact": "", "lines": []}
+    header: dict = {"name": "", "contact": ""}
 
     for title, lines in _split_sections(text):
         if title is None:
@@ -173,10 +175,16 @@ def build_slot_map(source: str, text: str) -> dict:
             blocks.extend(_parse_entry_blocks(title, kind, lines))
             continue
         if kind == "summary":
-            body = " ".join(ln.strip() for ln in lines if ln.strip())
+            body_lines = [ln.strip() for ln in lines if ln.strip()]
+            body = " ".join(body_lines)
             if body:
+                # The id hashes the joined text, so rewrapping the paragraph in
+                # the exemplar does not rename the slot. `lines` keeps the
+                # original breaks, because rendering a joined paragraph would
+                # emit a line that appears nowhere in the exemplar and the
+                # verbatim self-test would — correctly — refuse it.
                 blocks.append({"id": slot_id("summary", body), "kind": "summary",
-                               "section": title, "text": body})
+                               "section": title, "text": body, "lines": body_lines})
             continue
         for raw in lines:
             line = raw.strip()
@@ -195,7 +203,7 @@ def has_slots(smap: dict) -> bool:
     return any(block.get("bullets") or "text" in block for block in smap["blocks"])
 
 
-def _index_slots(smap: dict) -> dict[str, dict]:
+def _slots_by_id(smap: dict) -> dict[str, dict]:
     index: dict[str, dict] = {}
     for block in smap["blocks"]:
         index[block["id"]] = block
@@ -213,7 +221,7 @@ def _bullet_parents(smap: dict) -> dict[str, str]:
 
 def render_document(smap: dict, plan: dict) -> list[str]:
     """Rebuild the CV skeleton, filling only the slots the plan ordered."""
-    index = _index_slots(smap)
+    index = _slots_by_id(smap)
     # Section order comes from the exemplar, never from the plan: the template's
     # section order is a standards rule, not a per-application choice.
     section_order: list[str] = []
@@ -255,10 +263,28 @@ def render_document(smap: dict, plan: dict) -> list[str]:
                 lines.append("")
                 for bullet_id in entry.get("bullets", []):
                     lines.append(f"- {index[bullet_id]['text']}")
+            elif slot.get("lines"):
+                lines.extend(slot["lines"])
             else:
                 text = slot["text"]
                 lines.append(f"- {text}" if slot.get("bulleted") else text)
     return lines
+
+
+def heading_faults(doc_lines: list[str], exemplar_text: str) -> list[str]:
+    """Emitted headings that appear nowhere in the exemplar.
+
+    `content_lines` skips headings, so the claim-level check below cannot see
+    them — yet `### Role — Company` is exactly the line that says who an
+    achievement belongs to. A heading the exemplar never carried would
+    reattribute real bullets to an invented employer and read as true.
+    """
+    def norm(line: str) -> str:
+        return re.sub(r"\s+", " ", line.strip())
+
+    known = {norm(l) for l in exemplar_text.splitlines() if l.strip().startswith("#")}
+    return [norm(l) for l in doc_lines
+            if l.strip().startswith("#") and norm(l) not in known]
 
 
 def verbatim_report(doc_lines: list[str], exemplar_text: str):
@@ -281,13 +307,18 @@ def verbatim_report(doc_lines: list[str], exemplar_text: str):
 
 def collect_faults(smap: dict, plan: dict) -> list[str]:
     """Every reason this plan may not be assembled. Empty means it may."""
-    index = _index_slots(smap)
+    index = _slots_by_id(smap)
     parents = _bullet_parents(smap)
     faults: list[str] = []
 
     for key, why in REFUSED_OPERATIONS.items():
         if plan.get(key):
             faults.append(f"plan carries {key}[] — {why}")
+
+    # A document with no claims still renders — name, contact, skeleton — and
+    # would pass a 100% verbatim check vacuously. It is not a CV.
+    if not plan.get("order"):
+        faults.append("plan orders no slots — the result would carry no claims")
 
     ordered_ids: list[str] = []
     for entry in plan.get("order", []):
@@ -373,21 +404,24 @@ def cmd_build(args) -> int:
 
     doc = render_document(smap, plan)
     verbatim, changed = verbatim_report(doc, exemplar_text)
+    stray = heading_faults(doc, exemplar_text)
     total = verbatim + len(changed)
-    if changed:
+    if changed or stray:
         # Only kept slots can reach the document, so a non-verbatim line means
         # this module corrupted one. Refuse rather than ship it.
         for lineno, norm in changed:
             short = (norm[:70] + "…") if len(norm) > 71 else norm
             print(f"  ERROR: line {lineno} is not verbatim from the exemplar: {short}")
-        print(f"\n{len(changed)} non-verbatim line(s) — no output written")
+        for heading in stray:
+            print(f"  ERROR: heading is not from the exemplar: {heading}")
+        print(f"\n{len(changed) + len(stray)} non-verbatim line(s) — no output written")
         return 1
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "cv.md").write_text("\n".join(doc).rstrip() + "\n", encoding="utf-8")
 
-    index = _index_slots(smap)
+    index = _slots_by_id(smap)
     kept = len({sid for entry in plan.get("order", [])
                 for sid in [entry["id"], *entry.get("bullets", [])]})
     words = sum(len(line.split()) for line in doc)

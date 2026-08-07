@@ -18,6 +18,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -92,8 +93,11 @@ class CvCase(unittest.TestCase):
                             "--out-dir", str(self.out_dir)])
 
     def assertNothingWritten(self):
-        self.assertFalse((self.out_dir / "cv.md").exists(),
-                         "a rejected plan must write no cv.md at all")
+        # Not just "no cv.md" — nothing at all. A rejected build that left a
+        # report or a partial file behind would be picked up by the next step
+        # as though it had succeeded.
+        produced = sorted(p.name for p in self.out_dir.iterdir()) if self.out_dir.exists() else []
+        self.assertEqual(produced, [], "a rejected plan must write no files at all")
 
 
 class TestMap(CvCase):
@@ -272,6 +276,14 @@ class TestBuildRejections(CvCase):
         self.assertEqual(rc, 1)
         self.assertNothingWritten()
 
+    def test_plan_ordering_no_slots_is_refused(self):
+        # Renders name + contact and would pass a verbatim check vacuously.
+        self.slot_map()
+        rc, report = self.build({"order": []})
+        self.assertEqual(rc, 1)
+        self.assertIn("orders no slots", report)
+        self.assertNothingWritten()
+
     def test_undecomposable_exemplar(self):
         rc, report = self.build({"order": []}, exemplar_text="Just prose.\n")
         self.assertEqual(rc, 1)
@@ -314,6 +326,70 @@ class TestVerbatimSelfTest(CvCase):
         # caught — but it must be caught, not silently rendered from stale text.
         self.assertEqual(rc, 1, report)
         self.assertNothingWritten()
+
+    def test_a_corrupted_line_is_caught_and_nothing_is_written(self):
+        """The rejection path itself. Only kept slots can reach the document, so
+        the renderer is the only thing that could produce a non-verbatim line —
+        which means the guard can only be exercised by making the renderer
+        misbehave. Without this, the branch is unreachable and untested."""
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        plan = {"order": [{"id": acme["id"], "bullets": [b["id"] for b in acme["bullets"]]}]}
+        exemplar = self.write("master_cv.md", EXEMPLAR)
+        plan_path = self.write("plan.json", json.dumps(plan))
+
+        real = cv.render_document
+
+        def corrupting(smap_, plan_):
+            doc = real(smap_, plan_)
+            return [ln.replace("2M users", "40M users") for ln in doc]
+
+        with mock.patch.object(cv, "render_document", corrupting):
+            rc, report = self.run_cv(["build", str(plan_path), "--exemplar", str(exemplar),
+                                      "--out-dir", str(self.out_dir)])
+        self.assertEqual(rc, 1)
+        self.assertIn("not verbatim", report)
+        self.assertNothingWritten()
+
+    def test_a_heading_the_exemplar_never_carried_is_caught(self):
+        """Headings are skipped by the claim-level check, but `### Role — Company`
+        is the line that says who an achievement belongs to. An invented one
+        would reattribute real bullets and read as true."""
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        plan = {"order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]}]}
+        exemplar = self.write("master_cv.md", EXEMPLAR)
+        plan_path = self.write("plan.json", json.dumps(plan))
+
+        real = cv.render_document
+
+        def corrupting(smap_, plan_):
+            return [ln.replace("### Senior Engineer — Acme, Berlin",
+                               "### Principal Engineer — Acme, Berlin")
+                    for ln in real(smap_, plan_)]
+
+        with mock.patch.object(cv, "render_document", corrupting):
+            rc, report = self.run_cv(["build", str(plan_path), "--exemplar", str(exemplar),
+                                      "--out-dir", str(self.out_dir)])
+        self.assertEqual(rc, 1)
+        self.assertIn("heading is not from the exemplar", report)
+        self.assertNothingWritten()
+
+    def test_a_wrapped_summary_paragraph_stays_verbatim(self):
+        """A summary written across two lines is ordinary in a real CV. Joining
+        it on the way out would emit a line present nowhere in the exemplar, and
+        the self-test would refuse a perfectly valid build."""
+        wrapped = EXEMPLAR.replace(
+            "Ten years building payment systems.\n",
+            "Ten years building payment systems.\nAcross fintech and logistics.\n")
+        smap = self.slot_map(wrapped, name="wrapped.md")
+        summary = [b for b in smap["blocks"] if b["kind"] == "summary"][0]
+        rc, report = self.build({"order": [{"id": summary["id"]}]}, exemplar_text=wrapped)
+        self.assertEqual(rc, 0, report)
+        text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("Ten years building payment systems.", text)
+        self.assertIn("Across fintech and logistics.", text)
+        self.assertIn("changed: 0", report)
 
     def test_every_emitted_content_line_is_present_in_the_exemplar(self):
         smap = self.slot_map()
