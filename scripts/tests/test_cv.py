@@ -338,10 +338,13 @@ class TestOneOffSlots(CvCase):
         _, _, plan = self.plan_with_one_off()
         rc, report = self.build(plan)
         self.assertEqual(rc, 0, report)
-        # headline is absent from this plan: contact, dates, descriptor, one kept bullet.
-        self.assertIn("verbatim: 4/4", report)
+        # Five content lines: contact, dates, descriptor, one kept bullet, and
+        # the one-off. Four are verbatim; the one-off is exempt but still counted
+        # in the denominator, so the report never hides it.
+        self.assertIn("verbatim: 4/5", report)
         self.assertIn("changed: 0", report)
         self.assertIn("one-off: 1", report)
+        self.assertIn("(1 line(s))", report)
 
     def test_report_surfaces_every_one_off_for_the_verifier(self):
         _, _, plan = self.plan_with_one_off()
@@ -362,6 +365,52 @@ class TestOneOffSlots(CvCase):
         })
         self.assertEqual(rc, 1)
         self.assertIn("already a slot", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_repeating_exemplar_text_is_rejected(self):
+        """Relocation, not new content. Declaring Acme's bullet as a one-off and
+        placing it under Beta puts one employer's achievement under another's
+        heading — and it reads as true, so nothing downstream would catch it."""
+        smap = self.slot_map()
+        acme, beta = self.block_by_company(smap, "Acme"), self.block_by_company(smap, "Beta")
+        rc, report = self.build({
+            "order": [{"id": beta["id"], "bullets": ["oneoff-moved"]}],
+            "one_off": [{"id": "oneoff-moved", "text": acme["bullets"][0]["text"]}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("repeats text the exemplar already has", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_that_merely_rewords_a_slot_is_rejected(self):
+        """A patch wearing a one-off's clothes. Inventing a fresh id is not
+        enough to make reworded content new (ADR-0005)."""
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": ["oneoff-reworded"]}],
+            "one_off": [{"id": "oneoff-reworded",
+                         "text": "Built the billing pipeline that serves 2M+ users"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("rewording, not new content", report)
+        self.assertNothingWritten()
+
+    def test_genuinely_new_content_is_not_mistaken_for_a_rewording(self):
+        # The guard above must not fire on real one-offs, or the feature is dead.
+        _, _, plan = self.plan_with_one_off()
+        rc, report = self.build(plan)
+        self.assertEqual(rc, 0, report)
+
+    def test_duplicate_one_off_ids_are_rejected(self):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": ["oneoff-dup"]}],
+            "one_off": [{"id": "oneoff-dup", "text": "Ran the Kubernetes migration"},
+                        {"id": "oneoff-dup", "text": "Something else entirely"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("duplicate one-off id", report)
         self.assertNothingWritten()
 
     def test_an_undeclared_one_off_is_an_unknown_id(self):

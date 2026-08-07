@@ -39,11 +39,13 @@ Standard library only, like every script here.
 from __future__ import annotations
 
 import argparse
+import difflib
 import hashlib
 import json
 import re
 import sys
 from pathlib import Path
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
@@ -92,6 +94,15 @@ REFUSED_OPERATIONS = {
     "new": ("the v3 spelling carried a trace target — declare a one-off in "
             "one_off[] instead"),
 }
+
+# Above this similarity to an existing slot, a "one-off" is a rewording of that
+# slot rather than new content — the patch ADR-0005 removed, wearing a one-off's
+# clothes. Measured: real reworkings of the same claim score 0.88–0.94, while
+# genuinely new bullets against the nearest exemplar slot score 0.29–0.52, so
+# the bands are far apart and the exact cut is not delicate. Deterministic, like
+# every judgment in this file; whether the *claim* is true stays with the
+# verifier.
+NEAR_DUPLICATE_RATIO = 0.85
 
 
 def slot_id(kind: str, text: str) -> str:
@@ -232,20 +243,10 @@ def render_document(smap: dict, plan: dict) -> list[str]:
     # Declared one-offs join the addressable set for rendering only — they were
     # already checked against it, so nothing here can shadow an exemplar slot.
     for sid, item in one_offs_by_id(plan).items():
-        section = item.get("section")
-        # Follow the section's own convention rather than guessing: a one-off in
-        # a bulleted section should be bulleted, and one in Skills should not.
-        siblings = [b for b in smap["blocks"] if b.get("section") == section]
-        index[sid] = {"id": sid, "kind": "bullet", "section": section,
-                      "text": item["text"], "one_off": True,
-                      "bulleted": any(b.get("bulleted") for b in siblings)}
+        index[sid] = _one_off_slot(smap, item)
     # Section order comes from the exemplar, never from the plan: the template's
     # section order is a standards rule, not a per-application choice.
-    section_order: list[str] = []
-    for block in smap["blocks"]:
-        section = block.get("section")
-        if section and section not in section_order:
-            section_order.append(section)
+    section_order = exemplar_sections(smap)
 
     by_section: dict[str, list[dict]] = {s: [] for s in section_order}
     headline_id = None
@@ -304,7 +305,18 @@ def heading_faults(doc_lines: list[str], exemplar_text: str) -> list[str]:
             if l.strip().startswith("#") and norm(l) not in known]
 
 
-def verbatim_report(doc_lines: list[str], exemplar_text: str, exempt: set[str] | None = None):
+class VerbatimResult(NamedTuple):
+    verbatim: int
+    exempted: int
+    changed: list[tuple[int, str]]
+
+    @property
+    def total(self) -> int:
+        return self.verbatim + self.exempted + len(self.changed)
+
+
+def verbatim_report(doc_lines: list[str], exemplar_text: str,
+                    exempt: set[str] | None = None) -> VerbatimResult:
     """Which produced lines are present in the exemplar, comparing against the
     exemplar's own text rather than the slot map the renderer worked from.
 
@@ -326,7 +338,7 @@ def verbatim_report(doc_lines: list[str], exemplar_text: str, exempt: set[str] |
             exempted += 1
         else:
             changed.append((lineno, norm))
-    return verbatim, exempted, changed
+    return VerbatimResult(verbatim, exempted, changed)
 
 
 def one_offs_by_id(plan: dict) -> dict[str, dict]:
@@ -345,26 +357,64 @@ def exemplar_sections(smap: dict) -> list[str]:
     return out
 
 
-def collect_faults(smap: dict, plan: dict) -> list[str]:
-    """Every reason this plan may not be assembled. Empty means it may."""
-    index = _slots_by_id(smap)
-    parents = _bullet_parents(smap)
-    one_offs = one_offs_by_id(plan)
-    sections = exemplar_sections(smap)
+def _nearest_slot(text: str, index: dict[str, dict]) -> tuple[float, str]:
+    """The exemplar slot most similar to this text, and how similar."""
+    target = _common.normalize_line(text).lower()
+    best, best_text = 0.0, ""
+    for slot in index.values():
+        other = slot.get("text")
+        if not other:
+            continue
+        ratio = difflib.SequenceMatcher(None, target, _common.normalize_line(other).lower()).ratio()
+        if ratio > best:
+            best, best_text = ratio, other
+    return best, best_text
+
+
+def _one_off_faults(exemplar_text: str, plan: dict, index: dict[str, dict],
+                    sections: list[str]) -> list[str]:
+    """Every reason a declared one-off may not be assembled.
+
+    A one-off is *new content the exemplar lacked*. Everything here enforces
+    that one sentence: it may not reuse a slot's id, repeat a slot's text, or
+    closely rework a slot's wording — those are a patch, a relocation, and a
+    rewording respectively, and all three are what ADR-0005 removed.
+    """
     faults: list[str] = []
+    exemplar_lines = {norm for _, norm in _common.content_lines(exemplar_text)}
+    seen: set[str] = set()
 
     for item in plan.get("one_off", []):
         if not isinstance(item, dict) or "id" not in item:
             faults.append(f"malformed one_off[] entry: {item!r}")
             continue
         sid = item["id"]
+        if sid in seen:
+            faults.append(f"duplicate one-off id: {sid}")
+        seen.add(sid)
         # Reusing an exemplar id is how a rewording would sneak past ADR-0005:
         # same id, different text, and the slot map's own text is overwritten.
         if sid in index:
             faults.append(f"one-off {sid} is already a slot in the exemplar —"
                           " a one-off is new content, never a rewording")
-        if not str(item.get("text", "")).strip():
+        text = str(item.get("text", "")).strip()
+        if not text:
             faults.append(f"one-off {sid} has no text")
+            continue
+
+        # Text the exemplar already carries is not new content. Declaring it as
+        # a one-off and placing it under a different block is how one employer's
+        # achievement ends up under another's heading — and it reads as true.
+        if _common.normalize_line(text) in exemplar_lines:
+            faults.append(f"one-off {sid} repeats text the exemplar already has —"
+                          " keep the original slot instead of relocating its claim")
+        else:
+            ratio, nearest = _nearest_slot(text, index)
+            if ratio >= NEAR_DUPLICATE_RATIO:
+                faults.append(
+                    f"one-off {sid} is {ratio:.0%} the same as an existing slot"
+                    f" ({nearest!r}) — that is a rewording, not new content")
+
         section = item.get("section")
         if section is not None and section not in sections:
             faults.append(f"one-off {sid} names section {section!r},"
@@ -375,6 +425,29 @@ def collect_faults(smap: dict, plan: dict) -> list[str]:
             # render as a bare line adrift between two employers.
             faults.append(f"one-off {sid} names section {section!r}, whose entries are"
                           " role blocks — a one-off can only be a bullet inside one")
+    return faults
+
+
+def _one_off_slot(smap: dict, item: dict) -> dict:
+    """A declared one-off, shaped like a slot so the renderer can place it.
+
+    Bulleting follows the target section's own convention rather than a guess:
+    a one-off in a bulleted section is bulleted, one in Skills is not.
+    """
+    section = item.get("section")
+    siblings = [b for b in smap["blocks"] if b.get("section") == section]
+    return {"id": item["id"], "kind": "one-off", "section": section,
+            "text": item["text"],
+            "bulleted": any(b.get("bulleted") for b in siblings)}
+
+
+def collect_faults(smap: dict, plan: dict, exemplar_text: str = "") -> list[str]:
+    """Every reason this plan may not be assembled. Empty means it may."""
+    index = _slots_by_id(smap)
+    parents = _bullet_parents(smap)
+    one_offs = one_offs_by_id(plan)
+    sections = exemplar_sections(smap)
+    faults = _one_off_faults(exemplar_text, plan, index, sections)
 
     for key, why in REFUSED_OPERATIONS.items():
         if plan.get(key):
@@ -470,7 +543,7 @@ def cmd_build(args) -> int:
         print(f"  ERROR: {UNSUPPORTED}\n\nno output written")
         return 1
 
-    faults = collect_faults(smap, plan)
+    faults = collect_faults(smap, plan, exemplar_text)
     if faults:
         for fault in faults:
             print(f"  ERROR: {fault}")
@@ -481,18 +554,17 @@ def cmd_build(args) -> int:
     exempt = {_common.normalize_line(item["text"]) for item in one_offs.values()}
 
     doc = render_document(smap, plan)
-    verbatim, exempted, changed = verbatim_report(doc, exemplar_text, exempt)
+    result = verbatim_report(doc, exemplar_text, exempt)
     stray = heading_faults(doc, exemplar_text)
-    total = verbatim + len(changed)
-    if changed or stray:
+    if result.changed or stray:
         # Only kept slots can reach the document, so a non-verbatim line means
         # this module corrupted one. Refuse rather than ship it.
-        for lineno, norm in changed:
+        for lineno, norm in result.changed:
             short = (norm[:70] + "…") if len(norm) > 71 else norm
             print(f"  ERROR: line {lineno} is not verbatim from the exemplar: {short}")
         for heading in stray:
             print(f"  ERROR: heading is not from the exemplar: {heading}")
-        print(f"\n{len(changed) + len(stray)} non-verbatim line(s) — no output written")
+        print(f"\n{len(result.changed) + len(stray)} non-verbatim line(s) — no output written")
         return 1
 
     out_dir = Path(args.out_dir)
@@ -505,12 +577,13 @@ def cmd_build(args) -> int:
     kept = len(placed - set(one_offs))
     words = sum(len(line.split()) for line in doc)
     print(f"  kept: {kept}   dropped: {len(index) - kept}   one-off: {len(one_offs)}")
-    print(f"  verbatim: {verbatim}/{total}   changed: {len(changed)}")
+    print(f"  verbatim: {result.verbatim}/{result.total}   changed: {len(result.changed)}")
     print(f"  lines: {len(doc)}   words: {words}   est. pages: ~{max(1.0, round(words / 450, 1))}")
     if one_offs:
         # The exemplar's verdict does not cover these. They are the only claims
         # in the package the verifier still has to judge.
-        print(f"\n  ONE-OFF — unverified, the verifier must judge these ({exempted} line(s)):")
+        print(f"\n  ONE-OFF — unverified, the verifier must judge these"
+              f" ({result.exempted} line(s)):")
         for item in one_offs.values():
             print(f"    - {item['text']}")
     print(f"\nRESULT: {out_dir / 'cv.md'}")
