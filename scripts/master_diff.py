@@ -30,7 +30,6 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import re
 import sys
 from pathlib import Path
 
@@ -38,20 +37,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
 
 
-def normalize_line(line: str) -> str:
-    """Whitespace/bullet-marker normalisation — the only tolerance we allow."""
-    text = line.strip()
-    text = re.sub(r"^[-*+]\s+", "", text)
-    return re.sub(r"\s+", " ", text)
-
-
-def content_lines(text: str):
-    """Yield (lineno, normalized) for every content-bearing line."""
-    for i, raw in enumerate(text.splitlines(), start=1):
-        stripped = raw.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-        yield i, normalize_line(raw)
+# Shared with cv.py, which runs the same comparison as an internal self-test.
+normalize_line = _common.normalize_line
+content_lines = _common.content_lines
 
 
 def main(argv=None):
