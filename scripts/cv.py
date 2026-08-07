@@ -20,11 +20,18 @@ Slot ids hash the slot's own text, never its position: inserting or reordering
 in the exemplar renames nothing, while editing a slot's text renames exactly
 that slot.
 
+A **one-off slot** is the single exception to that: content the candidate
+directed into one application because the exemplar lacked it, declared in the
+plan's `one_off[]`. The declaration is the marker — it is what exempts the line
+from the verbatim self-test and what tells the verifier there is something left
+to judge. Undeclared content absent from the exemplar is a fault, which is what
+makes an unmarked rewording impossible to ship.
+
 `build` is atomic. Any fault — an unknown id, a duplicate, a keep/drop
-contradiction, a bullet under the wrong block, or a plan asking to reword —
-exits 1 and writes **no file**, because a partially assembled CV reads as
-complete and would go out missing content. The orchestrator hands the
-diagnostic back to the writer and re-dispatches.
+contradiction, a bullet under the wrong block, a one-off reusing an exemplar id,
+or a plan asking to reword — exits 1 and writes **no file**, because a partially
+assembled CV reads as complete and would go out missing content. The
+orchestrator hands the diagnostic back to the writer and re-dispatches.
 
 Standard library only, like every script here.
 """
@@ -76,14 +83,14 @@ UNSUPPORTED = (
     "  CV, so this stops here."
 )
 
-# Edit-plan keys this module refuses, and why. `patch` is refused permanently —
-# rewording is the thing ADR-0005 removes. `new` is refused only until one-off
-# slots land; the two entries do not change for the same reason.
+# Edit-plan keys this module refuses, and why. Both refusals are permanent:
+# rewording is the thing ADR-0005 removes, and `new` was the v3 spelling that
+# carried a trace target, which no longer exists.
 REFUSED_OPERATIONS = {
     "patch": ("the writer may not reword a slot (ADR-0005) — drop the slot and "
-              "request a one-off instead"),
-    "new": ("one-off slots are user-initiated and not supported by this command "
-            "yet"),
+              "declare a one-off instead"),
+    "new": ("the v3 spelling carried a trace target — declare a one-off in "
+            "one_off[] instead"),
 }
 
 
@@ -221,7 +228,17 @@ def _bullet_parents(smap: dict) -> dict[str, str]:
 
 def render_document(smap: dict, plan: dict) -> list[str]:
     """Rebuild the CV skeleton, filling only the slots the plan ordered."""
-    index = _slots_by_id(smap)
+    index = dict(_slots_by_id(smap))
+    # Declared one-offs join the addressable set for rendering only — they were
+    # already checked against it, so nothing here can shadow an exemplar slot.
+    for sid, item in one_offs_by_id(plan).items():
+        section = item.get("section")
+        # Follow the section's own convention rather than guessing: a one-off in
+        # a bulleted section should be bulleted, and one in Skills should not.
+        siblings = [b for b in smap["blocks"] if b.get("section") == section]
+        index[sid] = {"id": sid, "kind": "bullet", "section": section,
+                      "text": item["text"], "one_off": True,
+                      "bulleted": any(b.get("bulleted") for b in siblings)}
     # Section order comes from the exemplar, never from the plan: the template's
     # section order is a standards rule, not a per-application choice.
     section_order: list[str] = []
@@ -287,29 +304,77 @@ def heading_faults(doc_lines: list[str], exemplar_text: str) -> list[str]:
             if l.strip().startswith("#") and norm(l) not in known]
 
 
-def verbatim_report(doc_lines: list[str], exemplar_text: str):
+def verbatim_report(doc_lines: list[str], exemplar_text: str, exempt: set[str] | None = None):
     """Which produced lines are present in the exemplar, comparing against the
     exemplar's own text rather than the slot map the renderer worked from.
 
     Comparing the renderer's output back to its own input would be a tautology.
     Reading the exemplar again is what makes this a self-test: it catches the
     renderer corrupting a slot between reading it and emitting it.
+
+    `exempt` holds the declared one-off texts — the only content allowed to be
+    absent from the exemplar. Everything else absent is a fault, which is what
+    makes an *undeclared* rewording impossible to ship.
     """
     exemplar_set = {norm for _, norm in _common.content_lines(exemplar_text)}
-    verbatim, changed = 0, []
+    exempt = exempt or set()
+    verbatim, exempted, changed = 0, 0, []
     for lineno, norm in _common.content_lines("\n".join(doc_lines)):
         if norm in exemplar_set:
             verbatim += 1
+        elif norm in exempt:
+            exempted += 1
         else:
             changed.append((lineno, norm))
-    return verbatim, changed
+    return verbatim, exempted, changed
+
+
+def one_offs_by_id(plan: dict) -> dict[str, dict]:
+    """Declared one-off slots, keyed by id. The declaration is the marker."""
+    return {item["id"]: item for item in plan.get("one_off", [])
+            if isinstance(item, dict) and "id" in item}
+
+
+def exemplar_sections(smap: dict) -> list[str]:
+    """Section titles the exemplar actually has, in document order."""
+    out: list[str] = []
+    for block in smap["blocks"]:
+        section = block.get("section")
+        if section and section not in out:
+            out.append(section)
+    return out
 
 
 def collect_faults(smap: dict, plan: dict) -> list[str]:
     """Every reason this plan may not be assembled. Empty means it may."""
     index = _slots_by_id(smap)
     parents = _bullet_parents(smap)
+    one_offs = one_offs_by_id(plan)
+    sections = exemplar_sections(smap)
     faults: list[str] = []
+
+    for item in plan.get("one_off", []):
+        if not isinstance(item, dict) or "id" not in item:
+            faults.append(f"malformed one_off[] entry: {item!r}")
+            continue
+        sid = item["id"]
+        # Reusing an exemplar id is how a rewording would sneak past ADR-0005:
+        # same id, different text, and the slot map's own text is overwritten.
+        if sid in index:
+            faults.append(f"one-off {sid} is already a slot in the exemplar —"
+                          " a one-off is new content, never a rewording")
+        if not str(item.get("text", "")).strip():
+            faults.append(f"one-off {sid} has no text")
+        section = item.get("section")
+        if section is not None and section not in sections:
+            faults.append(f"one-off {sid} names section {section!r},"
+                          f" which the exemplar does not have")
+        elif section is not None and SECTION_KINDS.get(section.lower()) in ENTRY_SECTIONS:
+            # Entries in these sections are `### Role — Company` blocks carrying
+            # dates and a descriptor. A one-off has none of that, so it would
+            # render as a bare line adrift between two employers.
+            faults.append(f"one-off {sid} names section {section!r}, whose entries are"
+                          " role blocks — a one-off can only be a bullet inside one")
 
     for key, why in REFUSED_OPERATIONS.items():
         if plan.get(key):
@@ -327,6 +392,11 @@ def collect_faults(smap: dict, plan: dict) -> list[str]:
             continue
         ordered_ids.append(entry["id"])
         ordered_ids.extend(entry.get("bullets", []))
+        # A section-level one-off has no block to inherit a section from, so it
+        # has to say which one it belongs in.
+        if entry["id"] in one_offs and one_offs[entry["id"]].get("section") is None:
+            faults.append(f"one-off {entry['id']} is placed at section level but"
+                          " names no section")
         # A bullet belongs to exactly one block. Placing it under a different
         # block's heading would attribute the achievement to another employer —
         # a fabrication nothing downstream catches, because it reads as true.
@@ -337,8 +407,13 @@ def collect_faults(smap: dict, plan: dict) -> list[str]:
                               f" (it is a bullet of {owner})")
 
     for sid in ordered_ids:
-        if sid not in index:
+        if sid not in index and sid not in one_offs:
             faults.append(f"unknown slot id in order[]: {sid}")
+    # A declared one-off that reaches no document would take verifier judgment
+    # for a claim nobody ever reads.
+    for sid in one_offs:
+        if sid not in ordered_ids:
+            faults.append(f"one-off {sid} is declared but never placed")
     for sid in plan.get("drop", []):
         if sid not in index:
             faults.append(f"unknown slot id in drop[]: {sid}")
@@ -402,8 +477,11 @@ def cmd_build(args) -> int:
         print(f"\n{len(faults)} fault(s) — no output written")
         return 1
 
+    one_offs = one_offs_by_id(plan)
+    exempt = {_common.normalize_line(item["text"]) for item in one_offs.values()}
+
     doc = render_document(smap, plan)
-    verbatim, changed = verbatim_report(doc, exemplar_text)
+    verbatim, exempted, changed = verbatim_report(doc, exemplar_text, exempt)
     stray = heading_faults(doc, exemplar_text)
     total = verbatim + len(changed)
     if changed or stray:
@@ -422,12 +500,19 @@ def cmd_build(args) -> int:
     (out_dir / "cv.md").write_text("\n".join(doc).rstrip() + "\n", encoding="utf-8")
 
     index = _slots_by_id(smap)
-    kept = len({sid for entry in plan.get("order", [])
-                for sid in [entry["id"], *entry.get("bullets", [])]})
+    placed = {sid for entry in plan.get("order", [])
+              for sid in [entry["id"], *entry.get("bullets", [])]}
+    kept = len(placed - set(one_offs))
     words = sum(len(line.split()) for line in doc)
-    print(f"  kept: {kept}   dropped: {len(index) - kept}")
+    print(f"  kept: {kept}   dropped: {len(index) - kept}   one-off: {len(one_offs)}")
     print(f"  verbatim: {verbatim}/{total}   changed: {len(changed)}")
     print(f"  lines: {len(doc)}   words: {words}   est. pages: ~{max(1.0, round(words / 450, 1))}")
+    if one_offs:
+        # The exemplar's verdict does not cover these. They are the only claims
+        # in the package the verifier still has to judge.
+        print(f"\n  ONE-OFF — unverified, the verifier must judge these ({exempted} line(s)):")
+        for item in one_offs.values():
+            print(f"    - {item['text']}")
     print(f"\nRESULT: {out_dir / 'cv.md'}")
     return 0
 

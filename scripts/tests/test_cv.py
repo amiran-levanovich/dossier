@@ -306,6 +306,186 @@ class TestBuildRejections(CvCase):
         self.assertNothingWritten()
 
 
+class TestOneOffSlots(CvCase):
+    """Contract (#26, ADR-0005): a one-off is content the candidate directed
+    into a single application because the exemplar lacked it. It is the only
+    permitted non-verbatim content in an assembled CV, it is always a new slot
+    rather than a rewording of an existing one, and it must be declared — the
+    declaration is what lets the self-test exempt it and the verifier know
+    there is something to judge."""
+
+    def plan_with_one_off(self, **overrides):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        plan = {
+            "order": [{"id": acme["id"],
+                       "bullets": [acme["bullets"][0]["id"], "oneoff-k8s"]}],
+            "one_off": [{"id": "oneoff-k8s",
+                         "text": "Ran the Kubernetes migration end to end"}],
+        }
+        plan.update(overrides)
+        return smap, acme, plan
+
+    def test_a_declared_one_off_assembles_into_the_cv(self):
+        _, _, plan = self.plan_with_one_off()
+        rc, report = self.build(plan)
+        self.assertEqual(rc, 0, report)
+        text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("- Ran the Kubernetes migration end to end", text)
+        self.assertIn("- Built the billing pipeline serving 2M users", text)
+
+    def test_self_test_exempts_the_one_off_and_holds_the_rest_to_verbatim(self):
+        _, _, plan = self.plan_with_one_off()
+        rc, report = self.build(plan)
+        self.assertEqual(rc, 0, report)
+        # headline is absent from this plan: contact, dates, descriptor, one kept bullet.
+        self.assertIn("verbatim: 4/4", report)
+        self.assertIn("changed: 0", report)
+        self.assertIn("one-off: 1", report)
+
+    def test_report_surfaces_every_one_off_for_the_verifier(self):
+        _, _, plan = self.plan_with_one_off()
+        _, report = self.build(plan)
+        self.assertIn("ONE-OFF", report)
+        self.assertIn("Ran the Kubernetes migration end to end", report)
+        self.assertIn("verifier", report.lower())
+
+    def test_a_one_off_reusing_an_exemplar_slot_id_is_rejected(self):
+        # Same id, different text: that is altering a verified slot, which is
+        # exactly what ADR-0005 removes.
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        bullet = acme["bullets"][0]
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [bullet["id"]]}],
+            "one_off": [{"id": bullet["id"], "text": "Reworded for the posting"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("already a slot", report)
+        self.assertNothingWritten()
+
+    def test_an_undeclared_one_off_is_an_unknown_id(self):
+        # Unmarked non-verbatim content: the plan places an id it never declared.
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({"order": [{"id": acme["id"],
+                                            "bullets": ["oneoff-undeclared"]}]})
+        self.assertEqual(rc, 1)
+        self.assertIn("unknown slot id", report)
+        self.assertNothingWritten()
+
+    def test_a_declared_one_off_that_is_never_placed_is_rejected(self):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]}],
+            "one_off": [{"id": "oneoff-dead", "text": "Never placed anywhere"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("never placed", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_with_empty_text_is_rejected(self):
+        _, _, plan = self.plan_with_one_off(
+            one_off=[{"id": "oneoff-k8s", "text": "   "}])
+        rc, report = self.build(plan)
+        self.assertEqual(rc, 1)
+        self.assertIn("no text", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_can_be_a_section_level_entry(self):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]},
+                      {"id": "oneoff-cert"}],
+            "one_off": [{"id": "oneoff-cert", "section": "Skills",
+                         "text": "**Cloud:** AWS, Terraform"}],
+        })
+        self.assertEqual(rc, 0, report)
+        text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("## Skills", text)
+        self.assertIn("**Cloud:** AWS, Terraform", text)
+
+    def test_a_section_level_one_off_needs_a_section(self):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]},
+                      {"id": "oneoff-cert"}],
+            "one_off": [{"id": "oneoff-cert", "text": "**Cloud:** AWS"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("section", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_cannot_invent_a_section(self):
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]},
+                      {"id": "oneoff-x"}],
+            "one_off": [{"id": "oneoff-x", "section": "Publications",
+                         "text": "Wrote a paper"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("Publications", report)
+        self.assertNothingWritten()
+
+    def test_a_one_off_cannot_sit_loose_in_a_role_section(self):
+        """Entries in Experience are `### Role — Company` blocks with dates and
+        a descriptor. A one-off has none of that, so at section level it would
+        render as a bare line adrift between two employers — and a reader would
+        attribute it to whichever role it landed under."""
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]},
+                      {"id": "oneoff-loose"}],
+            "one_off": [{"id": "oneoff-loose", "section": "Experience",
+                         "text": "Led a platform rewrite"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("role blocks", report)
+        self.assertNothingWritten()
+
+    def test_a_section_level_one_off_follows_its_sections_bullet_convention(self):
+        # Skills lines are not bulleted in the exemplar, so a one-off there
+        # must not be either — otherwise the section renders inconsistently.
+        smap = self.slot_map()
+        acme = self.block_by_company(smap, "Acme")
+        rc, report = self.build({
+            "order": [{"id": acme["id"], "bullets": [acme["bullets"][0]["id"]]},
+                      {"id": "oneoff-cloud"}],
+            "one_off": [{"id": "oneoff-cloud", "section": "Skills",
+                         "text": "**Cloud:** AWS, Terraform"}],
+        })
+        self.assertEqual(rc, 0, report)
+        text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("\n**Cloud:** AWS, Terraform", text)
+        self.assertNotIn("- **Cloud:**", text)
+
+    def test_bullet_scoping_still_holds_when_one_offs_are_present(self):
+        smap = self.slot_map()
+        acme, beta = self.block_by_company(smap, "Acme"), self.block_by_company(smap, "Beta")
+        rc, report = self.build({
+            "order": [{"id": beta["id"],
+                       "bullets": [acme["bullets"][0]["id"], "oneoff-k8s"]}],
+            "one_off": [{"id": "oneoff-k8s", "text": "Ran the migration"}],
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("does not belong", report)
+        self.assertNothingWritten()
+
+    def test_patch_is_still_refused_alongside_one_offs(self):
+        _, acme, plan = self.plan_with_one_off()
+        plan["patch"] = [{"id": acme["bullets"][0]["id"], "text": "Reworded"}]
+        rc, report = self.build(plan)
+        self.assertEqual(rc, 1)
+        self.assertIn("patch", report)
+        self.assertNothingWritten()
+
+
 class TestVerbatimSelfTest(CvCase):
     """The self-test compares the rendered document against the *exemplar's own
     text*, not against the slot map the renderer worked from. Comparing the
