@@ -21,7 +21,7 @@ Verification = JSON validates (`python3 -c 'import json…'`), markdown links re
 job_docs/
 ├── core/                    # job_workflow.md (kernel) · kb_schema.md · interview_protocol.md · tailoring_method.md · override_protocol.md · fit_check.md · orchestration.md · quickref.md
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
-├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · master_documents
+├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · exemplar
 └── templates/               # cv_template.md
 eval/
 ├── fixtures/                # Tier-1: synthetic job folders + blessed snapshots (eval_run.py)

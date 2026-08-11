@@ -6,7 +6,7 @@ The quality bar is not re-earned per application. The exemplar (`master_cv.md`) 
 
 **Helper scripts.** The mechanical steps run dependency-free Python in `scripts/`, resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
 
-**Preconditions.** A signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` exist **in the current working directory**. One existence check, not a search — if the exemplar isn't there or isn't signed off, stop and route to `job-intake`; a deadline never justifies applying without the sign-off.
+**Preconditions.** A signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` exist **in the current working directory**. One existence check, not a search. Signed off means `master_cv_signoff.md` exists and its last recorded hash matches `sha256sum master_cv.md` — a hash that no longer matches means the exemplar was edited since signing, so it counts as unsigned until re-signed (`lifecycle/exemplar.md`). Otherwise stop and route to `job-intake`; a deadline never justifies applying without the sign-off.
 
 ---
 

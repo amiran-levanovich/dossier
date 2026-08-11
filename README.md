@@ -2,7 +2,7 @@
 
 > Sibling plugins, same method, separate repos: [**redgreen**](https://github.com/amiran-levanovich/redgreen) (code) · [**atelier**](https://github.com/amiran-levanovich/atelier) (design, content, research). Formerly `job-workflow` in the `claude_setup` marketplace.
 
-A Claude Code plugin that runs a **job search** with the same discipline its siblings bring to code and craft: build deep, *verified* knowledge before producing anything, define the bar before writing, and gate every output. Per job posting, sub-agents produce an ATS-safe tailored CV and a company-specific cover letter — and a verifier agent blocks anything that can't be traced back to what the candidate actually did.
+A Claude Code plugin that runs a **job search** with the same discipline its siblings bring to code and craft: interview the candidate once into a story bank and one superset CV, verify that CV at full rigor, then produce every application by **trimming** it rather than writing a new one. Two agent dispatches per posting produce an ATS-safe CV and a company-specific cover letter; a verifier gates what is left to judge.
 
 Built for the European market, with first-class **DACH** (Germany/Austria/Switzerland) conventions.
 
@@ -10,7 +10,7 @@ Built for the European market, with first-class **DACH** (Germany/Austria/Switze
 
 ## The one idea
 
-A tailored application is only as good as what the system **actually knows** about the candidate. So the workflow front-loads an extensive interview into a distributed knowledge base, and every generated claim must **trace** to a verified entry in it. Tailoring without the knowledge base is guessing — the pipeline refuses to guess.
+A tailored application is only as good as what the system **actually knows** about the candidate — so rigor is paid **once**, on one document, and inherited forever after. An extensive interview produces a story bank; one superset CV is built from it, machine-checked for containment against it, and read and signed off by the candidate. Every application then trims that CV **byte-verbatim**, which is what makes the one-time verdict apply to the artifact actually being sent. Nothing is generated, so there is nothing to re-verify.
 
 ## How it works
 
@@ -26,7 +26,7 @@ CV ───▶ │ job-intake │ ──────▶ │ job-goals │ ─�
       master_cv.md          (search targets)        (CV + letter)
 ```
 
-1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped. Closes by offering the **master-CV build** (below) — the one-time investment that makes every later application cheaper.
+1. **`job-intake`** — the big interview. Seeds the *agenda* from the existing CV rather than the bank, because a CV bullet is a hypothesis and one written straight into the bank would be indistinguishable from an interviewed fact later. Then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the candidate's part vs the team's — and keeps pressing until the numbers, the **failures**, and the **motivations** are all recorded, since those two never reach a CV and are what interview prep and a letter's framing are drawn from. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `interview_progress.md`. Ends, on the candidate's word that it's finished, in the **exemplar build** (below).
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line:
 
@@ -69,7 +69,7 @@ posting (URL or pasted text)
 
 ## The exemplar — master CV
 
-Since v2.5.0 the writer doesn't have to regenerate the CV from scratch. At intake's close (user's call), the pipeline builds one exemplar in the job folder and verifies it **once, at full rigor** (`lifecycle/master_documents.md`):
+The writer never generates a CV. At intake's close, once the candidate declares the interview done, the pipeline builds one exemplar in the job folder and verifies it **once, at full rigor** — a containment check against the story bank by a fresh agent, then the candidate's blocking sign-off (`lifecycle/exemplar.md`):
 
 - **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, in canonical spellings. It holds every claim any application may ever make, so trimming never has to reach outside it.
 
@@ -81,7 +81,7 @@ Slot ids are a hash of the slot's own text, so editing the exemplar renames exac
 
 ## The anti-slop pass
 
-A letter that reads as machine-written is a defect, so `application-writer` runs a mandatory prose pass over the letter draft **before** writing `cover.md` and its trace — the traces then quote final text. It uses the `humanizer` skill when the session has one, and the checklist in `standards/cover_letter_rules.md` when it doesn't: **the pass never skips, only its instrument is optional.** The pass edits prose, never claims — a "humanized" letter that gained a claim is a traceability BLOCKER, not a style win. `application-verifier` checks the same anti-slop rules either way: a banned pattern is a MAJOR, a voice note is a MINOR. The CV is out of scope; its ATS exact-spelling and master-verbatim rules outrank prose polish.
+A letter that reads as machine-written is a defect, so `application-writer` runs a mandatory prose pass over the letter draft **before** writing `cover.md`. It uses the `humanizer` skill when the session has one, and the checklist in `standards/cover_letter_rules.md` when it doesn't: **the pass never skips, only its instrument is optional.** The pass edits prose, never facts — a "humanized" letter that gained a fact the CV doesn't carry is a containment BLOCKER, not a style win. `application-verifier` checks the same anti-slop rules either way: a banned pattern is a MAJOR, a voice note is a MINOR. The CV is out of scope — it is trimmed verbatim, so there is no prose there to polish.
 
 ## After you apply — the lifecycle
 
@@ -90,7 +90,7 @@ A letter that reads as machine-written is a defect, so `application-writer` runs
  tracker.csv ───┼─ interview ──▶ interview-briefer ▶ prep.md ─┼──▶ one lesson line
                 └─ offer ─────▶ clause walk + negotiation ┘         │
                                                                     ▼
-     next application's fit gate ◀── reads ◀── knowledge/lessons.md
+     next application's fit gate ◀── reads ◀────── lessons.md
                 (analytics reads the whole tracker for patterns)
 ```
 
@@ -98,35 +98,35 @@ A letter that reads as machine-written is a defect, so `application-writer` runs
 - **Offer arrives** → `lifecycle/offer.md`, two parts in strict order. First the **contract-reading companion**: describe-don't-judge — a clause-by-clause walk with neutral tags against the DACH clause taxonomy, promises-vs-paper reconciliation, and two strictly separated question lists (clarifications for the employer; everything legal for a lawyer — the companion never states law or judges enforceability). Then **negotiation prep**: the offer positioned against `goals.md` and the fit gate's own comp research, arguments anchored in KB-traced achievements, replies drafted but never sent. **Contract text never leaves the main session** — no sub-agent, no web query, no artifact. *(The companion adapts ideas from career-ops' offer-prep skill, itself building on Anthropic's claude-for-legal — credit to both.)*
 - **Rejection** → `lifecycle/postmortem.md`: classify where it died (machine / human screen / post-interview), work the cause checklist against the actual submitted documents, state one plain diagnosis with one concrete fix.
 - **Across applications** → `lifecycle/analytics.md` reads the whole tracker by recipe — funnel, where applications die, pace — and turns a rejection *pattern* into one strategy adjustment instead of another per-application fix. Fit scores land in the tracker, so analytics can also tell whether the gate's own scoring is calibrated.
-- **The loop closes** through `knowledge/lessons.md`: every post-mortem and interview debrief lands exactly one lesson line, and the fit gate reads them back before the next application is built — a diagnosis made once is never made from scratch again.
+- **The loop closes** through `lessons.md`: every post-mortem and interview debrief lands exactly one lesson line, and the fit gate reads them back before the next application is built — a diagnosis made once is never made from scratch again.
 
-The knowledge base it builds (in *your* job folder — the plugin ships zero personal data):
+What it builds in *your* job folder (the plugin ships zero personal data):
 
 ```
-knowledge/
-├── INDEX.md               # agents read this first, pull only what's relevant
-├── profile.md             # hard facts: permit, notice period, languages, education
-├── constraints.md         # hard rules (e.g. protected-title wording) — always read
-├── goals.md               # search targets
-├── interview_progress.md  # the interview's save-game file
-├── portfolio.md           # asset register: per clickable asset, a verdict — showcase / fix first / don't link
-├── lessons.md             # learning log: every post-mortem and debrief lands one lesson, reread before applying
-├── roles/<company>.md     # one per position: stack, verified achievements, STAR stories
-├── projects/<name>.md
-└── skills.md              # exact tool names with depth + provenance
+story_bank.md              # your career in prose: context, numbers, failures, motivations,
+                           #   portfolio verdicts, constraints — wider than any CV, on purpose
+master_cv.md               # the exemplar: the subset cleared for documents, built once
+master_cv_signoff.md       # what you have read and stood behind, with the exemplar's hash
+goals.md                   # search targets
+interview_progress.md      # the interview's save-game, and its seeded agenda
+lessons.md                 # learning log: every post-mortem lands one lesson, reread before applying
+tracker.csv                # one row per application
+applications/<company>/    # jd.md · notes.md · plan.json · cv.md · cover.md · alias_log.md
 ```
+
+The bank has **no schema** — no per-role files, no index, no anchors. That machinery existed to serve per-claim trace targets, and with the exemplar verified as a whole there is nothing left for it to serve; what a story is worth is its context, which a schema's job would be to strip.
 
 ## Honesty model
 
-- **Verified knowledge only.** Entries seeded from a CV are `[unverified]` claims until the interview confirms, corrects, or strikes them; unverified entries never feed tailoring.
-- **Traceability.** Every claim in a generated CV/letter maps to a KB entry in a sidecar trace file; the verifier flags untraceable or inflated claims as BLOCKERs.
-- **The user outranks the rule.** If the user explicitly asks to include something the KB can't back, the workflow warns once (concretely, no moralizing), confirms, gets the details, and records it as a `user-directed` override in that application's folder — the KB itself stays true. Agents never volunteer fabrication.
+- **A CV bullet is a hypothesis.** Claims seeded from your old CV sit on the interview's agenda, not in the bank, until the gauntlet quantifies, scopes and attributes them. Only interrogated material enters the bank.
+- **One verification, inherited.** The exemplar is machine-checked for containment against the bank and then **read and signed off by you** — blocking, and never waived for a deadline. Every application trims it byte-verbatim and a self-test proves it, so the signed verdict covers the artifact that actually goes out.
+- **The candidate outranks the rule.** If you ask for a claim the exemplar lacks, the workflow warns once (concretely, no moralizing), confirms, gets the details, and it becomes a **one-off slot** — declared, judged at full rigor by the gate, and never disguised as a reworded exemplar line. Agents never volunteer fabrication and never propose a one-off unprompted.
 
 ## Skills
 
 | Skill        | When it triggers                                              |
 | :----------- | :------------------------------------------------------------ |
-| `job-intake` | Building/extending the knowledge base; resuming the interview |
+| `job-intake` | Building/extending the story bank; resuming the interview; the exemplar build |
 | `job-goals`  | Setting or revising search targets                            |
 | `job-apply`  | A posting arrives — the full tailoring pipeline               |
 
@@ -150,7 +150,7 @@ knowledge/
 | `core/fit_check.md`                          | The pre-application gate: liveness, constraints kill-switch, evidence-cited fit score, comp-reliability weighting, legitimacy tier |
 | `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
 | `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |
-| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `master_documents` (build/maintain the master CV exemplar) |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `exemplar` (build it once, sign it off, promote into it) |
 | `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
 ## The scripts layer (`scripts/`)
@@ -193,4 +193,4 @@ Then, in your job folder: run `job-intake` and block out a coffee's worth of tim
 ## What it deliberately does **not** have
 
 - **No pre-commit hook, no fixer agents** (same stance as `atelier`) — application quality is a judgment; enforcement is the verifier gate and the traceability contract.
-- **No personal data in the plugin.** The knowledge base, tracker, and applications live in your own job folder; the plugin ships only method, standards, and templates.
+- **No personal data in the plugin.** The story bank, exemplar, tracker, and applications live in your own job folder; the plugin ships only method, standards, and templates.

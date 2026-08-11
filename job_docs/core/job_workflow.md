@@ -27,7 +27,7 @@ The plugin ships **zero personal data**. Everything about the candidate lives in
 │   ├── offer_notes.md         #   recorded promises, once an offer arrives (lifecycle/offer.md)
 │   ├── offer_prep.md          #   contract clause walk + negotiation prep (lifecycle/offer.md)
 │   └── notes.md               #   anything else worth keeping per company
-├── master_cv.md (+ trace)     # optional exemplar, built once — lifecycle/master_documents.md
+├── master_cv.md               # the exemplar, built once — lifecycle/exemplar.md
 │                              #   (with .claim_ledger.json, the verifier's memo of past CLEANs)
 ├── tracker.csv                # application status log — see lifecycle/tracking.md
 └── CLAUDE.md                  # written after intake: a short pointer to knowledge/ and this workflow
