@@ -159,6 +159,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records the master CV's hash (`--document`) |
 | `master_diff.py`      | Re-judging master-CV content — proves which cv.md lines are verbatim from a verified `master_cv.md`; only CHANGED lines need judgment |
 | `master_slots.py`     | Re-typing the exemplar — `extract` decomposes `master_cv.md` into a slot map, `stamp` writes slot ids into its trace, `assemble` turns the writer's edit plan into `cv.md` + `cv_trace.md` (ADR-0003) |
+| `cv.py`               | **v4, in progress** — the trace-free successor to `master_slots.py`: `map` decomposes the exemplar into slots, `build` renders the slots an edit plan kept and refuses anything non-verbatim, writing no file on any fault (ADR-0004, ADR-0005). Replaces `master_slots.py` and `master_diff.py` once the method layer stops naming them |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
 | `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies + real token totals |
 

@@ -63,6 +63,27 @@ def heading_slugs(text: str) -> set[str]:
     return slugs
 
 
+def normalize_line(line: str) -> str:
+    """Whitespace/bullet-marker normalisation — the only tolerance allowed when
+    comparing a produced document against the exemplar it was cut from."""
+    text = line.strip()
+    text = re.sub(r"^[-*+]\s+", "", text)
+    return re.sub(r"\s+", " ", text)
+
+
+def content_lines(text: str):
+    """Yield (lineno, normalized) for every content-bearing line.
+
+    Headings are structural, not claims, so they are skipped — which is what
+    lets a verbatim check compare claims without tripping over the skeleton.
+    """
+    for i, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        yield i, normalize_line(raw)
+
+
 def keyword_pattern(keyword: str) -> re.Pattern:
     """Whole-token, case-insensitive matcher tolerant of tech punctuation.
 

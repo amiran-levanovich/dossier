@@ -27,7 +27,6 @@ Standard library only, like every script here.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import sys
@@ -38,138 +37,26 @@ import _common  # noqa: E402
 import trace_check  # noqa: E402
 from trace_check import SLOT_ID_PREFIX_RE  # noqa: E402
 
-# Section heading → the kind of block it contains.
-SECTION_KINDS = {
-    "summary": "summary",
-    "experience": "experience",
-    "projects": "projects",
-    "education": "education",
-    "certifications": "education",
-    "skills": "skills",
-    "languages": "languages",
-}
-# Sections whose entries are `###` blocks carrying bullets.
-ENTRY_SECTIONS = {"experience", "projects"}
-# Id prefix per kind — short, so an id costs a handful of tokens in an edit plan.
-ID_PREFIX = {
-    "headline": "head",
-    "summary": "sum",
-    "experience": "exp",
-    "projects": "proj",
-    "education": "edu",
-    "skills": "skills",
-    "languages": "lang",
-    "bullet": "b",
-}
-# `### Senior Engineer — Acme, Berlin` → role, company, location.
-ENTRY_HEADING_RE = re.compile(r"^###\s+(?P<role>.+?)\s+[—-]\s+(?P<rest>.+?)\s*$")
-# A dates line: starts with MM/YYYY or a year.
-DATES_RE = re.compile(r"^\d{2}/\d{4}\s*[–-]|^\d{4}\s*[–-]")
+# The slot model itself lives in cv.py, which owns it going forward. Sharing it
+# rather than keeping a second copy matters more than the import direction
+# looks: slot_id *is* the id contract, and two copies that drifted would
+# silently rename slots while both test suites stayed green.
+import cv  # noqa: E402
+from cv import (  # noqa: E402
+    DATES_RE,
+    ENTRY_HEADING_RE,
+    ENTRY_SECTIONS,
+    ID_PREFIX,
+    SECTION_KINDS,
+    build_slot_map,
+    slot_id,
+)
 
+has_slots = cv.has_slots
+_index_slots = cv._slots_by_id
+_bullet_parents = cv._bullet_parents
 
-def slot_id(kind: str, text: str) -> str:
-    """Content-hash id. Normalised so whitespace churn never renames a slot."""
-    norm = re.sub(r"\s+", " ", text.strip())
-    digest = hashlib.sha256(norm.encode("utf-8")).hexdigest()[:6]
-    return f"{ID_PREFIX.get(kind, kind)}-{digest}"
-
-
-def _split_sections(text: str):
-    """Yield (title|None, [lines]) for the preamble and each `##` section."""
-    title = None
-    buf: list[str] = []
-    for line in text.splitlines():
-        if line.startswith("## "):
-            yield title, buf
-            title, buf = line[3:].strip(), []
-        else:
-            buf.append(line)
-    yield title, buf
-
-
-def _parse_entry_blocks(section: str, kind: str, lines: list[str]) -> list[dict]:
-    """Parse `###` entries: heading + dates + descriptor atomic, bullets inside."""
-    blocks: list[dict] = []
-    current: dict | None = None
-    for raw in lines:
-        line = raw.strip()
-        if raw.startswith("### "):
-            m = ENTRY_HEADING_RE.match(raw)
-            role = m.group("role").strip() if m else raw[4:].strip()
-            rest = m.group("rest").strip() if m else ""
-            company, _, location = rest.partition(",")
-            current = {
-                "kind": kind,
-                "section": section,
-                "heading": raw.rstrip(),
-                "role": role,
-                "company": company.strip(),
-                "location": location.strip(),
-                "dates": "",
-                "descriptor": "",
-                "bullets": [],
-            }
-            blocks.append(current)
-        elif current is None or not line:
-            continue
-        elif line.startswith("- "):
-            text = line[2:].strip()
-            current["bullets"].append({"id": slot_id("bullet", text), "text": text})
-        elif not current["dates"] and DATES_RE.match(line):
-            current["dates"] = line
-        elif not current["descriptor"]:
-            current["descriptor"] = line
-    for block in blocks:
-        own = "\x00".join((block["heading"], block["dates"], block["descriptor"]))
-        block["id"] = slot_id(block["kind"], own)
-    return blocks
-
-
-def build_slot_map(source: str, text: str) -> dict:
-    """Decompose an exemplar into its slot map."""
-    blocks: list[dict] = []
-    header: dict = {"name": "", "contact": "", "lines": []}
-
-    for title, lines in _split_sections(text):
-        if title is None:
-            # Preamble: `# Name`, then the headline, then the contact row.
-            body = [ln for ln in lines if ln.strip()]
-            for i, line in enumerate(body):
-                if line.startswith("# "):
-                    header["name"] = line.rstrip()
-                elif not any(b["kind"] == "headline" for b in blocks) and i and header["name"]:
-                    blocks.append({
-                        "id": slot_id("headline", line.strip()),
-                        "kind": "headline",
-                        "section": None,
-                        "text": line.strip(),
-                    })
-                else:
-                    header["contact"] = line.strip()
-            continue
-
-        kind = SECTION_KINDS.get(title.strip().lower())
-        if kind is None:
-            continue
-        if kind in ENTRY_SECTIONS:
-            blocks.extend(_parse_entry_blocks(title, kind, lines))
-            continue
-        if kind == "summary":
-            body = " ".join(ln.strip() for ln in lines if ln.strip())
-            if body:
-                blocks.append({"id": slot_id("summary", body), "kind": "summary",
-                               "section": title, "text": body})
-            continue
-        for raw in lines:
-            line = raw.strip()
-            if not line:
-                continue
-            text_ = line[2:].strip() if line.startswith("- ") else line
-            blocks.append({"id": slot_id(kind, text_), "kind": kind,
-                           "section": title, "text": text_,
-                           "bulleted": line.startswith("- ")})
-
-    return {"source": source, "header": header, "blocks": blocks}
+_ = (DATES_RE, ENTRY_HEADING_RE, ENTRY_SECTIONS, ID_PREFIX, SECTION_KINDS, slot_id, build_slot_map)
 
 
 # Connectives an abbreviated claim may add or drop freely; they carry no claim
@@ -324,13 +211,6 @@ def stamped_trace_bodies(trace_text: str) -> dict[str, str]:
     return bodies
 
 
-def _index_slots(smap: dict) -> dict[str, dict]:
-    index: dict[str, dict] = {}
-    for block in smap["blocks"]:
-        index[block["id"]] = block
-        for bullet in block.get("bullets", []):
-            index[bullet["id"]] = bullet
-    return index
 
 
 UNSUPPORTED = (
@@ -343,16 +223,8 @@ UNSUPPORTED = (
 )
 
 
-def has_slots(smap: dict) -> bool:
-    """Whether the exemplar decomposed into anything addressable at all."""
-    return any(block.get("bullets") or "text" in block for block in smap["blocks"])
 
 
-def _bullet_parents(smap: dict) -> dict[str, str]:
-    """bullet id → its block's id. A bullet exists only inside one block."""
-    return {bullet["id"]: block["id"]
-            for block in smap["blocks"]
-            for bullet in block.get("bullets", [])}
 
 
 def trace_target(body: str) -> str:
