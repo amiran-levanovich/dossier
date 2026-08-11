@@ -1,0 +1,40 @@
+exit 0
+{
+  "source": "master_cv.md",
+  "header": {
+    "name": "# B. Applicant",
+    "contact": "Remote (EU) · applicant@example.invalid"
+  },
+  "blocks": [
+    {
+      "id": "head-386ffe",
+      "kind": "headline",
+      "section": null,
+      "text": "Backend Developer"
+    },
+    {
+      "kind": "experience",
+      "section": "Experience",
+      "heading": "### Backend Developer — Gamma, Vienna",
+      "role": "Backend Developer",
+      "company": "Gamma",
+      "location": "Vienna",
+      "dates": "03/2019 – present",
+      "descriptor": "*Payments infrastructure, ~50 people*",
+      "bullets": [
+        {
+          "id": "b-d468b5",
+          "text": "Reduced failed webhook deliveries from 3% to 0.2%."
+        }
+      ],
+      "id": "exp-7b2774"
+    },
+    {
+      "id": "skills-d70088",
+      "kind": "skills",
+      "section": "Skills",
+      "text": "**Backend:** Python, MySQL.",
+      "bulleted": true
+    }
+  ]
+}

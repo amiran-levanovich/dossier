@@ -1,0 +1,9 @@
+{
+  "_comment": "Deliberately invalid. Pins the atomic-refusal contract: an unknown slot id and a patch[] the writer may not ask for (ADR-0005) must exit 1 and write no cv.md at all.",
+  "order": [
+    { "id": "exp-notreal" }
+  ],
+  "patch": [
+    { "id": "exp-notreal", "text": "Reduced failed webhook deliveries to zero." }
+  ]
+}

@@ -53,8 +53,12 @@ DENYLIST_NAME = ".privacy-denylist"
 
 # --- email -----------------------------------------------------------------
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-# Placeholder domains/locals that are template text, not a real person.
-_EXAMPLE_DOMAINS = ("example.com", "example.org", "example.net", "example.edu", "localhost")
+# Placeholder domains/locals that are template text, not a real person. Every
+# entry is reserved by RFC 2606 / RFC 6761 and can never resolve, so no real
+# address can live at one — `.invalid` included, which is what fixture data uses
+# to be unmistakably synthetic.
+_EXAMPLE_DOMAINS = ("example.com", "example.org", "example.net", "example.edu",
+                    "example.invalid", "localhost")
 _PLACEHOLDER_LOCALS = ("you", "name", "firstname.lastname", "your.email", "email", "user")
 
 # --- salary ----------------------------------------------------------------

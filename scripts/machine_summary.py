@@ -15,7 +15,7 @@ never re-read prose with a model" idea. The block is stdlib-parseable
         claims_traced: 3
         claims_total: 3
         ats_covered: 4
-        ats_unverified: 1
+        ats_promotable: 1
         ats_gap: 1
         ledger_preverified: 0
 
@@ -47,7 +47,7 @@ REQUIRED = ("verdict", "claims_traced", "claims_total")
 VERDICTS = ("CLEAN", "FINDINGS")
 COUNT_FIELDS = (
     "verify_rounds", "claims_traced", "claims_total",
-    "ats_covered", "ats_unverified", "ats_gap", "ledger_preverified",
+    "ats_covered", "ats_promotable", "ats_gap", "ledger_preverified",
 )
 
 

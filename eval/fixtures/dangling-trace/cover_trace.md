@@ -1,1 +1,0 @@
-- "Python background" → skills.md#languages

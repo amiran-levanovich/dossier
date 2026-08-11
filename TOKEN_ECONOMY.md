@@ -237,8 +237,10 @@ understanding. These pipeline steps now run through `scripts/` (dependency-free 
 stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
 
 - **ATS keyword coverage** (`ats_coverage.py`) — literal whole-token matching of the
-  `jd.md` keyword list against the KB. Was an inline Grep-and-reason step; now one script
-  call returning COVERED/UNVERIFIED/GAP buckets. (kills the inline work behind C2/C5.)
+  `jd.md` keyword list against the exemplar and the story bank. Was an inline
+  Grep-and-reason step; now one script call returning COVERED/PROMOTABLE/GAP buckets, so
+  the promotion decision arrives already separated from the real gaps. (kills the inline
+  work behind C2/C5.)
 - **Trace-map pre-check** (`trace_check.py`) — confirms every trace target resolves to a
   real file and `#anchor` before `application-verifier` runs, so the verifier spends its
   budget on claim-strength judgment, not bookkeeping. (shrinks the verifier's per-round
@@ -267,6 +269,12 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   wording alone, and its inputs lose `master_cv.md` and `master_cv_trace.md` entirely.
   (C5 for the writer's inputs, C4 for its output; ADR-0003.) **Projected, not yet
   measured** — see §5's raised-budget note.
+- **Alias groups** (`aliases.py`, v4) — matching the posting's surface spelling of a
+  technology ("Postgres" for "PostgreSQL", "K8s" for "Kubernetes") used to be either a
+  writer instruction or a verifier finding, both of which spend a dispatch on string
+  matching. A shipped table plus a user extension makes it a table lookup applied after
+  the verbatim self-test (ADR-0008), with every swap logged. (C2/C6 — removes a class of
+  finding from the verifier entirely.)
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully

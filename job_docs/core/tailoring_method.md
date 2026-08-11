@@ -37,11 +37,11 @@ Run `core/fit_check.md` end to end: liveness and location sanity, the binary con
 
 ## Step 3 — ATS keyword check (before writing anything)
 
-Per `standards/ats_rules.md`: cross-check every ATS keyword from `jd.md` against the KB. Run `scripts/ats_coverage.py jd.md --kb-dir knowledge/` — literal whole-token matching, each keyword bucketed COVERED / UNVERIFIED / GAP, no KB read into the main session (fallback: batch-Grep `knowledge/` with variants, ≤5 calls). Then apply judgment:
+Per `standards/ats_rules.md`: cross-check every ATS keyword against the exemplar and the bank. Run `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls). Then:
 
-- **Covered** (`COVERED`) — a verified KB entry names it.
-- **Verifiable gap** — the user plausibly has it but the KB doesn't record it as verified → run a 2-minute mini-interview now, write the result into the KB (this is how the KB keeps growing after intake). The script's `UNVERIFIED` bucket (named only on an `[unverified]` line) lands here.
-- **Real gap** — the user doesn't have it → record under the KB-match evidence line in `jd.md`'s `## Fit` block. It may only enter the documents through the override protocol below. (Script `GAP` = this or a verifiable gap — judgment decides.)
+- **Covered** (`COVERED`) — the exemplar names it; trimming can use it. The report names the sections (achievement-backed vs a bare skills-list mention) and marks `(as "…")` when the exemplar's spelling differs — assembly swaps that in.
+- **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact as a slot and verify that slot, or leave it unclaimed.
+- **Real gap** (`GAP`) — neither has it → record in `jd.md`'s `## Fit` block. Feeds the fit score, never the documents.
 
 ## Step 4 — Company research
 

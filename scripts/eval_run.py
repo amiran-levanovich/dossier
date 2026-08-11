@@ -8,10 +8,15 @@ zero-LLM half. Each fixture under `eval/fixtures/<case>/` is a tiny, synthetic
 job-folder (no PII); the harness runs the deterministic scripts over it and
 asserts their output is byte-identical to a blessed `expected/` snapshot.
 
-It catches: a changed bucket label in ats_coverage, a reworded trace_check
-result, a master_diff format shift — and drift in the trace-file *contract* the
-writer agents must emit. When a change is intentional, `--bless` rewrites the
-snapshots so the diff is one reviewable step.
+It covers the v4 deterministic half end to end: the slot map `cv.py map` hands
+the writer, the assembly `cv.py build` renders from an edit plan, the alias swap
+applied after the verbatim self-test, and the three-way coverage report. So it
+catches a renamed slot id, a rendering change the verbatim counts would hide, a
+swap that stopped firing, a changed bucket label — and, on the rejection
+fixture, a build that starts writing a file it must refuse to write.
+
+When a change is intentional, `--bless` rewrites the snapshots so the diff is
+one reviewable step.
 
 The LLM half (agent quality) is Tier 2 — run on demand, not here.
 
@@ -31,17 +36,35 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-# Each check is one deterministic script invoked with fixture-relative paths, so
-# the paths echoed in its output stay location-independent across machines.
-Check = __import__("collections").namedtuple("Check", "name argv")
+@dataclass(frozen=True)
+class Check:
+    """One deterministic script invoked with fixture-relative paths, so the paths
+    echoed in its output stay location-independent across machines.
+
+    `artifacts` are files the script writes, whose content joins the snapshot.
+    A report saying "verbatim: 9/9" does not prove what landed in `cv.md`, and a
+    rejected build's whole contract is that the file is *absent* — neither is
+    visible on stdout, so both are pinned here.
+    """
+    name: str
+    argv: list[str]
+    artifacts: tuple[str, ...] = ()
+
 
 CHECKS = [
-    Check("ats_coverage", ["ats_coverage.py", "jd.md", "--kb-dir", "knowledge"]),
-    Check("trace_check", ["trace_check.py", "cv_trace.md", "cover_trace.md", "--kb-dir", "knowledge"]),
-    Check("master_diff", ["master_diff.py", "cv.md", "--master", "master_cv.md"]),
+    Check("cv_map", ["cv.py", "map", "master_cv.md"]),
+    Check("cv_build", ["cv.py", "build", "plan.json", "--exemplar", "master_cv.md",
+                       "--out-dir", "out"],
+          artifacts=("out/cv.md",)),
+    Check("cv_build_aliased", ["cv.py", "build", "plan.json", "--exemplar", "master_cv.md",
+                               "--out-dir", "out-aliased", "--posting", "jd.md"],
+          artifacts=("out-aliased/cv.md", "out-aliased/alias_log.md")),
+    Check("ats_coverage", ["ats_coverage.py", "jd.md", "--exemplar", "master_cv.md",
+                           "--bank", "story_bank.md"]),
 ]
 
 EXPECTED_DIR = "expected"
+MISSING = "<not written>"
 
 
 @dataclass(frozen=True)
@@ -52,9 +75,43 @@ class Diff:
     actual: str
 
 
-def render(exit_code: int, stdout: str) -> str:
-    """Golden snapshot format: exit code on line 1, then the captured stdout."""
-    return f"exit {exit_code}\n{stdout}"
+def render(exit_code: int, stdout: str, artifacts=()) -> str:
+    """Golden snapshot: exit code, the captured stdout, then each artifact.
+
+    An artifact the script did not write is recorded as absent rather than
+    skipped, so "this build wrote no file" is an assertion and not a silence.
+    """
+    out = f"exit {exit_code}\n{stdout}"
+    for label, content in artifacts:
+        out += f"\n--- {label} ---\n{MISSING if content is None else content}"
+    return out
+
+
+def _clear_artifacts(fixture_dir: Path, check: Check) -> None:
+    """Remove a previous run's outputs before running.
+
+    Without this a rejected build would inherit the last successful run's
+    `cv.md` and its snapshot would record a file the run never wrote — which is
+    precisely the atomicity failure the fixture exists to catch.
+    """
+    for rel in check.artifacts:
+        path = fixture_dir / rel
+        if path.is_file():
+            path.unlink()
+
+
+def _read_artifacts(fixture_dir: Path, check: Check) -> list[tuple[str, str | None]]:
+    out = []
+    for rel in check.artifacts:
+        path = fixture_dir / rel
+        out.append((rel, path.read_text(encoding="utf-8") if path.is_file() else None))
+    return out
+
+
+def _run(fixture_dir: Path, check: Check, run_fn) -> str:
+    _clear_artifacts(fixture_dir, check)
+    exit_code, stdout = run_fn(fixture_dir, check)
+    return render(exit_code, stdout, _read_artifacts(fixture_dir, check))
 
 
 def discover_fixtures(fixtures_root) -> list[Path]:
@@ -89,8 +146,7 @@ def compare_fixture(fixture_dir, checks, run_fn) -> list[Diff]:
     fixture_dir = Path(fixture_dir)
     diffs = []
     for check in checks:
-        exit_code, stdout = run_fn(fixture_dir, check)
-        actual = render(exit_code, stdout)
+        actual = _run(fixture_dir, check, run_fn)
         ep = _expected_path(fixture_dir, check)
         expected = ep.read_text(encoding="utf-8") if ep.is_file() else "<no expected snapshot>\n"
         if actual != expected:
@@ -102,8 +158,8 @@ def bless_fixture(fixture_dir, checks, run_fn) -> None:
     fixture_dir = Path(fixture_dir)
     (fixture_dir / EXPECTED_DIR).mkdir(exist_ok=True)
     for check in checks:
-        exit_code, stdout = run_fn(fixture_dir, check)
-        _expected_path(fixture_dir, check).write_text(render(exit_code, stdout), encoding="utf-8")
+        _expected_path(fixture_dir, check).write_text(
+            _run(fixture_dir, check, run_fn), encoding="utf-8")
 
 
 def _format_drift(d: Diff) -> str:

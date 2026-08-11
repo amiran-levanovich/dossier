@@ -86,11 +86,11 @@ class CvCase(unittest.TestCase):
                 return block
         raise AssertionError(f"no block for {company}")
 
-    def build(self, plan, exemplar_text=EXEMPLAR):
+    def build(self, plan, exemplar_text=EXEMPLAR, extra=()):
         exemplar = self.write("master_cv.md", exemplar_text)
         plan_path = self.write("plan.json", json.dumps(plan))
         return self.run_cv(["build", str(plan_path), "--exemplar", str(exemplar),
-                            "--out-dir", str(self.out_dir)])
+                            "--out-dir", str(self.out_dir), *extra])
 
     def assertNothingWritten(self):
         # Not just "no cv.md" — nothing at all. A rejected build that left a
@@ -634,6 +634,117 @@ class TestVerbatimSelfTest(CvCase):
         produced = (self.out_dir / "cv.md").read_text(encoding="utf-8")
         for _, norm in _common.content_lines(produced):
             self.assertIn(norm, exemplar_lines)
+
+
+class TestAliasPass(CvCase):
+    """The alias pass at its seam in `build` (ADR-0008, #27).
+
+    The unit behaviour of resolution lives in test_aliases.py. What is tested
+    here is the *sequence*: aliasing happens after the self-test, on an accepted
+    build only, and leaves an audit trail for every difference it introduced.
+    """
+
+    def skills_plan(self, smap):
+        return {"order": [{"id": sid} for sid in self.ids(smap)["skills"]]}
+
+    def test_the_postings_spelling_replaces_the_exemplars(self):
+        smap = self.slot_map()
+        jd = self.write("jd.md", "## Requirements\n- Postgres and K8s in production\n")
+        rc, report = self.build(self.skills_plan(smap), extra=["--posting", str(jd)])
+        self.assertEqual(rc, 0, report)
+        cv_text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("Ruby, Rails, Postgres", cv_text)
+        self.assertIn("Docker, K8s", cv_text)
+        self.assertNotIn("PostgreSQL", cv_text)
+        self.assertIn("aliases: 2 swap(s)", report)
+
+    def test_every_swap_is_logged_beside_the_cv(self):
+        smap = self.slot_map()
+        jd = self.write("jd.md", "Postgres, please.\n")
+        rc, report = self.build(self.skills_plan(smap), extra=["--posting", str(jd)])
+        self.assertEqual(rc, 0, report)
+        log = (self.out_dir / "alias_log.md").read_text(encoding="utf-8")
+        self.assertIn("`PostgreSQL` → `Postgres`", log)
+        self.assertIn("alias_groups.md", log)
+
+    def test_a_posting_that_agrees_leaves_the_cv_alone_and_says_so(self):
+        smap = self.slot_map()
+        jd = self.write("jd.md", "PostgreSQL and Kubernetes, as it happens.\n")
+        rc, report = self.build(self.skills_plan(smap), extra=["--posting", str(jd)])
+        self.assertEqual(rc, 0, report)
+        self.assertIn("PostgreSQL", (self.out_dir / "cv.md").read_text(encoding="utf-8"))
+        self.assertIn("No swaps", (self.out_dir / "alias_log.md").read_text(encoding="utf-8"))
+
+    def test_without_a_posting_no_alias_pass_runs_and_no_log_appears(self):
+        smap = self.slot_map()
+        rc, report = self.build(self.skills_plan(smap))
+        self.assertEqual(rc, 0, report)
+        self.assertFalse((self.out_dir / "alias_log.md").exists())
+        self.assertNotIn("aliases:", report)
+
+    def test_a_user_extension_merges_with_the_shipped_table(self):
+        smap = self.slot_map()
+        jd = self.write("jd.md", "We are a psql and Moby shop.\n")
+        ext = self.write("alias_groups.md",
+                         "## Alias groups\n- Postgres, psql\n- Docker, Moby\n")
+        rc, report = self.build(self.skills_plan(smap),
+                                extra=["--posting", str(jd), "--aliases", str(ext)])
+        self.assertEqual(rc, 0, report)
+        cv_text = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        # `psql` reaches `PostgreSQL` only because the extension joined the
+        # shipped PostgreSQL/Postgres group rather than forming a rival one.
+        self.assertIn("psql", cv_text)
+        self.assertIn("Moby", cv_text)
+
+    def test_a_mistyped_alias_table_is_refused_before_anything_is_written(self):
+        smap = self.slot_map()
+        jd = self.write("jd.md", "Postgres.\n")
+        ext = self.write("mine.md", "Postgres, pg\n")  # no `## Alias groups`
+        rc, report = self.build(self.skills_plan(smap),
+                                extra=["--posting", str(jd), "--aliases", str(ext)])
+        self.assertEqual(rc, 1)
+        self.assertIn("Alias groups", report)
+        self.assertNothingWritten()
+
+    def test_a_failed_self_test_produces_no_aliased_output(self):
+        """The ordering regression (ADR-0008). A build that would alias *and*
+        fails the self-test must fail as a build: if the alias pass ran anyway,
+        a corrupted line would ship carrying a log that accounted only for the
+        deliberate changes, and the corruption would read as an alias swap."""
+        smap = self.slot_map()
+        jd = self.write("jd.md", "Postgres and K8s.\n")
+        exemplar = self.write("master_cv.md", EXEMPLAR)
+        plan_path = self.write("plan.json", json.dumps(self.skills_plan(smap)))
+
+        real = cv.render_document
+
+        def corrupting(smap_, plan_):
+            return [ln.replace("Ruby, Rails, PostgreSQL", "Ruby, Rails, PostgreSQL, Go")
+                    for ln in real(smap_, plan_)]
+
+        with mock.patch.object(cv, "render_document", corrupting):
+            rc, report = self.run_cv(["build", str(plan_path), "--exemplar", str(exemplar),
+                                      "--out-dir", str(self.out_dir), "--posting", str(jd)])
+        self.assertEqual(rc, 1)
+        self.assertIn("not verbatim", report)
+        self.assertNotIn("aliases:", report)
+        self.assertNothingWritten()
+
+    def test_the_alias_pass_cannot_be_called_without_a_passed_self_test(self):
+        """Belt to the braces above: the guard lives in the module, so a future
+        caller that reorders the steps fails loudly instead of silently."""
+        import aliases
+        with self.assertRaises(aliases.AliasOrderError):
+            aliases.apply(["PostgreSQL"], "Postgres.",
+                          [["PostgreSQL", "Postgres"]],
+                          cv.VerbatimResult(1, 0, [(1, "corrupted")]))
+
+    def test_a_missing_posting_file_is_an_input_error(self):
+        smap = self.slot_map()
+        rc, report = self.build(self.skills_plan(smap),
+                                extra=["--posting", str(self.root / "nope.md")])
+        self.assertEqual(rc, 2)
+        self.assertIn("not found", report)
 
 
 if __name__ == "__main__":

@@ -87,6 +87,57 @@ class TestCompareAndBless(TmpMixin):
         self.assertEqual(len(diffs), 1)  # exit line differs even though stdout matches
 
 
+class TestArtifacts(TmpMixin):
+    """Files a check writes join its snapshot, since stdout does not prove them."""
+
+    def check(self):
+        return eval_run.Check("cv_build", ["cv.py", "build"], artifacts=("out/cv.md",))
+
+    def writing_runner(self, text):
+        def run(fixture_dir, check):
+            out = Path(fixture_dir) / "out"
+            out.mkdir(exist_ok=True)
+            (out / "cv.md").write_text(text, encoding="utf-8")
+            return 0, "built\n"
+        return run
+
+    def test_artifact_content_joins_the_snapshot(self):
+        fx = self.mkfixture("acme")
+        eval_run.bless_fixture(fx, [self.check()], self.writing_runner("# CV\n"))
+        snapshot = (fx / "expected" / "cv_build.txt").read_text(encoding="utf-8")
+        self.assertIn("--- out/cv.md ---", snapshot)
+        self.assertIn("# CV", snapshot)
+
+    def test_a_change_only_in_the_artifact_is_caught(self):
+        """The report can say `verbatim: 9/9` either way — the rendering change
+        is only visible in the file itself."""
+        fx = self.mkfixture("acme")
+        checks = [self.check()]
+        eval_run.bless_fixture(fx, checks, self.writing_runner("# CV\n- old bullet\n"))
+        diffs = eval_run.compare_fixture(fx, checks,
+                                        self.writing_runner("# CV\n- new bullet\n"))
+        self.assertEqual(len(diffs), 1)
+
+    def test_a_missing_artifact_is_recorded_as_absent(self):
+        fx = self.mkfixture("acme")
+        refusing = lambda fixture_dir, check: (1, "2 fault(s) — no output written\n")
+        eval_run.bless_fixture(fx, [self.check()], refusing)
+        self.assertIn(eval_run.MISSING,
+                     (fx / "expected" / "cv_build.txt").read_text(encoding="utf-8"))
+
+    def test_a_previous_runs_artifact_is_cleared_before_running(self):
+        """Otherwise a build that refuses to write would inherit the last good
+        run's cv.md, and the atomicity contract would pass while broken."""
+        fx = self.mkfixture("acme")
+        checks = [self.check()]
+        eval_run.bless_fixture(fx, checks, self.writing_runner("# CV\n"))
+        self.assertTrue((fx / "out" / "cv.md").is_file())
+        refusing = lambda fixture_dir, check: (1, "no output written\n")
+        diffs = eval_run.compare_fixture(fx, checks, refusing)
+        self.assertEqual(len(diffs), 1)
+        self.assertIn(eval_run.MISSING, diffs[0].actual)
+
+
 class TestSubprocessRunner(TmpMixin):
     def test_runs_a_real_script_with_fixture_cwd(self):
         # A trivial script that echoes cwd-relative file contents, proving the

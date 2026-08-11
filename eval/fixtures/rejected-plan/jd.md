@@ -1,6 +1,6 @@
-# Beta — Backend Developer
+# Gamma — Backend Developer
 
 **URL:** pasted   **Captured:** 2026-07-20
 
 ## ATS keywords
-Python
+Python, MySQL, Kafka
