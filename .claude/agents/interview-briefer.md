@@ -15,8 +15,7 @@ actually claimed, not to improvise new claims.
 - **Stage** — which interview this is (recruiter screen, hiring manager / technical,
   behavioural, panel / assessment, offer); plus who's in the room and the format, if known
 - **Application paths** — `jd.md`, `notes.md` (company + interviewer research),
-  `cv.md` + `cv_trace.md`, `cover.md`
-- **overrides.md path** — only if user-directed claims exist for this application
+  `cv.md`, `cover.md`
 - **KB file paths** — the selected knowledge-base files (relevant roles/projects,
   skills, profile, constraints, goals)
 - **Standards paths** — `lifecycle/interview_prep.md` (the per-stage briefing
@@ -28,9 +27,8 @@ missing file.
 
 ## Procedure
 
-1. Read jd.md, then the application documents (cv.md, cv_trace.md, cover.md,
-   overrides.md if present) — know exactly what was claimed to THIS company and where
-   each claim came from. Then notes.md, the standards, and the KB files.
+1. Read jd.md, then the application documents (cv.md, cover.md) — know exactly what was
+   claimed to THIS company. Then notes.md, the standards, and the KB files.
 2. Build `prep.md` for **the given stage only**, per the matching section of
    `interview_prep.md`: pitch, salary answer, and questions for a screen; probable
    topics mapped to KB stories and metrics for hiring manager / technical; STAR
@@ -40,9 +38,9 @@ missing file.
    the KB records, the stack detail skills.md carries. A claim in cv.md or cover.md
    with no prepared backing is a gap — flag it, don't paper over it.
 4. Always include these two sections:
-   - **User-directed claims** (only when overrides.md exists): each override, the
-     detail recorded for it, and how to sustain it if probed — the user chose to make
-     these claims and must carry them live.
+   - **One-off claims** (only when the CV carries a slot the exemplar doesn't): each
+     one, the detail recorded for it, and how to sustain it if probed — the user chose
+     to make these claims and must carry them live.
    - **Flags**: topics the CV names that the KB shows thin or stale depth on
      (rusty-risk), decisive `[unverified]` entries you skipped, and open questions
      the user should ask at this stage.

@@ -22,13 +22,15 @@ Three skills, in order — each builds what the next one needs:
 CV ───▶ │ job-intake │ ──────▶ │ job-goals │ ──────▶ │ job-apply │ ◀─── posting
         └─────┬──────┘         └─────┬─────┘         └─────┬─────┘
               ▼                      ▼                     ▼
-         knowledge/              goals.md         applications/<company>/
-        (verified KB)        (search targets)     (CV + letter + traces)
+    story_bank.md +             goals.md         applications/<company>/
+      master_cv.md          (search targets)        (CV + letter)
 ```
 
 1. **`job-intake`** — the big interview. Seeds a knowledge base from the existing CV, then interrogates every claim (a CV is marketing, not testimony): metrics, scope, the user's part vs the team's. Drills into tool ecosystems ("Python" → pytest, ruff, Django, Celery… — exactly the keywords ATS filters match). Inspects portfolio assets (GitHub, website, published work) directly — budgeted, one asset at a time — and records a show/fix/don't-link verdict per asset: what a recruiter sees on click is evidence too, in both directions. Deliberately too extensive for one sitting, and therefore **resumable by design**: progress lives in `knowledge/interview_progress.md`, and every session continues where the last one stopped. Closes by offering the **master-CV build** (below) — the one-time investment that makes every later application cheaper.
 2. **`job-goals`** — targets: titles, seniority, locations, remote policy, salary, hard-yes/hard-no lists. Small and re-runnable.
 3. **`job-apply`** — the production line:
+
+**Two LLM dispatches per posting.** Everything else is deterministic script:
 
 ```
 posting (URL or pasted text)
@@ -39,25 +41,28 @@ posting (URL or pasted text)
    ▼
  FIT GATE ── liveness · constraints screen · evidence-cited score 1–5
    │         · legitimacy tier — verdict said out loud BEFORE anything
-   │         is built; weak/fishy → user decides (override recorded)
-   ▼
- ATS keyword check ── covered / verifiable gap (mini-interview → KB)
-   │                  / real gap — before writing a single line
+   │         is built; weak/fishy → user decides
    ▼
  company research ──▶ notes.md
    │
    ▼
- application-writer ── one agent, targeted KB files only
-   │  cv.md + trace · cover.md + trace — both lead with the
-   │  same evidence; mandatory anti-slop pass over the letter
-   │  before either file is written
+ ATS keyword check ── covered (usable now) / promotable (in the bank,
+   │                  your call) / gap (feeds the fit score) — alias-aware
    ▼
- application-verifier ──▶ findings ──▶ fix ──▶ re-verify ─┐
-   ▲                     (same agents continued, not      │
-   │                      respawned; 3 rounds max —       │
-   │                      then the findings go to you)    │
-   └────────────────────────────◀─────────────────────────┘
-   │ CLEAN
+ slot map ── cv.py map: the writer's only view of the exemplar
+   │
+   ▼
+ DISPATCH 1 · application-writer ── plan.json (slot ids, no wording)
+   │                              + cover.md — one head picks the lead
+   │  evidence, so both documents argue from it; anti-slop pass first
+   ▼
+ assemble ── cv.py build: kept slots rendered byte-verbatim, proved,
+   │  then the posting's spellings swapped in and logged. A faulty plan
+   │  writes NOTHING → one repair back to the same writer
+   ▼
+ DISPATCH 2 · application-verifier ── one round, no cap: the letter's
+   │  facts must be in the CV; any one-off slot judged against the bank.
+   │  Everything else inherits the exemplar's verdict
    ▼
  present + tracker.csv row (fit score recorded)
 ```
@@ -66,13 +71,13 @@ posting (URL or pasted text)
 
 Since v2.5.0 the writer doesn't have to regenerate the CV from scratch. At intake's close (user's call), the pipeline builds one exemplar in the job folder and verifies it **once, at full rigor** (`lifecycle/master_documents.md`):
 
-- **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, canonical spellings, fully traced. Per application, `application-writer` **subtracts and makes bounded edits** instead of writing: dropping/reordering verified bullets can't introduce claims, so it's free; anything reworded is CHANGED — `scripts/master_diff.py` proves the split mechanically — and gets judged normally.
+- **`master_cv.md`** — the superset CV: every role, every bullet worth ever using, in canonical spellings. It holds every claim any application may ever make, so trimming never has to reach outside it.
 
-  Since v3.2.0 the writer doesn't retype the parts it keeps either. `scripts/master_slots.py` decomposes the exemplar into addressable **slots**, and the writer emits an **edit plan** — slot order, patched text, new slots, drops — which the script assembles into `cv.md` and `cv_trace.md`. Kept slots are copied byte-for-byte and inherit their trace lines by slot id, so only genuinely new wording is written, and only new wording is judged (ADR-0003).
+  Per application the writer **only trims** (ADR-0005). `scripts/cv.py map` decomposes the exemplar into addressable **slots**; the writer emits an **edit plan** naming slot ids in output order, and `cv.py build` renders those slots byte-verbatim and proves it with a self-test. There is no mechanism to reword one, which is what makes the once-earned verdict apply to the artifact actually being sent. The only exception is a **one-off slot** the user explicitly directs — the single thing the gate still judges on the CV side.
 
 **The cover letter has no exemplar, on purpose** (removed in v3.0.0). A CV is a superset you subtract from, so verbatim lines stay true across companies. A letter's stable parts are exactly what makes it swappable between companies — the defect `standards/cover_letter_rules.md` exists to prevent — and the anti-slop pass would rewrite reused phrasing anyway.
 
-The claim ledger records the exemplar's content hash on CLEAN: edit the master and the verbatim shortcut switches off until it's re-verified. One master only, in the search's primary language. No master → the pipeline runs exactly as before.
+Slot ids are a hash of the slot's own text, so editing the exemplar renames exactly the slots you touched and nothing else — an edit plan naming a slot that no longer exists fails assembly rather than quietly assembling stale wording. One exemplar only, in the search's primary language, and applying to anything requires its sign-off.
 
 ## The anti-slop pass
 

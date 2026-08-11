@@ -8,9 +8,9 @@ Re-read this when context is tight, after a compaction, or whenever unsure. It i
 4. **CV content is claims:** seeded entries stay `[unverified]` until interview-confirmed; unverified entries never feed tailoring.
 5. **Gate before writing:** first the fit gate (`core/fit_check.md` — liveness, constraints kill-switch, evidence-cited score, legitimacy tier; the user's override wins and is recorded), then the ATS keyword check (`standards/ats_rules.md`) — both before drafting anything.
 6. **Exact names, never equivalency language:** "X-equivalent" and "similar to X" are invisible to ATS. Name the tool or omit it.
-7. **Every claim traces:** each CV/letter statement maps to a KB entry or a user-directed override in the trace file. Untraceable = defect.
-8. **The verifier gate is the door:** fix → re-verify until a fully CLEAN round, **three rounds maximum** (re-verify by continuing the same verifier, not respawning). Findings still open at the cap are structural, not fixable by another round — stop and hand them to the user. Never present with open BLOCKER/MAJOR findings.
-9. **Never fabricate unprompted.** If the *user* directs an unsupported claim: warn once, confirm, get details, record in `overrides.md` — the KB stays true (see `core/tailoring_method.md`).
+7. **The CV is trimmed, never written:** every line comes byte-verbatim from the signed-off `master_cv.md`, and assembly proves it. A claim it lacks is a one-off slot or a promotion — never a reworded slot.
+8. **The gate is the door, and runs once:** it judges the letter's fact containment against the assembled CV and any one-off slot; everything else inherits the exemplar's verdict. An invented fact gets removed; a promotion candidate is the user's call. Never present with open BLOCKER/MAJOR findings.
+9. **Never fabricate unprompted.** The writer proposes no one-off of its own. If the *user* directs an unsupported claim: warn once, confirm, get details, then declare it as a one-off slot the gate judges at full rigor.
 10. **Close the loop:** tracker current with dated `next_action`s, application folder complete, new facts written back to the KB — before the session ends.
 
 ## When lost
