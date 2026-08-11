@@ -338,6 +338,58 @@ class TestAtsCoverage(TmpMixin):
         self.assertEqual(rc, 0)
         self.assertIn("no keywords found", out)
 
+    def test_a_keyword_the_exemplar_spells_differently_is_still_covered(self):
+        """The seam between #27 and #28. Assembly already swaps in the posting's
+        spelling, so a posting asking for "Postgres" against an exemplar saying
+        "PostgreSQL" is covered — reporting it as a gap would lower the fit score
+        for a keyword the delivered CV does match, and prompt a promotion for a
+        fact already on the exemplar."""
+        _, out = self.coverage(["Postgres"])
+        self.assertIn("[COVERED]    Postgres", out)
+        self.assertIn('as "PostgreSQL"', out)
+
+    def test_an_alias_match_in_the_bank_is_promotable(self):
+        _, out = self.coverage(["K8s"])
+        self.assertIn("[PROMOTABLE] K8s", out)
+        self.assertIn('as "Kubernetes"', out)
+
+    def test_a_literal_match_is_not_annotated_as_an_alias(self):
+        _, out = self.coverage(["PostgreSQL"])
+        self.assertIn("[COVERED]    PostgreSQL — Skills", out)
+        self.assertNotIn("as \"", out)
+
+    def test_no_alias_reaches_across_groups(self):
+        _, out = self.coverage(["MySQL"])
+        self.assertIn("[GAP]        MySQL", out)
+
+    def test_an_alias_carrying_uppercase_does_not_fire_on_prose(self):
+        """`Go` must not match "decided to go with", or the report would call a
+        gap covered — the worse direction of the two."""
+        _, out = self.coverage(["Golang"], exemplar=self.EXEMPLAR + "- Decided to go with SQS.\n",
+                               bank="Nothing relevant here.\n")
+        self.assertIn("[GAP]        Golang", out)
+
+    def test_a_user_alias_extension_is_honoured(self):
+        jd, ex, bk = self.setup_case(["Moby"], exemplar="# CV\n\n## Skills\n- Docker.\n")
+        ext = self.write("alias_groups.md", "## Alias groups\n- Docker, Moby\n")
+        rc, out = self.run_coverage([str(jd), "--exemplar", str(ex), "--bank", str(bk),
+                                     "--aliases", str(ext)])
+        self.assertEqual(rc, 0)
+        self.assertIn("[COVERED]    Moby", out)
+
+    def test_a_mistyped_alias_table_warns_and_loses_only_its_own_spellings(self):
+        """Coverage is advisory. Dying on a mistyped table would block the report
+        the orchestrator is waiting on, and discarding the shipped table with it
+        would turn one typo into a page of false gaps."""
+        jd, ex, bk = self.setup_case(["Postgres", "pg"])
+        ext = self.write("mine.md", "Postgres, pg\n")  # no `## Alias groups`
+        rc, out = self.run_coverage([str(jd), "--exemplar", str(ex), "--bank", str(bk),
+                                     "--aliases", str(ext)])
+        self.assertEqual(rc, 0)
+        self.assertIn("warning:", out)
+        self.assertIn("[COVERED]    Postgres", out)   # shipped table still applies
+        self.assertIn("[GAP]        pg", out)         # only the extension's spelling is lost
+
     def test_the_knowledge_directory_argument_is_gone(self):
         """v4 has no knowledge/ to point at, so the old flag must fail loudly
         rather than be quietly accepted and ignored."""

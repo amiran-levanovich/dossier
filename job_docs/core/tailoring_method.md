@@ -37,11 +37,11 @@ Run `core/fit_check.md` end to end: liveness and location sanity, the binary con
 
 ## Step 3 — ATS keyword check (before writing anything)
 
-Per `standards/ats_rules.md`: cross-check every ATS keyword against the exemplar and the story bank. Run `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, each keyword bucketed COVERED / PROMOTABLE / GAP, neither artifact read into the main session (fallback: batch-Grep both, ≤5 calls). Then:
+Per `standards/ats_rules.md`: cross-check every ATS keyword against the exemplar and the bank. Run `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls). Then:
 
-- **Covered** (`COVERED`) — the exemplar names it; trimming can use it. The report names the sections, which separates an achievement backing the keyword from a bare skills-list mention.
-- **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact into the exemplar as a slot and verify that slot, or leave it and don't claim it.
-- **Real gap** (`GAP`) — neither has it → record under the evidence line in `jd.md`'s `## Fit` block. It feeds the fit score, never the documents.
+- **Covered** (`COVERED`) — the exemplar names it; trimming can use it. The report names the sections (achievement-backed vs a bare skills-list mention) and marks `(as "…")` when the exemplar's spelling differs — assembly swaps that in.
+- **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact as a slot and verify that slot, or leave it unclaimed.
+- **Real gap** (`GAP`) — neither has it → record in `jd.md`'s `## Fit` block. Feeds the fit score, never the documents.
 
 ## Step 4 — Company research
 

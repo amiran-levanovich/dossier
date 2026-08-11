@@ -11,7 +11,7 @@
 - Background job processing
 
 ## ATS keywords
-Ruby, Rails, PostgreSQL, Redis, Go, Kubernetes
+Ruby, RoR, Postgres, Redis, Go, Kubernetes
 
 ## Fit
 <filled by the fit gate>

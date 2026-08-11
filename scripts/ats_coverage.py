@@ -31,6 +31,7 @@ from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
+import aliases  # noqa: E402
 
 # A locator is a pointer to the passage, not a concordance of every mention.
 MAX_LOCATORS = 3
@@ -64,43 +65,99 @@ def read_bank(bank: Path) -> list[tuple[str, int, str]]:
             for lineno, line in enumerate(_common.read_text(path).splitlines(), start=1)]
 
 
-def exemplar_sections(keyword: str, exemplar_text: str) -> list[str]:
-    """The exemplar sections naming this keyword, in document order.
+def keyword_variants(keyword: str, groups: list[list[str]]) -> list[str]:
+    """The keyword, then the alias spellings interchangeable with it.
+
+    Assembly already swaps in the posting's spelling (ADR-0008), so a posting
+    asking for "Postgres" against an exemplar saying "PostgreSQL" is covered —
+    the delivered CV will say Postgres. Matching only the literal keyword would
+    report that as a gap, lowering the fit score for a keyword the CV does match
+    and prompting a promotion for a fact already on the exemplar.
+    """
+    fold = keyword.casefold()
+    for group in groups:
+        if any(m.casefold() == fold for m in group):
+            return [keyword] + [m for m in group if m.casefold() != fold]
+    return [keyword]
+
+
+def _matched(keyword: str, variants: list[str], line: str) -> str | None:
+    """Which spelling this line uses, if any.
+
+    The keyword is matched case-insensitively, as an ATS would. Alias variants
+    carry the alias table's own casing rule instead, which is what keeps `Go`
+    from matching "decided to go with" and calling a gap covered.
+    """
+    for variant in variants:
+        if variant == keyword:
+            if _common.keyword_pattern(variant).search(line):
+                return variant
+        elif aliases.first_position(variant, line) is not None:
+            return variant
+    return None
+
+
+def exemplar_sections(keyword: str, exemplar_text: str,
+                      groups: list[list[str]] = ()) -> tuple[list[str], list[str]]:
+    """The exemplar sections naming this keyword, and any alias spellings used.
 
     Where a keyword sits is the difference between evidence and assertion: in an
     Experience bullet it is backed by an achievement, in Skills it is a claim on
     its own. The preamble — name, headline, contact row — belongs to no section
     and is labelled as the header, so a headline keyword still counts as found.
     """
-    pat = _common.keyword_pattern(keyword)
+    variants = keyword_variants(keyword, list(groups))
     found: list[str] = []
+    via: list[str] = []
     for title, lines in _common.split_sections(exemplar_text):
         label = title or PREAMBLE_LABEL
-        if label not in found and any(pat.search(line) for line in lines):
-            found.append(label)
-    return found
+        for line in lines:
+            hit = _matched(keyword, variants, line)
+            if hit is None:
+                continue
+            if label not in found:
+                found.append(label)
+            if hit != keyword and hit not in via:
+                via.append(hit)
+    return found, via
 
 
-def bank_locators(keyword: str, bank: list[tuple[str, int, str]]) -> list[str]:
+def bank_locators(keyword: str, bank: list[tuple[str, int, str]],
+                  groups: list[list[str]] = ()) -> tuple[list[str], list[str]]:
     """`file:line` for each mention in the bank, so a promotion can be judged."""
-    pat = _common.keyword_pattern(keyword)
-    return [f"{name}:{lineno}" for name, lineno, line in bank if pat.search(line)]
+    variants = keyword_variants(keyword, list(groups))
+    hits: list[str] = []
+    via: list[str] = []
+    for name, lineno, line in bank:
+        hit = _matched(keyword, variants, line)
+        if hit is None:
+            continue
+        hits.append(f"{name}:{lineno}")
+        if hit != keyword and hit not in via:
+            via.append(hit)
+    return hits, via
 
 
 class Row(NamedTuple):
     keyword: str
     bucket: str
     locators: list[str]
+    via: list[str]
 
 
-def classify(keyword: str, exemplar_text: str,
-             bank: list[tuple[str, int, str]]) -> Row:
+def classify(keyword: str, exemplar_text: str, bank: list[tuple[str, int, str]],
+             groups: list[list[str]] = ()) -> Row:
     """Bucket one keyword, with the locators for acting on it."""
-    sections = exemplar_sections(keyword, exemplar_text)
+    sections, via = exemplar_sections(keyword, exemplar_text, groups)
     if sections:
-        return Row(keyword, "COVERED", sections)
-    hits = bank_locators(keyword, bank)
-    return Row(keyword, "PROMOTABLE" if hits else "GAP", hits)
+        return Row(keyword, "COVERED", sections, via)
+    hits, via = bank_locators(keyword, bank, groups)
+    return Row(keyword, "PROMOTABLE" if hits else "GAP", hits, via)
+
+
+def format_via(via: list[str]) -> str:
+    """Name the spelling the artifact actually uses, so the match is auditable."""
+    return "  (as " + ", ".join(f'"{v}"' for v in via) + ")" if via else ""
 
 
 def format_locators(hits: list[str]) -> str:
@@ -115,6 +172,8 @@ def main(argv=None):
     ap.add_argument("--exemplar", required=True, help="path to master_cv.md")
     ap.add_argument("--bank", required=True,
                     help="path to the story bank (a file, or a directory of .md)")
+    ap.add_argument("--aliases", action="append",
+                    help="extra alias table to merge with the shipped one (repeatable)")
     args = ap.parse_args(argv)
 
     jd_text = _common.read_text(args.jd)
@@ -132,21 +191,28 @@ def main(argv=None):
     exemplar_text = _common.read_text(exemplar)
     bank_lines = read_bank(bank)
     keywords = extract_keywords(jd_text)
+    # A mistyped table degrades to literal matching out loud rather than killing
+    # the report: this step is advisory, and the orchestrator is waiting on it.
+    groups, alias_faults = aliases.load_table([aliases.PLUGIN_TABLE, *(args.aliases or [])])
 
     print(f"ATS-COVERAGE  jd={args.jd}  exemplar={exemplar}  bank={bank}")
+    for fault in alias_faults:
+        print(f"  warning: {fault} — matching literally for those spellings")
     if not keywords:
         print("  no keywords found under a `## ATS keywords` heading in jd.md")
         return 0
 
-    rows = [classify(kw, exemplar_text, bank_lines) for kw in keywords]
+    rows = [classify(kw, exemplar_text, bank_lines, groups) for kw in keywords]
     buckets = {name: [r for r in rows if r.bucket == name]
                for name in ("COVERED", "PROMOTABLE", "GAP")}
     print(f"  keywords: {len(keywords)}   covered: {len(buckets['COVERED'])}   "
           f"promotable: {len(buckets['PROMOTABLE'])}   gap: {len(buckets['GAP'])}")
     for row in buckets["COVERED"]:
-        print(f"  [COVERED]    {row.keyword} — {', '.join(row.locators)}")
+        print(f"  [COVERED]    {row.keyword} — {', '.join(row.locators)}"
+              f"{format_via(row.via)}")
     for row in buckets["PROMOTABLE"]:
         print(f"  [PROMOTABLE] {row.keyword} — {format_locators(row.locators)}"
+              f"{format_via(row.via)}"
               "  (in the bank, not the exemplar — promote it to use it)")
     for row in buckets["GAP"]:
         print(f"  [GAP]        {row.keyword} — in neither"
