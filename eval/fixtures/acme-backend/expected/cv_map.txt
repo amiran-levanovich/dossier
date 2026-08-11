@@ -1,0 +1,77 @@
+exit 0
+{
+  "source": "master_cv.md",
+  "header": {
+    "name": "# A. Candidate",
+    "contact": "Remote (EU) · candidate@example.invalid"
+  },
+  "blocks": [
+    {
+      "id": "head-2b98b8",
+      "kind": "headline",
+      "section": null,
+      "text": "Senior Backend Developer"
+    },
+    {
+      "id": "sum-099ec2",
+      "kind": "summary",
+      "section": "Summary",
+      "text": "Backend developer with a focus on Ruby and data-heavy services.",
+      "lines": [
+        "Backend developer with a focus on Ruby and data-heavy services."
+      ]
+    },
+    {
+      "kind": "experience",
+      "section": "Experience",
+      "heading": "### Senior Backend Developer — Acme, Berlin",
+      "role": "Senior Backend Developer",
+      "company": "Acme",
+      "location": "Berlin",
+      "dates": "06/2021 – present",
+      "descriptor": "*B2B SaaS for hotel operations, ~80 people*",
+      "bullets": [
+        {
+          "id": "b-8860f5",
+          "text": "Built a Rails API serving 2M requests/day with a p99 under 120ms."
+        },
+        {
+          "id": "b-b3891a",
+          "text": "Owned the billing service end to end, including its on-call rotation."
+        }
+      ],
+      "id": "exp-bac003"
+    },
+    {
+      "kind": "experience",
+      "section": "Experience",
+      "heading": "### Backend Developer — Beta, Munich",
+      "role": "Backend Developer",
+      "company": "Beta",
+      "location": "Munich",
+      "dates": "01/2018 – 05/2021",
+      "descriptor": "*Logistics marketplace, ~200 people*",
+      "bullets": [
+        {
+          "id": "b-0a4636",
+          "text": "Cut the nightly batch window from six hours to 40 minutes."
+        }
+      ],
+      "id": "exp-27a6c7"
+    },
+    {
+      "id": "skills-3c92b9",
+      "kind": "skills",
+      "section": "Skills",
+      "text": "**Backend:** Ruby, Rails, PostgreSQL, Redis.",
+      "bulleted": true
+    },
+    {
+      "id": "skills-744c85",
+      "kind": "skills",
+      "section": "Skills",
+      "text": "**Infra:** Docker, Terraform.",
+      "bulleted": true
+    }
+  ]
+}

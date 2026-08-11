@@ -1,0 +1,51 @@
+exit 0
+BUILD master_cv.md + plan.json
+  kept: 8   dropped: 1   one-off: 1
+  verbatim: 11/12   changed: 0
+  aliases: 2 swap(s) — see out-aliased/alias_log.md
+  lines: 26   words: 107   est. pages: ~1.0
+
+  ONE-OFF — unverified, the verifier must judge these (1 line(s)):
+    - **Testing:** RSpec, Capybara.
+
+RESULT: out-aliased/cv.md
+
+--- out-aliased/cv.md ---
+# A. Candidate
+Senior Backend Developer
+
+Remote (EU) · candidate@example.invalid
+
+## Summary
+Backend developer with a focus on Ruby and data-heavy services.
+
+## Experience
+
+### Senior Backend Developer — Acme, Berlin
+06/2021 – present
+*B2B SaaS for hotel operations, ~80 people*
+
+- Built a Ruby on Rails API serving 2M requests/day with a p99 under 120ms.
+- Owned the billing service end to end, including its on-call rotation.
+
+### Backend Developer — Beta, Munich
+01/2018 – 05/2021
+*Logistics marketplace, ~200 people*
+
+- Cut the nightly batch window from six hours to 40 minutes.
+
+## Skills
+- **Backend:** Ruby, Ruby on Rails, PostgreSQL, Redis.
+- **Testing:** RSpec, Capybara.
+
+--- out-aliased/alias_log.md ---
+# Alias swap log
+
+The assembled CV was proven verbatim against `master_cv.md` **before** these swaps were applied (ADR-0008), so this list is the complete set of differences between the delivered `cv.md` and the exemplar's text.
+
+Tables read: `scripts/alias_groups.md`
+
+## Swaps (2)
+
+- line 15: `Rails` → `Ruby on Rails`
+- line 25: `Rails` → `Ruby on Rails`

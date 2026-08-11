@@ -590,7 +590,8 @@ def cmd_build(args) -> int:
     (out_dir / "cv.md").write_text("\n".join(doc).rstrip() + "\n", encoding="utf-8")
     if aliasing:
         (out_dir / "alias_log.md").write_text(
-            aliases.log_document(swaps, [str(s) for s in alias_sources], exemplar.name),
+            aliases.log_document(swaps, [aliases.table_label(s) for s in alias_sources],
+                                 exemplar.name),
             encoding="utf-8")
 
     index = _slots_by_id(smap)

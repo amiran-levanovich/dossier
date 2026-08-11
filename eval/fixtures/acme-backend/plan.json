@@ -1,0 +1,19 @@
+{
+  "_comment": "Slot ids are content hashes of master_cv.md. Editing that file renames the slots it touched and this plan must be regenerated — see eval/fixtures/README.md.",
+  "order": [
+    { "id": "head-2b98b8" },
+    { "id": "sum-099ec2" },
+    { "id": "exp-bac003", "bullets": ["b-8860f5", "b-b3891a"] },
+    { "id": "exp-27a6c7", "bullets": ["b-0a4636"] },
+    { "id": "skills-3c92b9" },
+    { "id": "oneoff-testing" }
+  ],
+  "drop": ["skills-744c85"],
+  "one_off": [
+    {
+      "id": "oneoff-testing",
+      "section": "Skills",
+      "text": "**Testing:** RSpec, Capybara."
+    }
+  ]
+}

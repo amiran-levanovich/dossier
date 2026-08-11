@@ -166,6 +166,8 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 
 Tests: `python3 -m unittest discover -s scripts/tests`.
 
+**The regression net.** `eval/fixtures/` holds tiny synthetic job folders; `scripts/eval_run.py` runs the deterministic scripts over each and asserts the output is byte-identical to a blessed snapshot — the slot map, the assembly and its verbatim self-test, the alias swap, the coverage buckets, and the refusal path where a bad plan must write no file at all. `--bless` re-records so an intentional change is one reviewable diff. It also runs under `unittest`, so drift fails without anyone remembering to look. Details: [`eval/fixtures/README.md`](./eval/fixtures/README.md).
+
 ## European / DACH specifics
 
 Language follows the posting (German posting → Lebenslauf + Anschreiben); protected titles ("Ingenieur") are hard rules the verifier blocks on; the logistics close always carries permit status and notice period; photo/birth-date are the user's recorded choice, asked once at intake; Austrian KV-minimum and Swiss permit/salary conventions covered; a contract clause taxonomy (Probezeit, Kündigungsfrist, 13th salary, non-compete with compensation, …) equips the offer stage's clause walk — as market patterns, never legal statements. Details: [`job_docs/standards/dach_conventions.md`](./job_docs/standards/dach_conventions.md).

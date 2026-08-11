@@ -45,6 +45,16 @@ PLUGIN_TABLE = Path(__file__).resolve().parent / "alias_groups.md"
 GROUP_HEADING = "Alias groups"
 
 
+def table_label(path: str | Path) -> str:
+    """How a table is named in the swap log.
+
+    The shipped table gets a repo-relative label rather than its absolute path:
+    the log is committed alongside an application and read on other machines, and
+    an installation path would make it machine-specific for no gain.
+    """
+    return f"scripts/{PLUGIN_TABLE.name}" if Path(path) == PLUGIN_TABLE else str(path)
+
+
 class Swap(NamedTuple):
     lineno: int
     term: str

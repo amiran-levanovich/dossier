@@ -1,8 +1,8 @@
 exit 0
 ATS-COVERAGE  jd=jd.md  exemplar=master_cv.md  bank=story_bank.md
   keywords: 6   covered: 4   promotable: 1   gap: 1
-  [COVERED]    Ruby — Skills
-  [COVERED]    RoR — Experience  (as "Rails")
+  [COVERED]    Ruby — Summary, Skills
+  [COVERED]    RoR — Experience, Skills  (as "Rails")
   [COVERED]    Postgres — Skills  (as "PostgreSQL")
   [COVERED]    Redis — Skills
   [PROMOTABLE] Go — story_bank.md:10  (in the bank, not the exemplar — promote it to use it)

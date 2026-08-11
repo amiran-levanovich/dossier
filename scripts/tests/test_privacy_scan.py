@@ -52,10 +52,17 @@ class TestEmail(unittest.TestCase):
         self.assertTrue(self.flagged("a.tsiklauri@somecompany.io"))
 
     def test_ignores_example_domains(self):
-        # Template placeholders are not PII.
+        # Template placeholders are not PII. Every exempt domain is reserved by
+        # RFC 2606 / 6761 and cannot resolve, so widening this list can never
+        # let a reachable address through.
         self.assertEqual(self.flagged("you@example.com"), [])
         self.assertEqual(self.flagged("firstname.lastname@example.org"), [])
         self.assertEqual(self.flagged("name@example.net"), [])
+        self.assertEqual(self.flagged("candidate@example.invalid"), [])
+
+    def test_still_flags_a_lookalike_of_an_exempt_domain(self):
+        """`example.invalid` is exempt; `example.invalid.co` is a real domain."""
+        self.assertTrue(self.flagged("someone@example.invalid.co"))
 
     def test_ignores_placeholder_locals(self):
         self.assertEqual(self.flagged("your.email@company.com"), [])

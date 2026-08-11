@@ -1,0 +1,9 @@
+exit 1
+BUILD master_cv.md + plan.json
+  ERROR: plan carries patch[] — the writer may not reword a slot (ADR-0005) — drop the slot and declare a one-off instead
+  ERROR: unknown slot id in order[]: exp-notreal
+
+2 fault(s) — no output written
+
+--- out/cv.md ---
+<not written>

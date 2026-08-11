@@ -1,3 +1,15 @@
+exit 0
+BUILD master_cv.md + plan.json
+  kept: 8   dropped: 1   one-off: 1
+  verbatim: 11/12   changed: 0
+  lines: 26   words: 103   est. pages: ~1.0
+
+  ONE-OFF — unverified, the verifier must judge these (1 line(s)):
+    - **Testing:** RSpec, Capybara.
+
+RESULT: out/cv.md
+
+--- out/cv.md ---
 # A. Candidate
 Senior Backend Developer
 
@@ -23,4 +35,4 @@ Backend developer with a focus on Ruby and data-heavy services.
 
 ## Skills
 - **Backend:** Ruby, Rails, PostgreSQL, Redis.
-- **Infra:** Docker, Terraform.
+- **Testing:** RSpec, Capybara.

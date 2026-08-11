@@ -1,1 +1,0 @@
-- "focus on Ruby on Rails" → profile.md#summary

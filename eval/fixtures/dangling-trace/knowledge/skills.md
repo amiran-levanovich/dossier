@@ -1,4 +1,0 @@
-# Skills
-
-## Languages
-Python.
