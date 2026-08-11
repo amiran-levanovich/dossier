@@ -237,8 +237,10 @@ understanding. These pipeline steps now run through `scripts/` (dependency-free 
 stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
 
 - **ATS keyword coverage** (`ats_coverage.py`) — literal whole-token matching of the
-  `jd.md` keyword list against the KB. Was an inline Grep-and-reason step; now one script
-  call returning COVERED/UNVERIFIED/GAP buckets. (kills the inline work behind C2/C5.)
+  `jd.md` keyword list against the exemplar and the story bank. Was an inline
+  Grep-and-reason step; now one script call returning COVERED/PROMOTABLE/GAP buckets, so
+  the promotion decision arrives already separated from the real gaps. (kills the inline
+  work behind C2/C5.)
 - **Trace-map pre-check** (`trace_check.py`) — confirms every trace target resolves to a
   real file and `#anchor` before `application-verifier` runs, so the verifier spends its
   budget on claim-strength judgment, not bookkeeping. (shrinks the verifier's per-round

@@ -154,7 +154,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 
 | Script                | Replaces                                                                                     |
 | :-------------------- | :------------------------------------------------------------------------------------------- |
-| `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords vs the KB, bucketed COVERED / UNVERIFIED / GAP |
+| `ats_coverage.py`     | The inline ATS keyword sweep — literal whole-token matching of `jd.md` keywords against the exemplar and the story bank, bucketed COVERED (usable now) / PROMOTABLE (in the bank only — a promotion decision) / GAP (in neither — feeds the fit score) |
 | `trace_check.py`      | The verifier's trace bookkeeping — confirms every trace target resolves to a real file + `#anchor` before `application-verifier` runs |
 | `claim_ledger.py`     | Re-judging unchanged claims — memoizes (claim, source, content hash) on CLEAN verdicts; exact repeats come back PRE-VERIFIED, so the verifier judges only new/changed claims. Also records the master CV's hash (`--document`) |
 | `master_diff.py`      | Re-judging master-CV content — proves which cv.md lines are verbatim from a verified `master_cv.md`; only CHANGED lines need judgment |

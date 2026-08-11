@@ -14,6 +14,6 @@ recorded, not claimed. Proceed.
     claims_traced: 3
     claims_total: 3
     ats_covered: 4
-    ats_unverified: 1
+    ats_promotable: 1
     ats_gap: 1
     ledger_preverified: 0

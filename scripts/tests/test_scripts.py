@@ -5,6 +5,7 @@ Uses only the standard library (the amended CLAUDE.md principle allows helper
 scripts + their tests, not a third-party test framework).
 """
 
+import contextlib
 import csv
 import io
 import json
@@ -216,31 +217,134 @@ class TestTraceCheck(TmpMixin):
 
 
 class TestAtsCoverage(TmpMixin):
+    """Three-way bucketing over the exemplar and the story bank (ADR-0006, #28).
+
+    The three buckets carry the distinction the candidate actually acts on:
+    covered is usable now, promotable is a promotion decision, and only a gap
+    feeds the fit score instead of the writing.
+    """
+
+    EXEMPLAR = (
+        "# Jane Smith\n"
+        "Senior Ruby Engineer\n\n"
+        "## Experience\n"
+        "- Built a Rails API serving 2M requests/day.\n\n"
+        "## Skills\n"
+        "- PostgreSQL, Redis.\n"
+    )
+    BANK = (
+        "# Story bank\n\n"
+        "At Acme I ran the Kubernetes migration over two quarters.\n"
+        "We also trialled Go for one service and dropped it.\n"
+    )
+
+    def setup_case(self, keywords, exemplar=None, bank=None):
+        jd = self.write("jd.md", "## ATS keywords\n" + "".join(f"- {k}\n" for k in keywords))
+        ex = self.write("master_cv.md", self.EXEMPLAR if exemplar is None else exemplar)
+        bk = self.write("story_bank.md", self.BANK if bank is None else bank)
+        return jd, ex, bk
+
+    def run_coverage(self, argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            rc = ats_coverage.main(argv)
+        return rc, buf.getvalue()
+
+    def coverage(self, keywords, **kw):
+        jd, ex, bk = self.setup_case(keywords, **kw)
+        return self.run_coverage([str(jd), "--exemplar", str(ex), "--bank", str(bk)])
+
     def test_extract_keywords(self):
         jd = "## Must-haves\n- x\n\n## ATS keywords\n- PostgreSQL, Redis\n- Kafka\n\n## Fit\n- y\n"
         self.assertEqual(ats_coverage.extract_keywords(jd), ["PostgreSQL", "Redis", "Kafka"])
 
-    def test_buckets(self):
-        self.write("knowledge/skills.md", "## Databases\n- PostgreSQL deep\n- Kafka [unverified]\n")
-        jd = self.root / "jd.md"
-        jd.write_text("## ATS keywords\n- PostgreSQL\n- Kafka\n- Terraform\n", encoding="utf-8")
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            rc = ats_coverage.main([str(jd), "--kb-dir", str(self.root / "knowledge")])
-        out = buf.getvalue()
+    def test_a_keyword_in_the_exemplar_is_covered(self):
+        rc, out = self.coverage(["PostgreSQL"])
         self.assertEqual(rc, 0)
         self.assertIn("[COVERED]    PostgreSQL", out)
-        self.assertIn("[UNVERIFIED] Kafka", out)
+
+    def test_a_keyword_in_the_bank_but_not_the_exemplar_is_promotable(self):
+        _, out = self.coverage(["Kubernetes"])
+        self.assertIn("[PROMOTABLE] Kubernetes", out)
+
+    def test_a_keyword_in_neither_is_a_gap(self):
+        _, out = self.coverage(["Terraform"])
         self.assertIn("[GAP]        Terraform", out)
 
-    def test_lessons_excluded(self):
-        self.write("knowledge/lessons.md", "- examplecorp: posting named Sidekiq\n")
-        jd = self.root / "jd.md"
-        jd.write_text("## ATS keywords\n- Sidekiq\n", encoding="utf-8")
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            ats_coverage.main([str(jd), "--kb-dir", str(self.root / "knowledge")])
-        self.assertIn("[GAP]        Sidekiq", buf.getvalue())
+    def test_the_exemplar_wins_when_both_name_it(self):
+        """The bucket answers "is this usable now", so a fact already on the
+        exemplar is covered no matter how much the bank says about it."""
+        _, out = self.coverage(["Rails"], bank="Rails, Rails, Rails.\n")
+        self.assertIn("[COVERED]    Rails", out)
+        self.assertNotIn("PROMOTABLE", out)
+
+    def test_covered_names_the_exemplar_sections_it_was_found_in(self):
+        """Whether a keyword sits in an achievement or only in a skills list is
+        the difference between evidence and assertion."""
+        _, out = self.coverage(["Rails", "Redis"])
+        self.assertIn("[COVERED]    Rails — Experience", out)
+        self.assertIn("[COVERED]    Redis — Skills", out)
+
+    def test_a_keyword_above_the_first_section_is_still_covered(self):
+        """The headline carries keywords and belongs to no `##` section, so the
+        locator must not be what decides the bucket."""
+        _, out = self.coverage(["Senior"])
+        self.assertIn("[COVERED]    Senior", out)
+
+    def test_promotable_locates_the_passage_in_the_bank(self):
+        _, out = self.coverage(["Kubernetes"])
+        self.assertIn("story_bank.md:3", out)
+
+    def test_matching_is_whole_token_and_case_insensitive(self):
+        _, out = self.coverage(["Rail", "redis"])
+        self.assertIn("[GAP]        Rail", out)
+        self.assertIn("[COVERED]    redis", out)
+
+    def test_a_bank_directory_is_read_whole(self):
+        jd = self.write("jd.md", "## ATS keywords\n- Sidekiq\n")
+        ex = self.write("master_cv.md", self.EXEMPLAR)
+        self.write("bank/roles.md", "Ran Sidekiq queues at Acme.\n")
+        rc, out = self.run_coverage([str(jd), "--exemplar", str(ex),
+                                     "--bank", str(self.root / "bank")])
+        self.assertEqual(rc, 0)
+        self.assertIn("[PROMOTABLE] Sidekiq", out)
+        self.assertIn("roles.md:1", out)
+
+    def test_many_bank_mentions_are_capped(self):
+        """A locator list is a pointer, not a concordance."""
+        bank = "".join(f"Line {i} mentions Kafka.\n" for i in range(10))
+        _, out = self.coverage(["Kafka"], bank=bank)
+        self.assertIn("+7 more", out)
+
+    def test_a_missing_exemplar_is_an_input_error(self):
+        jd = self.write("jd.md", "## ATS keywords\n- Ruby\n")
+        bk = self.write("story_bank.md", self.BANK)
+        rc, _ = self.run_coverage([str(jd), "--exemplar", str(self.root / "nope.md"),
+                                   "--bank", str(bk)])
+        self.assertEqual(rc, 2)
+
+    def test_a_missing_bank_is_an_input_error(self):
+        jd = self.write("jd.md", "## ATS keywords\n- Ruby\n")
+        ex = self.write("master_cv.md", self.EXEMPLAR)
+        rc, _ = self.run_coverage([str(jd), "--exemplar", str(ex),
+                                   "--bank", str(self.root / "nope.md")])
+        self.assertEqual(rc, 2)
+
+    def test_a_jd_with_no_keyword_block_says_so(self):
+        jd = self.write("jd.md", "# Beta — Backend Developer\n")
+        ex = self.write("master_cv.md", self.EXEMPLAR)
+        bk = self.write("story_bank.md", self.BANK)
+        rc, out = self.run_coverage([str(jd), "--exemplar", str(ex), "--bank", str(bk)])
+        self.assertEqual(rc, 0)
+        self.assertIn("no keywords found", out)
+
+    def test_the_knowledge_directory_argument_is_gone(self):
+        """v4 has no knowledge/ to point at, so the old flag must fail loudly
+        rather than be quietly accepted and ignored."""
+        jd, ex, bk = self.setup_case(["Ruby"])
+        with self.assertRaises(SystemExit):
+            with redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                ats_coverage.main([str(jd), "--kb-dir", str(self.root)])
 
 
 class TestTracker(TmpMixin):

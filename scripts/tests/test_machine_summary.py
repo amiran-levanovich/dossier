@@ -32,7 +32,7 @@ Some prose about the application.
     claims_traced: 3
     claims_total: 3
     ats_covered: 4
-    ats_unverified: 1
+    ats_promotable: 1
     ats_gap: 1
     ledger_preverified: 0
 
@@ -54,7 +54,7 @@ class TestParse(unittest.TestCase):
         self.assertNotIn("more", d)  # "More prose..." after the next heading is ignored
         self.assertEqual(set(d), {
             "verdict", "verify_rounds", "claims_traced", "claims_total",
-            "ats_covered", "ats_unverified", "ats_gap", "ledger_preverified"})
+            "ats_covered", "ats_promotable", "ats_gap", "ledger_preverified"})
 
     def test_absent_block_returns_none(self):
         self.assertIsNone(machine_summary.parse("# Report\n\nNo summary here.\n"))

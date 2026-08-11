@@ -119,19 +119,6 @@ def slot_id(kind: str, text: str) -> str:
     return f"{ID_PREFIX.get(kind, kind)}-{digest}"
 
 
-def _split_sections(text: str):
-    """Yield (title|None, [lines]) for the preamble and each `##` section."""
-    title = None
-    buf: list[str] = []
-    for line in text.splitlines():
-        if line.startswith("## "):
-            yield title, buf
-            title, buf = line[3:].strip(), []
-        else:
-            buf.append(line)
-    yield title, buf
-
-
 def _parse_entry_blocks(section: str, kind: str, lines: list[str]) -> list[dict]:
     """Parse `###` entries: heading + dates + descriptor atomic, bullets inside."""
     blocks: list[dict] = []
@@ -175,7 +162,7 @@ def build_slot_map(source: str, text: str) -> dict:
     blocks: list[dict] = []
     header: dict = {"name": "", "contact": ""}
 
-    for title, lines in _split_sections(text):
+    for title, lines in _common.split_sections(text):
         if title is None:
             # Preamble: `# Name`, then the headline, then the contact row.
             body = [ln for ln in lines if ln.strip()]

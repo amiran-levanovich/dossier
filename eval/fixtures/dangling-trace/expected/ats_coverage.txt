@@ -1,4 +1,4 @@
 exit 0
-ATS-COVERAGE  jd=jd.md  kb=knowledge
-  keywords: 1   covered: 1   unverified: 0   gap: 0
-  [COVERED]    Python — skills.md
+ATS-COVERAGE  jd=jd.md  exemplar=master_cv.md  bank=story_bank.md
+  keywords: 1   covered: 1   promotable: 0   gap: 0
+  [COVERED]    Python — Skills

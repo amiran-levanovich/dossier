@@ -120,8 +120,8 @@ block must be well-formed. Validate with `scripts/machine_summary.py <report.md>
     verify_rounds: 1          # rounds the verifier ran
     claims_traced: 3          # claim-bearing lines with a resolving trace
     claims_total: 3           # claim-bearing lines total (traced <= total)
-    ats_covered: 4            # ATS keywords COVERED / UNVERIFIED / GAP
-    ats_unverified: 1
+    ats_covered: 4            # ATS keywords COVERED / PROMOTABLE / GAP
+    ats_promotable: 1
     ats_gap: 1
     ledger_preverified: 0     # claims skipped via the claim ledger
 ```

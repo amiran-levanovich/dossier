@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """ATS keyword coverage — the deterministic half of standards/ats_rules.md.
 
-Reads the `## ATS keywords` block from an application's jd.md and reports, for
-each keyword, whether a knowledge-base file names it. Matching is literal and
-whole-token (case-insensitive) — exactly what an ATS does — with no language
-understanding, so this replaces the inline LLM keyword sweep entirely.
+Reads the `## ATS keywords` block from an application's jd.md and buckets each
+keyword against the two artifacts that hold the candidate's facts: the exemplar
+(`master_cv.md`) and the story bank. Matching is literal and whole-token
+(case-insensitive) — exactly what an ATS does — with no language understanding,
+so this replaces the inline LLM keyword sweep entirely.
 
-Buckets, per ats_rules.md's covered / verifiable-gap / real-gap split:
-  COVERED     — named on a verified KB line.
-  UNVERIFIED  — named only on an `[unverified]` line (kb_schema.md): verify or drop.
-  GAP         — not found in the KB at all.
+Three buckets, carrying the distinction the candidate acts on (ADR-0006):
+  COVERED     — named in the exemplar, so trimming can already use it.
+  PROMOTABLE  — in the story bank but not the exemplar: a promotion decision,
+                not a gap. The bank is wider than the exemplar by design, and
+                this is where that lag becomes visible.
+  GAP         — in neither. Feeds the fit score, not the writing.
 
-This is advisory, not a gate: gaps are a normal, expected input to the
-mini-interview / override decisions the orchestrator makes. Exit code is 0
-unless the inputs can't be read (2). The `[unverified]` test is line-local — a
-keyword whose only mentions sit on `[unverified]` lines is reported UNVERIFIED;
-confirm borderline cases against the entry in the file.
+The bank is expected to be one free-form file; a directory is read whole if one
+is given. Nothing inside what the caller named is skipped, because silently
+ignoring part of the bank would report a fact the candidate has as a gap.
+
+This is advisory, not a gate. Exit code is 0 unless the inputs can't be read (2).
+Output is line-stable so `eval_run.py` can hold it as a fixture snapshot.
 """
 
 from __future__ import annotations
@@ -23,13 +27,16 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
 
-# lessons.md is orchestrator-only context, never a source of CV claims
-# (kb_schema.md), so a keyword found only there does not count as covered.
-EXCLUDE_FILES = {"lessons.md", "INDEX.md", "interview_progress.md", "goals.md"}
+# A locator is a pointer to the passage, not a concordance of every mention.
+MAX_LOCATORS = 3
+# What to call a hit above the exemplar's first section — the name, headline and
+# contact row. Part of the report format, so `eval_run.py` snapshots it.
+PREAMBLE_LABEL = "(header)"
 
 
 def extract_keywords(jd_text: str) -> list[str]:
@@ -46,76 +53,104 @@ def extract_keywords(jd_text: str) -> list[str]:
     return out
 
 
-def kb_files(kb_dir: Path) -> list[Path]:
-    return sorted(
-        p
-        for p in kb_dir.rglob("*.md")
-        if p.name not in EXCLUDE_FILES
-    )
+def read_bank(bank: Path) -> list[tuple[str, int, str]]:
+    """The bank as (file, lineno, line), read once for every keyword to reuse.
+
+    One free-form prose file is the expected shape; a directory is read whole.
+    """
+    files = sorted(bank.rglob("*.md")) if bank.is_dir() else [bank]
+    return [(path.name, lineno, line)
+            for path in files
+            for lineno, line in enumerate(_common.read_text(path).splitlines(), start=1)]
 
 
-def classify(keyword: str, files: list[Path]) -> tuple[str, list[str]]:
+def exemplar_sections(keyword: str, exemplar_text: str) -> list[str]:
+    """The exemplar sections naming this keyword, in document order.
+
+    Where a keyword sits is the difference between evidence and assertion: in an
+    Experience bullet it is backed by an achievement, in Skills it is a claim on
+    its own. The preamble — name, headline, contact row — belongs to no section
+    and is labelled as the header, so a headline keyword still counts as found.
+    """
     pat = _common.keyword_pattern(keyword)
-    verified_hits: list[str] = []
-    unverified_hits: list[str] = []
-    for f in files:
-        rel = f.name if f.parent.name in ("", "knowledge") else f"{f.parent.name}/{f.name}"
-        matched_verified = False
-        matched_unverified = False
-        for line in _common.read_text(f).splitlines():
-            if pat.search(line):
-                if "[unverified]" in line.lower():
-                    matched_unverified = True
-                else:
-                    matched_verified = True
-        if matched_verified:
-            verified_hits.append(rel)
-        elif matched_unverified:
-            unverified_hits.append(rel)
-    if verified_hits:
-        return "COVERED", verified_hits
-    if unverified_hits:
-        return "UNVERIFIED", unverified_hits
-    return "GAP", []
+    found: list[str] = []
+    for title, lines in _common.split_sections(exemplar_text):
+        label = title or PREAMBLE_LABEL
+        if label not in found and any(pat.search(line) for line in lines):
+            found.append(label)
+    return found
+
+
+def bank_locators(keyword: str, bank: list[tuple[str, int, str]]) -> list[str]:
+    """`file:line` for each mention in the bank, so a promotion can be judged."""
+    pat = _common.keyword_pattern(keyword)
+    return [f"{name}:{lineno}" for name, lineno, line in bank if pat.search(line)]
+
+
+class Row(NamedTuple):
+    keyword: str
+    bucket: str
+    locators: list[str]
+
+
+def classify(keyword: str, exemplar_text: str,
+             bank: list[tuple[str, int, str]]) -> Row:
+    """Bucket one keyword, with the locators for acting on it."""
+    sections = exemplar_sections(keyword, exemplar_text)
+    if sections:
+        return Row(keyword, "COVERED", sections)
+    hits = bank_locators(keyword, bank)
+    return Row(keyword, "PROMOTABLE" if hits else "GAP", hits)
+
+
+def format_locators(hits: list[str]) -> str:
+    shown = hits[:MAX_LOCATORS]
+    suffix = f"  (+{len(hits) - len(shown)} more)" if len(hits) > len(shown) else ""
+    return ", ".join(shown) + suffix
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("jd", help="path to the application's jd.md")
-    ap.add_argument("--kb-dir", required=True, help="path to the knowledge/ directory")
+    ap.add_argument("--exemplar", required=True, help="path to master_cv.md")
+    ap.add_argument("--bank", required=True,
+                    help="path to the story bank (a file, or a directory of .md)")
     args = ap.parse_args(argv)
 
     jd_text = _common.read_text(args.jd)
     if not jd_text:
         print(f"error: jd not found or empty: {args.jd}", file=sys.stderr)
         return 2
-    kb_dir = Path(args.kb_dir)
-    if not kb_dir.is_dir():
-        print(f"error: --kb-dir not found: {kb_dir}", file=sys.stderr)
+    exemplar, bank = Path(args.exemplar), Path(args.bank)
+    if not exemplar.is_file():
+        print(f"error: --exemplar not found: {exemplar}", file=sys.stderr)
+        return 2
+    if not (bank.is_file() or bank.is_dir()):
+        print(f"error: --bank not found: {bank}", file=sys.stderr)
         return 2
 
+    exemplar_text = _common.read_text(exemplar)
+    bank_lines = read_bank(bank)
     keywords = extract_keywords(jd_text)
-    files = kb_files(kb_dir)
 
-    results = [(kw, *classify(kw, files)) for kw in keywords]
-    covered = [r for r in results if r[1] == "COVERED"]
-    unverified = [r for r in results if r[1] == "UNVERIFIED"]
-    gaps = [r for r in results if r[1] == "GAP"]
-
-    print(f"ATS-COVERAGE  jd={args.jd}  kb={kb_dir}")
+    print(f"ATS-COVERAGE  jd={args.jd}  exemplar={exemplar}  bank={bank}")
     if not keywords:
         print("  no keywords found under a `## ATS keywords` heading in jd.md")
         return 0
-    print(
-        f"  keywords: {len(keywords)}   covered: {len(covered)}   "
-        f"unverified: {len(unverified)}   gap: {len(gaps)}"
-    )
-    for kw, _, hits in covered:
-        print(f"  [COVERED]    {kw} — {', '.join(hits)}")
-    for kw, _, hits in unverified:
-        print(f"  [UNVERIFIED] {kw} — {', '.join(hits)}  (only on [unverified] lines — verify or drop)")
-    for kw, _, _ in gaps:
-        print(f"  [GAP]        {kw} — not found in KB (mini-interview, or real gap → jd.md ## Fit)")
+
+    rows = [classify(kw, exemplar_text, bank_lines) for kw in keywords]
+    buckets = {name: [r for r in rows if r.bucket == name]
+               for name in ("COVERED", "PROMOTABLE", "GAP")}
+    print(f"  keywords: {len(keywords)}   covered: {len(buckets['COVERED'])}   "
+          f"promotable: {len(buckets['PROMOTABLE'])}   gap: {len(buckets['GAP'])}")
+    for row in buckets["COVERED"]:
+        print(f"  [COVERED]    {row.keyword} — {', '.join(row.locators)}")
+    for row in buckets["PROMOTABLE"]:
+        print(f"  [PROMOTABLE] {row.keyword} — {format_locators(row.locators)}"
+              "  (in the bank, not the exemplar — promote it to use it)")
+    for row in buckets["GAP"]:
+        print(f"  [GAP]        {row.keyword} — in neither"
+              " (feeds the fit score, not the writing)")
     return 0
 
 

@@ -36,7 +36,8 @@ from pathlib import Path
 Check = __import__("collections").namedtuple("Check", "name argv")
 
 CHECKS = [
-    Check("ats_coverage", ["ats_coverage.py", "jd.md", "--kb-dir", "knowledge"]),
+    Check("ats_coverage", ["ats_coverage.py", "jd.md", "--exemplar", "master_cv.md",
+                           "--bank", "story_bank.md"]),
     Check("trace_check", ["trace_check.py", "cv_trace.md", "cover_trace.md", "--kb-dir", "knowledge"]),
     Check("master_diff", ["master_diff.py", "cv.md", "--master", "master_cv.md"]),
 ]

@@ -84,6 +84,25 @@ def content_lines(text: str):
         yield i, normalize_line(raw)
 
 
+def split_sections(text: str):
+    """Yield (title|None, [lines]) for a CV's preamble and each `##` section.
+
+    Shared so that the slot map and the ATS coverage report cannot disagree
+    about what section a line is in — a report naming a section the slot map
+    does not have would point the writer at a slot that isn't there. Heading
+    lines are consumed; `### Role — Company` lines stay, since they are content.
+    """
+    title = None
+    buf: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("## "):
+            yield title, buf
+            title, buf = line[3:].strip(), []
+        else:
+            buf.append(line)
+    yield title, buf
+
+
 def bulleted_section(text: str, heading: str,
                      require_bullets: bool = False) -> list[list[str]]:
     """Comma-separated items under a named markdown heading, grouped by line.
