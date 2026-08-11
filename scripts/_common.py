@@ -84,6 +84,43 @@ def content_lines(text: str):
         yield i, normalize_line(raw)
 
 
+def bulleted_section(text: str, heading: str,
+                     require_bullets: bool = False) -> list[list[str]]:
+    """Comma-separated items under a named markdown heading, grouped by line.
+
+    One of the plugin's own file formats, read by two callers that disagree about
+    what a line means: jd.md's `## ATS keywords` wants every keyword regardless
+    of how the lines were broken, while alias_groups.md's `## Alias groups`
+    treats each line as one group. So this keeps the line structure and lets the
+    caller flatten it.
+
+    `require_bullets` is the other half of that disagreement. A keyword block is
+    hand-pasted and a bare line in it is still a keyword; an alias group is data,
+    where a sentence of prose that parsed as a group would put an unrelated word
+    into a set of interchangeable spellings.
+    """
+    wanted = re.compile(rf"^#{{1,6}}\s+{re.escape(heading)}\s*$", re.IGNORECASE)
+    rows: list[list[str]] = []
+    in_block = False
+    for line in text.splitlines():
+        if re.match(r"^#{1,6}\s", line):
+            in_block = bool(wanted.match(line.strip()))
+            continue
+        if not in_block:
+            continue
+        stripped = line.strip()
+        if require_bullets and not re.match(r"^[-*+]\s", stripped):
+            continue
+        item = stripped.lstrip("-*").strip()
+        if not item:
+            continue
+        row = [part.strip().strip("`") for part in item.split(",")]
+        row = [part for part in row if part]
+        if row:
+            rows.append(row)
+    return rows
+
+
 def keyword_pattern(keyword: str) -> re.Pattern:
     """Whole-token, case-insensitive matcher tolerant of tech punctuation.
 

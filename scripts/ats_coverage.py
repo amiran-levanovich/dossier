@@ -21,7 +21,6 @@ confirm borderline cases against the entry in the file.
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -34,23 +33,15 @@ EXCLUDE_FILES = {"lessons.md", "INDEX.md", "interview_progress.md", "goals.md"}
 
 
 def extract_keywords(jd_text: str) -> list[str]:
-    """Pull the keyword list from the `## ATS keywords` section of jd.md."""
-    lines = jd_text.splitlines()
+    """Pull the keyword list from the `## ATS keywords` section of jd.md.
+
+    Line breaks carry no meaning here — a keyword is a keyword whether it sat
+    alone or shared a comma-separated line — so the rows are flattened.
+    """
     out: list[str] = []
-    in_block = False
-    for line in lines:
-        if re.match(r"^#{1,6}\s", line):
-            in_block = bool(re.match(r"^#{1,6}\s+ATS keywords\s*$", line, re.IGNORECASE))
-            continue
-        if not in_block:
-            continue
-        item = line.strip().lstrip("-*").strip()
-        if not item:
-            continue
-        # A line may hold several comma-separated keywords.
-        for kw in item.split(","):
-            kw = kw.strip().strip("`")
-            if kw and kw not in out:
+    for row in _common.bulleted_section(jd_text, "ATS keywords"):
+        for kw in row:
+            if kw not in out:
                 out.append(kw)
     return out
 

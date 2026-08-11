@@ -267,6 +267,12 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   wording alone, and its inputs lose `master_cv.md` and `master_cv_trace.md` entirely.
   (C5 for the writer's inputs, C4 for its output; ADR-0003.) **Projected, not yet
   measured** — see §5's raised-budget note.
+- **Alias groups** (`aliases.py`, v4) — matching the posting's surface spelling of a
+  technology ("Postgres" for "PostgreSQL", "K8s" for "Kubernetes") used to be either a
+  writer instruction or a verifier finding, both of which spend a dispatch on string
+  matching. A shipped table plus a user extension makes it a table lookup applied after
+  the verbatim self-test (ADR-0008), with every swap logged. (C2/C6 — removes a class of
+  finding from the verifier entirely.)
 
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully

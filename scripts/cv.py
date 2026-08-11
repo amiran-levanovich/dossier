@@ -7,7 +7,7 @@ CV is *unchanged* from the exemplar: the writer selects and orders slots, and
 has no mechanism to reword one. Two commands own both ends of that contract:
 
     cv.py map   master_cv.md --out slots.json
-    cv.py build plan.json --exemplar master_cv.md --out-dir app/
+    cv.py build plan.json --exemplar master_cv.md --out-dir app/ --posting app/jd.md
 
 A **slot** is an addressable unit of the exemplar: a *block* (one experience,
 project, education, skills or languages entry, inseparable from its heading,
@@ -33,6 +33,12 @@ or a plan asking to reword — exits 1 and writes **no file**, because a partial
 assembled CV reads as complete and would go out missing content. The
 orchestrator hands the diagnostic back to the writer and re-dispatches.
 
+Given `--posting`, the last step before writing is the alias pass (`aliases.py`),
+which swaps in the posting's spelling of a technology and logs every swap. It
+runs *after* the self-test, never before (ADR-0008), so the verbatim claim is
+stated against the assembled document and `alias_log.md` accounts for every
+difference between that and the delivered `cv.md`.
+
 Standard library only, like every script here.
 """
 
@@ -49,6 +55,7 @@ from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _common  # noqa: E402
+import aliases  # noqa: E402
 
 # Section heading → the kind of block it contains.
 SECTION_KINDS = {
@@ -535,6 +542,17 @@ def cmd_build(args) -> int:
         print(f"error: edit plan is not valid JSON: {exc}", file=sys.stderr)
         return 2
 
+    # One flag rather than four `args.posting` tests: the alias pass is a
+    # single step whose inputs, rewrite, and log are read at three phases.
+    aliasing = bool(args.posting)
+    posting_text = ""
+    if aliasing:
+        posting = Path(args.posting)
+        if not posting.is_file():
+            print(f"error: not found: {posting}", file=sys.stderr)
+            return 2
+        posting_text = _common.read_text(posting)
+
     exemplar_text = _common.read_text(exemplar)
     smap = build_slot_map(exemplar.name, exemplar_text)
 
@@ -543,7 +561,13 @@ def cmd_build(args) -> int:
         print(f"  ERROR: {UNSUPPORTED}\n\nno output written")
         return 1
 
-    faults = collect_faults(smap, plan, exemplar_text)
+    # The alias table is read before anything is rendered, so a table the user
+    # mistyped is reported alongside the plan's own faults rather than after a
+    # CV has already been written from it.
+    alias_sources = [aliases.PLUGIN_TABLE, *(args.aliases or [])] if aliasing else []
+    alias_groups, alias_faults = aliases.load_table(alias_sources)
+
+    faults = collect_faults(smap, plan, exemplar_text) + alias_faults
     if faults:
         for fault in faults:
             print(f"  ERROR: {fault}")
@@ -567,9 +591,20 @@ def cmd_build(args) -> int:
         print(f"\n{len(result.changed) + len(stray)} non-verbatim line(s) — no output written")
         return 1
 
+    # Only here, with the self-test passed, may the text change (ADR-0008): the
+    # verbatim claim is stated against the document above, and the swap log
+    # below is the audit trail for every difference after it.
+    swaps: list[aliases.Swap] = []
+    if aliasing:
+        doc, swaps = aliases.apply(doc, posting_text, alias_groups, result)
+
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "cv.md").write_text("\n".join(doc).rstrip() + "\n", encoding="utf-8")
+    if aliasing:
+        (out_dir / "alias_log.md").write_text(
+            aliases.log_document(swaps, [str(s) for s in alias_sources], exemplar.name),
+            encoding="utf-8")
 
     index = _slots_by_id(smap)
     placed = {sid for entry in plan.get("order", [])
@@ -578,6 +613,8 @@ def cmd_build(args) -> int:
     words = sum(len(line.split()) for line in doc)
     print(f"  kept: {kept}   dropped: {len(index) - kept}   one-off: {len(one_offs)}")
     print(f"  verbatim: {result.verbatim}/{result.total}   changed: {len(result.changed)}")
+    if aliasing:
+        print(f"  aliases: {len(swaps)} swap(s) — see {out_dir / 'alias_log.md'}")
     print(f"  lines: {len(doc)}   words: {words}   est. pages: ~{max(1.0, round(words / 450, 1))}")
     if one_offs:
         # The exemplar's verdict does not cover these. They are the only claims
@@ -603,6 +640,9 @@ def main(argv=None):
     p_build.add_argument("plan", help="path to the edit plan JSON")
     p_build.add_argument("--exemplar", required=True, help="path to master_cv.md")
     p_build.add_argument("--out-dir", required=True, help="application folder to write into")
+    p_build.add_argument("--posting", help="path to jd.md — enables the alias pass")
+    p_build.add_argument("--aliases", action="append",
+                         help="extra alias table to merge with the shipped one (repeatable)")
     p_build.set_defaults(func=cmd_build)
 
     args = ap.parse_args(argv)
