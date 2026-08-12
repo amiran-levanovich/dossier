@@ -409,6 +409,56 @@ class TestSessionMetricsDispatches(TmpMixin):
         self.assertNotIn("dispatch tokens", buf.getvalue())
 
 
+class TestSessionMetricsRepairs(TmpMixin):
+    """A repair — a resumed agent, continued with a finding — costs a full
+    dispatch but never appears as one: `SendMessage` returns immediately and the
+    agent reports through a task notification instead of a tool result.
+    """
+
+    def notification(self, task="a1", tokens=51031, tool_uses=2, ms=30511, kind="queue-operation"):
+        return json.dumps({
+            "type": kind,
+            "content": (f"<task-notification>\n<task-id>{task}</task-id>\n"
+                        f"<status>completed</status>\n</task-notification>\n"
+                        f"<usage><subagent_tokens>{tokens}</subagent_tokens>"
+                        f"<tool_uses>{tool_uses}</tool_uses>"
+                        f"<duration_ms>{ms}</duration_ms></usage>"),
+        })
+
+    def test_a_resumed_agent_is_counted_as_a_repair(self):
+        p = self.write("session.jsonl", self.notification() + "\n")
+        s = session_metrics.analyze(p)
+        self.assertEqual(len(s["repairs"]), 1)
+        self.assertEqual(s["repairs"][0]["tokens"], 51031)
+        self.assertEqual(s["repairs"][0]["tool_uses"], 2)
+
+    def test_the_same_notification_is_not_counted_twice(self):
+        """The harness writes each notification more than once — as a queued
+        operation and again as an attachment. A repair counted twice would
+        double the number this measurement exists to establish."""
+        lines = [self.notification(), self.notification(),
+                 self.notification(kind="attachment")]
+        p = self.write("session.jsonl", "\n".join(lines) + "\n")
+        self.assertEqual(len(session_metrics.analyze(p)["repairs"]), 1)
+
+    def test_two_different_repairs_both_count(self):
+        lines = [self.notification(task="a1", tokens=51031),
+                 self.notification(task="a2", tokens=66470)]
+        p = self.write("session.jsonl", "\n".join(lines) + "\n")
+        s = session_metrics.analyze(p)
+        self.assertEqual(sorted(r["tokens"] for r in s["repairs"]), [51031, 66470])
+
+    def test_the_report_separates_repairs_from_dispatches(self):
+        p = self.write("session.jsonl", self.notification() + "\n")
+        s = session_metrics.analyze(p)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            session_metrics.report(Path("session.jsonl"), s)
+        out = buf.getvalue()
+        self.assertIn("repair", out.lower())
+        self.assertIn("51,031", out)
+
+
 class TestTracker(TmpMixin):
     def _rows(self, path):
         with open(path, newline="", encoding="utf-8") as fh:

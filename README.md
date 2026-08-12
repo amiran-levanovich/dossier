@@ -164,7 +164,7 @@ The pipeline's mechanical, no-judgment steps run through small, dependency-free 
 | `cv.py`               | Writing and re-judging a CV — `map` decomposes the exemplar into slots, `build` renders the slots an edit plan kept and refuses anything non-verbatim, writing no file on any fault (ADR-0004, ADR-0005), then runs the alias pass when given `--posting` |
 | `aliases.py`          | The manual hunt for the posting's spelling of a technology: merges the shipped `alias_groups.md` with a user extension and swaps in the posting's variant, *after* `cv.py`'s verbatim self-test passes (ADR-0008), logging every swap to `alias_log.md` |
 | `tracker.py`          | Hand-editing `tracker.csv` — column order, quoting, and header migration, with defect warnings |
-| `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies, real token totals, and per-dispatch subagent cost (tokens, tool uses, duration) read off the Agent tool result, which is what made ADR-0003's projected saving measurable |
+| `session_metrics.py`  | Manual transcript reading — the `TOKEN_ECONOMY.md` §2 measurement proxies, real token totals, and per-dispatch subagent cost (tokens, tool uses, duration) read off the Agent tool result — plus **repairs**, which report through a task notification instead and so leave no dispatch record. Together they made ADR-0003's projected saving measurable |
 
 Tests: `python3 -m unittest discover -s scripts/tests`.
 

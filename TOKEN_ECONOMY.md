@@ -318,6 +318,39 @@ whatever the repairs cost.
 **Verdict on ADR-0003's revert clause:** the saving is not marginal, so the edit-plan path
 stays. The clause is answered, not quietly dropped.
 
+## 7d. Does the writer's self-check pay? (open — not enough data)
+
+The repair is the pipeline's largest single avoidable cost, and `session_metrics.py` now
+counts it: a resumed agent reports through a task notification rather than a tool result, so
+until this was parsed a repair left no dispatch record at all.
+
+Across the two live runs:
+
+| | Writer | Verifier | Repair | Finding that caused it |
+|---|---|---|---|---|
+| Run 1 | 48,437 | 32,404 | **51,031** | merged attribution |
+| Run 2 | 63,038 | 35,254 | **66,470** | a bank fact in the letter |
+
+**117,501 tokens of repair against 179,133 of dispatch — 40% of all agent spend on two
+applications.** Both repairs cost more than the write they followed, and both runs needed
+one.
+
+The writer gained a self-check line targeting exactly this in v4.0.1 (#43), after run 1. Run
+2 was the first run to carry it, and it still produced a containment BLOCKER — a different
+class (a fact taken from the bank rather than two CV facts merged), but one the same
+self-check item already covers: *every fact in the letter is in a slot you kept*.
+
+**Verdict: not enough data, and no evidence yet that it pays.** One run with the instruction
+and one defect through it is n=1 either way. Cutting it on that basis would be as unjustified
+as keeping it on faith, so it stays — and the writer's output contract now reports what its
+self-check caught, so the next runs produce the evidence directly instead of leaving it to be
+inferred from whether a repair happened.
+
+**What would decide it:** three or more further runs with the line reporting. If the writer
+never reports a catch and repairs keep happening at this rate, the line is 50-odd tokens per
+dispatch buying nothing and should be cut. If it reports catches, each one is a repair
+avoided, and at these prices one catch pays for the instruction several hundred times over.
+
 ## 8. Known open levers (not yet implemented)
 
 Candidates for future releases, in rough order of value:
