@@ -6,6 +6,8 @@ A Claude Code plugin that runs a **job search** with the same discipline its sib
 
 Built for the European market, with first-class **DACH** (Germany/Austria/Switzerland) conventions.
 
+> **New here?** [`HOW_IT_WORKS.md`](./HOW_IT_WORKS.md) walks the whole flow end to end in plain language — what runs in what order, what each step produces, and who checks what. Release history is in [`CHANGELOG.md`](./CHANGELOG.md).
+
 ---
 
 ## The one idea

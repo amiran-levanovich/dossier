@@ -29,7 +29,9 @@ eval/
 docs/adr/                    # architecture decisions — why the shape is the shape
 docs/agents/                 # per-repo config for the engineering skills: issue-tracker · triage-labels · domain
 scripts/                     # deterministic helpers: cv (slot map + verbatim assembly) · aliases (+ alias_groups.md, the shipped table) · ats_coverage · tracker · session_metrics · release_audit · privacy_scan · machine_summary · eval_run/eval_score (+ _common, tests/)
-README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
+README.md                    # detailed guide    HOW_IT_WORKS.md  # the full flow, plain language
+CHANGELOG.md                 # per-release history, Unreleased kept current
+CLAUDE.md                    # this file         TOKEN_ECONOMY.md # cost-maintenance doc
 CONTEXT.md                   # the glossary — the vocabulary docs/skills/agents must all use
 ```
 
@@ -37,7 +39,7 @@ CONTEXT.md                   # the glossary — the vocabulary docs/skills/agent
 - **No hook, no fixer agents — by design.** Application quality is a judgment; enforcement is the `application-verifier` gate + the superset invariant (every CV line verbatim from the signed exemplar). Don't add a commit hook.
 - **Never commit personal data** (names, employers, salaries, application material). The docs are generic method; anything candidate-specific belongs in the user's job folder, not the plugin. Sweep before committing.
 - **Skills are thin pointers**, not content: a skill's `SKILL.md` detects context and routes to the authoritative `job_docs/` file. Put substance in the docs, not the skill. Path resolution: project-root copy first, else `../../../job_docs/…` relative to the skill dir.
-- **Versioning**: bump `version` in `plugin.json` on a meaningful change (breaking → major; currently 4.x). Bump with a targeted line edit — a JSON load/dump round-trip reformats the manifest. After the bump's PR merges, tag `main` as `v<version>` and publish a GitHub release; notes end with the consumer update commands (`/plugin marketplace update dossier`, `/plugin update dossier@dossier`). Pre-split history carries `v1.x` tags migrated from `job-workflow-v1.x`.
+- **Versioning**: bump `version` in `plugin.json` on a meaningful change (breaking → major; currently 4.x). Bump with a targeted line edit — a JSON load/dump round-trip reformats the manifest. Move the `CHANGELOG.md` Unreleased entries under the new version and date them in the same commit. After the bump's PR merges, tag `main` as `v<version>` and publish a GitHub release; notes end with the consumer update commands (`/plugin marketplace update dossier`, `/plugin update dossier@dossier`). Pre-split history carries `v1.x` tags migrated from `job-workflow-v1.x`.
 - **Git**: feature branch → PR into `main` (never commit to `main`); [Conventional Commits](https://www.conventionalcommits.org), subject ≤ 60 chars.
 - **Use `CONTEXT.md`'s vocabulary.** It is the glossary, not a spec — when a doc, skill, or agent names a domain concept, use the term defined there and avoid the listed synonyms. A concept missing from it is a signal: either the language is being invented (reconsider) or the glossary has a gap. Decisions that a future reader would find surprising go in `docs/adr/`; contradicting an existing ADR is fine, but say so out loud rather than silently overriding it.
 - When editing a doc, update README.md and this layout if the structure changed; run the verification checks above before committing.
