@@ -8,6 +8,7 @@ These rules bind the `application-writer` agent; the `application-verifier` chec
 - **Specific to this company and role.** Every letter references something real about the company (from the Step 4 research notes — a product, a public decision, an initiative). A letter that would work with the company name swapped out is a defect.
 - **Language matches the posting** unless the user says otherwise; if applying in a second language, close with a natural note ("Ich führe das Gespräch gerne auf Deutsch weiter." / "Happy to continue the conversation in German.").
 - **Fact containment (ADR-0007).** The letter may assert no fact the assembled `cv.md` doesn't — no number, technology, outcome, or credential that isn't in a slot the trim kept. Framing, motivation, and the company angle are free, and the story bank is what they're drawn from; facts are not. This is the letter's half of the quality bar and the main thing the gate judges (`core/tailoring_method.md`).
+- **Attribution is part of the fact.** Two contained facts can combine into an uncontained claim: a metric from one bullet attached to another bullet's verb, *built* widened to *owns*, a past role written as present, one project's outcome credited to a different employer. The test is not "does each word appear in the CV" but "does the CV attach it to this". A letter arguing from two adjacent bullets is exactly where this slips — keep each fact with the verb, employer, and tense its own slot gives it.
 
 ## Banned openers (automatic rewrite)
 

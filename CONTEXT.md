@@ -62,6 +62,10 @@ _Avoid_: synonym, keyword variant, normalization
 The rule holding the letter honest: it may assert no fact the assembled `cv.md` doesn't. Framing, motivation, and company angle are free; numbers, technologies, outcomes, and credentials are not (ADR-0007).
 _Avoid_: grounding, provenance, traceability
 
+**Merged attribution**:
+The way contained facts still break containment: each appears in `cv.md`, but joined into a claim it doesn't make — one bullet's metric on another's verb, *built* widened to *owns*, a past role written as present. The gate's third finding class; the fix is a split, not a removal.
+_Avoid_: conflation, overstatement, embellishment
+
 **Lead evidence**:
 The single achievement answering the posting's hardest requirement. The CV surfaces it first and the letter argues from it — one choice, made once, binding both documents.
 _Avoid_: main selling point, key achievement
