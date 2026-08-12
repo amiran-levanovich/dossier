@@ -27,3 +27,27 @@ The waste this removes is that every verbatim line was being **re-typed in full 
 **The slot model only reads `templates/cv_template.md`'s shape**, and real exemplars predate that template. An exemplar the parser cannot decompose yields an empty slot map, which every plan-level guard passes because the plan is fine — it is the master that was never understood. All three subcommands therefore refuse an exemplar with no slots (v3.2.1) and name the previous path, which is format-agnostic because `master_diff.py` works line-by-line. Support for further shapes is a detected second family, not a loosening of this check.
 
 **The token saving is projected, not measured.** `session_metrics.py` cannot supply the evidence on its own: subagent turns are absent from Claude Code transcripts (no `isSidechain` records), so the writer's output — the thing this change reduces — is invisible to it. The workable substitute is comparing artifacts directly: the tokens of a real `cv.md` + `cv_trace.md` against the equivalent edit plan for the same application. `scripts/session_metrics.py` on one real application before and after is the acceptance evidence; if the saving is marginal, the `trace_check.py` risk above is not worth paying and this should be reverted rather than kept for tidiness. Applications with no exemplar, or a CHANGED one, take the previous path unchanged.
+
+---
+
+## Measured — v4.0.0, 2026-08-12
+
+The paragraph above says the saving is projected and that this should be reverted rather
+than kept for tidiness if it turns out marginal. It is not marginal, so it stays. The
+evidence, and the reason it took this long, are in `TOKEN_ECONOMY.md` §7c.
+
+The obstacle named above — "subagent turns are absent from Claude Code transcripts" —
+turned out to be a statement about *turns*, not about the measurement. The Agent tool
+result carries the dispatched agent's own totals, so `session_metrics.py` reads per-dispatch
+cost directly; the artifact-to-artifact substitute this ADR proposed was never needed.
+
+One dispatch, one application, same model: **192,878 tokens under the v3 trace-based path
+against 80,841 under v4's trim-based one, −58%**; −32% if the run's one repair dispatch is
+counted. Different postings and a thinner exemplar make this indicative rather than
+controlled.
+
+The `trace_check.py` risk this ADR weighed against the saving is moot: that module was
+deleted in v4.0.0 along with the trace contract it served.
+
+*(Appended, not rewritten. The decision and its reasoning above stand as recorded — this
+answers the open commitment they made.)*

@@ -286,6 +286,80 @@ class TestAtsCoverage(TmpMixin):
                 ats_coverage.main([str(jd), "--kb-dir", str(self.root)])
 
 
+class TestSessionMetricsDispatches(TmpMixin):
+    """Per-dispatch subagent usage, read from the Agent tool's own result.
+
+    Subagent turns never appear in a transcript as turns (`isSidechain` entries
+    are the main session's view), which is why ADR-0003's saving went unmeasured.
+    The Agent tool result carries the agent's own totals, so the measurement is
+    available after all — from the result, not from the turns.
+    """
+
+    def transcript(self, *results):
+        lines = []
+        for i, r in enumerate(results):
+            lines.append(json.dumps({
+                "type": "assistant",
+                "message": {"id": f"m{i}", "content": [
+                    {"type": "tool_use", "id": f"t{i}", "name": "Agent",
+                     "input": {"subagent_type": r["agentType"]}}]},
+            }))
+            lines.append(json.dumps({
+                "type": "user",
+                "message": {"content": [{"type": "tool_result", "tool_use_id": f"t{i}"}]},
+                "toolUseResult": r,
+            }))
+        return self.write("session.jsonl", "\n".join(lines) + "\n")
+
+    def result(self, agent="application-writer", tokens=48437, tool_uses=10,
+               ms=122299, model="claude-sonnet-5", status="completed"):
+        return {"agentId": "a1", "agentType": agent, "status": status,
+                "totalTokens": tokens, "totalToolUseCount": tool_uses,
+                "totalDurationMs": ms, "resolvedModel": model}
+
+    def test_a_dispatch_reports_its_own_usage(self):
+        s = session_metrics.analyze(self.transcript(self.result()))
+        self.assertEqual(len(s["dispatches"]), 1)
+        d = s["dispatches"][0]
+        self.assertEqual(d["agent"], "application-writer")
+        self.assertEqual(d["tokens"], 48437)
+        self.assertEqual(d["tool_uses"], 10)
+        self.assertEqual(d["duration_ms"], 122299)
+        self.assertEqual(d["model"], "claude-sonnet-5")
+
+    def test_dispatches_keep_their_order_and_sum(self):
+        s = session_metrics.analyze(self.transcript(
+            self.result(),
+            self.result(agent="application-verifier", tokens=32404, tool_uses=7, ms=139074)))
+        self.assertEqual([d["agent"] for d in s["dispatches"]],
+                         ["application-writer", "application-verifier"])
+        self.assertEqual(sum(d["tokens"] for d in s["dispatches"]), 80841)
+
+    def test_a_result_without_agent_usage_is_not_a_dispatch(self):
+        line = json.dumps({"type": "user", "toolUseResult": {"stdout": "hi"},
+                           "message": {"content": []}})
+        p = self.write("session.jsonl", line + "\n")
+        self.assertEqual(session_metrics.analyze(p)["dispatches"], [])
+
+    def test_the_report_names_each_dispatch(self):
+        s = session_metrics.analyze(self.transcript(self.result()))
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            session_metrics.report(Path("session.jsonl"), s)
+        out = buf.getvalue()
+        self.assertIn("application-writer", out)
+        self.assertIn("48,437", out)
+
+    def test_a_transcript_with_no_dispatches_says_so_without_a_dispatch_block(self):
+        p = self.write("session.jsonl", json.dumps(
+            {"type": "assistant", "message": {"id": "m", "content": []}}) + "\n")
+        s = session_metrics.analyze(p)
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            session_metrics.report(Path("session.jsonl"), s)
+        self.assertNotIn("dispatch tokens", buf.getvalue())
+
+
 class TestTracker(TmpMixin):
     def _rows(self, path):
         with open(path, newline="", encoding="utf-8") as fh:

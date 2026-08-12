@@ -7,6 +7,14 @@ counts, WebSearch/WebFetch counts, subagent spawns). Claude Code transcripts
 token counts, so this reports both: the proxies §2 asks for, plus actual token
 totals when present.
 
+A dispatched agent's own turns are not in the transcript — `isSidechain` entries
+are the main session's view of them — which is why ADR-0003's saving went
+unmeasured. The **Agent tool result** carries the agent's totals (tokens, tool
+uses, duration, resolved model), so the per-dispatch cost is readable after all:
+from the result, not from the turns. A resumed agent (SendMessage) reports
+through a task notification instead, so its cost may not appear here; the
+dispatch list is what the transcript can prove.
+
 This is the harness for the quick-win baseline. Point it at the .jsonl of a real
 job-apply session to capture the per-run numbers the Phase 2 audit needs. Main
 session and subagent (`isSidechain`) turns are counted separately so a heavy
@@ -40,6 +48,7 @@ def analyze(path: Path) -> dict:
         "web_fetch": 0,
         "web_search": 0,
         "subagents": Counter(),
+        "dispatches": [],
         "tokens": Counter(),
         "malformed": 0,
     }
@@ -57,6 +66,16 @@ def analyze(path: Path) -> dict:
             except json.JSONDecodeError:
                 stats["malformed"] += 1
                 continue
+            usage = obj.get("toolUseResult")
+            if isinstance(usage, dict) and "agentType" in usage:
+                stats["dispatches"].append({
+                    "agent": usage.get("agentType", "?"),
+                    "tokens": usage.get("totalTokens", 0),
+                    "tool_uses": usage.get("totalToolUseCount", 0),
+                    "duration_ms": usage.get("totalDurationMs", 0),
+                    "model": usage.get("resolvedModel", "?"),
+                    "status": usage.get("status", "?"),
+                })
             if obj.get("type") != "assistant":
                 continue
             sidechain = bool(obj.get("isSidechain"))
@@ -108,6 +127,14 @@ def report(path: Path, s: dict) -> None:
         print(f"  subagent spawns: {sum(s['subagents'].values())}  [{spawns}]")
     else:
         print("  subagent spawns: 0")
+    if s["dispatches"]:
+        total = sum(d["tokens"] for d in s["dispatches"])
+        print(f"  dispatch tokens: {total:,} over {len(s['dispatches'])} dispatch(es)")
+        for d in s["dispatches"]:
+            secs = d["duration_ms"] / 1000
+            flag = "" if d["status"] == "completed" else f"  [{d['status']}]"
+            print(f"    {d['agent']}: {d['tokens']:,} tokens · {d['tool_uses']} tool uses"
+                  f" · {secs:.0f}s · {d['model']}{flag}")
     t = s["tokens"]
     if any(t.values()):
         processed = t["input_tokens"] + t["output_tokens"] + t["cache_creation_input_tokens"]
