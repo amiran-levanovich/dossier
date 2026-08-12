@@ -9,7 +9,10 @@ or exemplar without updating reference.json and this fails). Scoring a *fresh* l
 the on-demand step — see eval/golden/README.md.
 """
 
+import json
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -34,6 +37,36 @@ class TestTier2Golden(unittest.TestCase):
             with self.subTest(case=case):
                 code = eval_score.main(["--case", case, "--golden-root", str(GOLDEN)])
                 self.assertEqual(code, 0, f"golden case {case} does not score PASS")
+
+
+class TestOneOffCaseProvesSomething(unittest.TestCase):
+    """A golden case that passes whatever you do to it guards nothing.
+
+    The one-off case exists because a declared one-off is the only CV content
+    the exemplar's verdict does not cover. If the scorer treated the extra line
+    as ordinary drift the case would fail; if it exempted *any* unmatched line
+    the case would pass even with the declaration removed. Both are checked.
+    """
+
+    CASE = "acme-oneoff"
+
+    def bundle(self):
+        return GOLDEN / self.CASE / "bundle"
+
+    def test_the_case_carries_a_declared_one_off(self):
+        plan = json.loads((self.bundle() / "plan.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(plan.get("one_off", [])), 1)
+
+    def test_removing_the_declaration_fails_the_case(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            run = Path(tmp) / "bundle"
+            shutil.copytree(self.bundle(), run)
+            plan = json.loads((run / "plan.json").read_text(encoding="utf-8"))
+            plan.pop("one_off")
+            (run / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+            code = eval_score.main(["--case", self.CASE, "--golden-root", str(GOLDEN),
+                                    "--run", str(run)])
+            self.assertEqual(code, 1, "an undeclared extra line must fail the case")
 
 
 if __name__ == "__main__":

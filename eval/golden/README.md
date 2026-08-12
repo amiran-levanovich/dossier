@@ -85,6 +85,13 @@ live pipeline:
    scorecard names which). Run this before a release that touched an agent or a
    standards doc — the on-demand analogue of TOKEN_ECONOMY.md §6's live smoke run.
 
+## The cases
+
+| Case | What it guards |
+|---|---|
+| `acme-backend` | The clean path: every line verbatim, no one-off, `CLEAN` |
+| `acme-oneoff` | A declared **one-off slot** — the only CV content the exemplar's verdict does not cover, and so the only CV-side judgment the gate still makes. Its `cv.md` carries a line no exemplar line matches, and `verbatim_fraction` is still 1.0 because the declaration in `plan.json` exempts it. Delete that declaration and the case fails, which is what makes it worth keeping |
+
 ## Adding a case
 
 Record one good run as `bundle/`, write `reference.json` to match, keep it
