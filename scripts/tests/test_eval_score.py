@@ -178,6 +178,71 @@ class TestBundleReaders(TmpMixin):
 # Machine Summary consumption: block supplies the verdict; the line count stays
 # independently verified, with a consistency cross-check on the self-report.
 # --------------------------------------------------------------------------
+class TestScoringALiveRun(TmpMixin):
+    """A real run leaves the exemplar at the job-folder root, not in the
+    application folder — scoring one should not need files copied by hand."""
+
+    def app_folder(self, with_exemplar_at_root=True):
+        root = self.root / "job"
+        app = root / "applications" / "kestrel"
+        app.mkdir(parents=True)
+        (app / "cv.md").write_text(CV, encoding="utf-8")
+        if with_exemplar_at_root:
+            (root / "master_cv.md").write_text(EXEMPLAR, encoding="utf-8")
+        return root, app
+
+    def test_the_exemplar_is_found_at_the_job_folder_root(self):
+        root, app = self.app_folder()
+        self.assertEqual(eval_score.resolve_exemplar(app), root / "master_cv.md")
+
+    def test_an_exemplar_beside_the_documents_wins(self):
+        _, app = self.app_folder()
+        local = app / "master_cv.md"
+        local.write_text(EXEMPLAR, encoding="utf-8")
+        self.assertEqual(eval_score.resolve_exemplar(app), local)
+
+    def test_an_explicit_path_overrides_the_search(self):
+        root, app = self.app_folder()
+        elsewhere = self.write("other/master_cv.md", EXEMPLAR)
+        self.assertEqual(eval_score.resolve_exemplar(app, elsewhere), elsewhere)
+
+    def test_no_exemplar_anywhere_resolves_to_nothing(self):
+        _, app = self.app_folder(with_exemplar_at_root=False)
+        self.assertIsNone(eval_score.resolve_exemplar(app))
+
+    def test_an_application_folder_scores_in_place(self):
+        _, app = self.app_folder()
+        card = eval_score.score_bundle(app, REF, verdict_override="CLEAN")
+        self.assertTrue(card.ok)
+
+    def test_a_run_with_no_recorded_verdict_says_so(self):
+        """A live folder has no report.md — the gate answers in the session. Failing
+        the verdict gate would read as "the run was judged and found wanting"."""
+        _, app = self.app_folder()
+        with self.assertRaises(eval_score.MissingVerdict):
+            eval_score.score_bundle(app, REF)
+
+    def test_a_missing_exemplar_is_a_diagnostic_not_a_zero_score(self):
+        """The old failure mode returned (0, 0, 0.0), which fails the verbatim
+        gate for the wrong reason — the run looks broken when the *inputs* are."""
+        _, app = self.app_folder(with_exemplar_at_root=False)
+        with self.assertRaises(eval_score.MissingExemplar):
+            eval_score.verbatim_fraction(app)
+
+    def test_main_reports_the_missing_exemplar_and_exits_2(self):
+        _, app = self.app_folder(with_exemplar_at_root=False)
+        self.write("golden/acme/reference.json", json.dumps(REF))
+        (self.root / "golden" / "acme" / "bundle").mkdir(parents=True)
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = eval_score.main(["--case", "acme", "--golden-root",
+                                    str(self.root / "golden"), "--run", str(app)])
+        self.assertEqual(code, 2)
+        self.assertIn("master_cv.md", err.getvalue())
+
+
 class TestSummaryConsumption(TmpMixin):
     def _bundle(self, block_verdict="CLEAN", block_total=2):
         self.write("master_cv.md", EXEMPLAR)
