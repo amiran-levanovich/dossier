@@ -45,6 +45,10 @@ Career-change applications: one variant is the bridge.>
 
 ## Languages
 <Language> (<CEFR level or native>) · <Language> (<level>)
+
+## Availability      <!-- optional; required for DACH — see dach_conventions.md -->
+- <work permit / citizenship status, where it is asked>
+- <notice period or earliest start date>
 ```
 
 Rules baked into the shape:
@@ -57,6 +61,11 @@ Rules baked into the shape:
   (SaaS, ecommerce, fintech…) double as ATS keywords.
 - The header's GitHub/portfolio link and every Projects entry point only at assets
   the bank's portfolio verdicts mark worth showing.
+- **Availability** carries the admin facts the letter's logistics close needs. They are
+  exemplar content precisely so the letter can state them: it may assert nothing the CV
+  doesn't (ADR-0007), so a notice period living only in the story bank cannot be written.
+  It is the one section that goes stale — a notice period changes with the job — and
+  correcting it is an ordinary exemplar edit plus a re-sign.
 - The parser in `scripts/cv.py` decomposes exactly this shape into slots — `# Name`,
   the headline line, `## Section`, `### <Title> — <Company>`, and the bullets under
   each. An exemplar that departs from it cannot be trimmed.

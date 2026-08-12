@@ -59,8 +59,9 @@ off the rails. Do not read `master_cv.md` — its verdict is inherited, not re-d
 4. **Standards** — cv_rules: section order, length, no filler; cover_letter_rules: 6 parts
    in order, <300 words, banned openers, a real company-specific reference, correct language
    and register, plus its **anti-slop** section; dach_conventions when applicable: logistics
-   close completeness (permit, notice period), protected titles, salutation, the user's
-   recorded photo/data choices not contradicted.
+   close completeness (permit, notice period) **judged against what cv.md carries** — a fact
+   the CV lacks is not a letter defect and never a finding; protected titles, salutation, the
+   user's recorded photo/data choices not contradicted.
 
 ## Output contract
 
