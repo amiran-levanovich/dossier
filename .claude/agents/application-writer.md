@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Write, Skill
 model: sonnet
 ---
 
-<!-- audit-ok: C7 — 2,122 against the 1,640 per-agent row. This is the only writing dispatch
+<!-- audit-ok: C7 — 2,146 against the 1,640 per-agent row. This is the only writing dispatch
 in the v4 pipeline, and it absorbed the CV contract that v3 spread across this agent (1,914
 tokens then), tailoring_method's edit-plan section, and the plan format itself. Read once
 per application in a pipeline that went from up to five dispatches to two, so the
@@ -84,9 +84,10 @@ If any input is missing, name it and stop — never substitute your own assumpti
 2. No `patch`, no `new`, no `one_off` the user didn't direct.
 3. CV and letter lead with the **same** evidence and contradict each other nowhere.
 4. Every fact in the letter is in a slot you kept — read your own `order` back and check —
-   **and each one keeps that slot's verb, employer and tense.** Two contained facts merged
-   into one sentence ("built" + another bullet's on-call becoming "I own X, including its
-   on-call") is the gate's commonest finding. One slot per clause is the safe shape.
+   **and each keeps that slot's verb, scope noun, employer and tense.** Swap the slot's words
+   back into your sentence: if the meaning narrows, you widened it ("own the settlement
+   *service*" is not "hold the settlement *domain*"). Merging two contained facts into one
+   sentence is the same defect and the gate's commonest finding; one slot per clause is safe.
 5. Letter: under 300 words, 6 parts in order, no banned opener, a real company reference
    from notes.md, correct language and register, DACH logistics close complete.
 6. The anti-slop pass ran, and every URL comes from a slot you kept.
