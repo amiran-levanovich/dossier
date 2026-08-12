@@ -3,26 +3,28 @@
 
 Tier 1 (eval_run.py) guards the deterministic pipeline. Tier 2 guards the part
 only the LLM can produce: that the *agents* still turn a known posting into a
-CLEAN, fully-traced, in-budget application after edits to their definitions or
-the standards docs. You can't assert generated prose, so — like career-ops'
-golden eval — this scores **agreement on the stable, discrete signals**, gating
-the pass/fail ones and tolerance-banding the continuous ones:
+CLEAN, verbatim, in-budget application after edits to their definitions or the
+standards docs. You can't assert generated prose, so — like career-ops' golden
+eval — this scores **agreement on the stable, discrete signals**, gating the
+pass/fail ones and tolerance-banding the continuous ones:
 
-  gate  verdict == CLEAN           (the verifier's final call, recorded)
-  gate  traced_fraction >= 1.0     (every claim resolves to a real source)
-  band  |claims_count - expected| <= tolerance
+  gate  verdict == CLEAN            (the gate's final call, recorded)
+  gate  verbatim_fraction >= 1.0    (every cv.md line is exemplar text or a
+                                     declared one-off)
+  band  |cv_lines - expected| <= tolerance
   band  each cost metric <= its §3 ceiling   (skipped if no transcript)
 
 Producing a fresh run bundle needs the live pipeline (a `claude -p` job-apply
 run); SCORING a bundle does not — so a recorded bundle replays for $0 and keeps
 the scorer itself CI-testable. See eval/golden/README.md for the workflow.
 
-A run bundle is a directory holding: cv_trace.md, cover_trace.md, knowledge/,
-and optionally session.jsonl. The verdict comes from report.md's `## Machine
-Summary` block when present (falling back to a verdict.txt whose first line is
-CLEAN or FINDINGS); if that block also self-reports a claim count, it is
-cross-checked against the independent trace count as an extra gate. Claims are
-always counted independently — the self-report is never trusted for them.
+A run bundle is a directory holding: master_cv.md, plan.json, cv.md, cover.md,
+report.md, verdict.txt, and optionally session.jsonl. The verdict comes from
+report.md's `## Machine Summary` block when present (falling back to a
+verdict.txt whose first line is CLEAN or FINDINGS); if that block also
+self-reports a line count, it is cross-checked against the independent one as an
+extra gate. Lines are always counted independently — by re-reading the exemplar,
+never by trusting the self-report.
 
 Usage:
   eval_score.py --case <id>                 score the case's recorded bundle
@@ -40,11 +42,11 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import _common
+import aliases
+import cv
 import machine_summary
 import session_metrics
-import trace_check
-
-TRACE_FILES = ("cv_trace.md", "cover_trace.md")
 
 
 @dataclass(frozen=True)
@@ -94,20 +96,46 @@ def read_verdict(bundle_dir) -> str:
     return ""
 
 
-def traced_fraction(bundle_dir):
+def verbatim_fraction(bundle_dir):
+    """Re-check the recorded cv.md against the recorded exemplar, independently.
+
+    The run's own build already ran this self-test, which is exactly why the
+    scorer runs it again from the artifacts rather than reading the run's word
+    for it: a bundle whose cv.md drifted from its master_cv.md fails here.
+    """
     bundle_dir = Path(bundle_dir)
-    kb_dir = bundle_dir / "knowledge"
-    total_lines = 0
-    total_ok = 0
-    for name in TRACE_FILES:
-        tf = bundle_dir / name
-        if not tf.is_file():
-            continue
-        n_lines, n_ok, _ = trace_check.check_file(tf, kb_dir, bundle_dir)
-        total_lines += n_lines
-        total_ok += n_ok
-    frac = (total_ok / total_lines) if total_lines else 0.0
-    return total_ok, total_lines, frac
+    doc, exemplar = bundle_dir / "cv.md", bundle_dir / "master_cv.md"
+    if not (doc.is_file() and exemplar.is_file()):
+        return 0, 0, 0.0
+
+    exempt = set()
+    plan_path = bundle_dir / "plan.json"
+    if plan_path.is_file():
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        for one_off in cv.one_offs_by_id(plan).values():
+            for _, norm in _common.content_lines(one_off.get("text", "")):
+                exempt.add(norm)
+
+    # A delivered cv.md may differ from the exemplar by the posting's alias
+    # spellings, which the build applies after its own verbatim proof (ADR-0008).
+    # Rather than trust alias_log.md, re-run that pass over the exemplar and
+    # accept either spelling: the exemplar is verbatim against itself, so the
+    # empty self-test result below is the honest one.
+    exemplar_text = exemplar.read_text(encoding="utf-8")
+    jd = bundle_dir / "jd.md"
+    if jd.is_file():
+        groups, _ = aliases.load_table([aliases.PLUGIN_TABLE])
+        aliased, _ = aliases.apply(exemplar_text.splitlines(),
+                                   jd.read_text(encoding="utf-8"), groups,
+                                   cv.VerbatimResult(0, 0, []))
+        for _, norm in _common.content_lines("\n".join(aliased)):
+            exempt.add(norm)
+
+    result = cv.verbatim_report(doc.read_text(encoding="utf-8").splitlines(),
+                                exemplar_text, exempt)
+    n_ok = result.verbatim + result.exempted
+    frac = (n_ok / result.total) if result.total else 0.0
+    return n_ok, result.total, frac
 
 
 def score(reference: dict, verdict: str, n_ok: int, n_lines: int, metrics: dict) -> Scorecard:
@@ -118,14 +146,14 @@ def score(reference: dict, verdict: str, n_ok: int, n_lines: int, metrics: dict)
         "verdict", "gate", verdict, f"== {exp_verdict}", verdict == exp_verdict))
 
     frac = (n_ok / n_lines) if n_lines else 0.0
-    frac_min = reference["traced_fraction_min"]
+    frac_min = reference["verbatim_fraction_min"]
     card.signals.append(Signal(
-        "traced_fraction", "gate", round(frac, 3), f">= {frac_min}", frac >= frac_min))
+        "verbatim_fraction", "gate", round(frac, 3), f">= {frac_min}", frac >= frac_min))
 
-    expected = reference["claims_expected"]
-    tol = reference["claims_tolerance"]
+    expected = reference["cv_lines_expected"]
+    tol = reference["cv_lines_tolerance"]
     card.signals.append(Signal(
-        "claims_count", "band", n_lines, f"{expected} +/-{tol}", abs(n_lines - expected) <= tol))
+        "cv_lines", "band", n_lines, f"{expected} +/-{tol}", abs(n_lines - expected) <= tol))
 
     for name, ceiling in reference.get("metric_ceilings", {}).items():
         if name in metrics:
@@ -149,12 +177,12 @@ def score_bundle(bundle_dir, reference: dict) -> Scorecard:
     bundle_dir = Path(bundle_dir)
     summary = load_summary(bundle_dir)
 
-    # The verdict is the verifier's judgment — not something this scorer can
+    # The verdict is the gate's judgment — not something this scorer can
     # recompute — so take it from the structured Machine Summary block when the
-    # run recorded one, falling back to verdict.txt. Claims stay INDEPENDENTLY
+    # run recorded one, falling back to verdict.txt. Lines stay INDEPENDENTLY
     # counted below; the block's self-report is never trusted for those.
     verdict = (summary.get("verdict", "").upper() if summary else "") or read_verdict(bundle_dir)
-    n_ok, n_lines, _ = traced_fraction(bundle_dir)
+    n_ok, n_lines, _ = verbatim_fraction(bundle_dir)
     metrics = compute_metrics(bundle_dir / "session.jsonl")
 
     card = score(reference, verdict, n_ok, n_lines, metrics)

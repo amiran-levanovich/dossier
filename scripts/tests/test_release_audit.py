@@ -222,7 +222,7 @@ class TestModelInherit(TmpMixin):
 # v2.4.0 incidents each needed both fixes.
 # --------------------------------------------------------------------------
 class TestBatchDiscipline(TmpMixin):
-    BARE = "Read the KB file for every claim in the trace map."
+    BARE = "Read the bank file for every claim in the edit plan."
 
     def test_flags_per_item_read_with_no_mitigation(self):
         self.write(".claude/agents/v.md", self.BARE)

@@ -28,7 +28,7 @@ eval/
 └── golden/                  # Tier-2: agent-agreement cases (eval_score.py)
 docs/adr/                    # architecture decisions — why the shape is the shape
 docs/agents/                 # per-repo config for the engineering skills: issue-tracker · triage-labels · domain
-scripts/                     # deterministic helpers: cv (v4 slot map + verbatim assembly) · aliases (+ alias_groups.md, the shipped table) · ats_coverage · tracker · trace_check · claim_ledger · master_diff · master_slots · session_metrics · release_audit · privacy_scan · machine_summary · eval_run/eval_score (+ _common, tests/)
+scripts/                     # deterministic helpers: cv (slot map + verbatim assembly) · aliases (+ alias_groups.md, the shipped table) · ats_coverage · tracker · session_metrics · release_audit · privacy_scan · machine_summary · eval_run/eval_score (+ _common, tests/)
 README.md                    # detailed guide    CLAUDE.md  # this file    TOKEN_ECONOMY.md  # cost-maintenance doc
 CONTEXT.md                   # the glossary — the vocabulary docs/skills/agents must all use
 ```

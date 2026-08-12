@@ -7,7 +7,7 @@ model: sonnet
 
 <!-- audit-ok: C7 — 1,755 against the 1,640 per-agent row. This is the only writing dispatch
 in the v4 pipeline, and it absorbed the CV contract that v3 spread across this agent (1,914
-tokens then), tailoring_method's edit-plan section, and master_slots' plan format. Read once
+tokens then), tailoring_method's edit-plan section, and the plan format itself. Read once
 per application in a pipeline that went from up to five dispatches to two, so the
 per-application cost fell while this one file grew. Trimmed twice already; what remains is
 the reword prohibition, the plan shape, its two refusals, fact containment, and the

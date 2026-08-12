@@ -22,11 +22,27 @@ import eval_score  # noqa: E402
 
 REF = {
     "expected_verdict": "CLEAN",
-    "claims_expected": 3,
-    "claims_tolerance": 1,
-    "traced_fraction_min": 1.0,
+    "cv_lines_expected": 3,
+    "cv_lines_tolerance": 1,
+    "verbatim_fraction_min": 1.0,
     "metric_ceilings": {"web_fetch": 2, "subagent_spawns": 8},
 }
+
+EXEMPLAR = """\
+# A. Candidate
+Senior Backend Developer
+
+## Skills
+- **Backend:** Ruby, Rails, PostgreSQL.
+"""
+
+CV = """\
+# A. Candidate
+Senior Backend Developer
+
+## Skills
+- **Backend:** Ruby, Rails, PostgreSQL.
+"""
 
 
 class TmpMixin(unittest.TestCase):
@@ -60,23 +76,23 @@ class TestScore(unittest.TestCase):
         self.assertEqual(sig.kind, "gate")
         self.assertFalse(sig.passed)
 
-    def test_traced_fraction_gate_fails_below_one(self):
+    def test_verbatim_gate_fails_below_one(self):
         card = self.score(n_ok=2, n_lines=3)  # fraction 0.67 < 1.0
         self.assertFalse(card.ok)
-        self.assertFalse(next(s for s in card.signals if s.name == "traced_fraction").passed)
+        self.assertFalse(next(s for s in card.signals if s.name == "verbatim_fraction").passed)
 
-    def test_zero_claims_fails_fraction_gate(self):
+    def test_empty_document_fails_verbatim_gate(self):
         card = self.score(n_ok=0, n_lines=0)
         self.assertFalse(card.ok)
 
-    def test_claims_band_within_tolerance_passes(self):
+    def test_line_band_within_tolerance_passes(self):
         # expected 3, tolerance 1 -> 4 is within band
         self.assertTrue(self.score(n_ok=4, n_lines=4).ok)
 
-    def test_claims_band_outside_tolerance_fails(self):
+    def test_line_band_outside_tolerance_fails(self):
         card = self.score(n_ok=5, n_lines=5)  # |5-3| = 2 > 1
         self.assertFalse(card.ok)
-        self.assertEqual(next(s for s in card.signals if s.name == "claims_count").kind, "band")
+        self.assertEqual(next(s for s in card.signals if s.name == "cv_lines").kind, "band")
 
     def test_metric_over_ceiling_fails(self):
         card = self.score(metrics={"web_fetch": 3, "subagent_spawns": 2})  # 3 > 2
@@ -116,10 +132,9 @@ class TestMetricsFromStats(unittest.TestCase):
 # artifact readers over a bundle
 # --------------------------------------------------------------------------
 class TestBundleReaders(TmpMixin):
-    def _bundle(self, verdict="CLEAN"):
-        self.write("knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
-        self.write("cv_trace.md", '- "wrote Python" → skills.md#languages\n')
-        self.write("cover_trace.md", '- "Python focus" → skills.md#languages\n')
+    def _bundle(self, verdict="CLEAN", cv=CV):
+        self.write("master_cv.md", EXEMPLAR)
+        self.write("cv.md", cv)
         self.write("verdict.txt", verdict + "\n")
         return self.root
 
@@ -127,21 +142,35 @@ class TestBundleReaders(TmpMixin):
         self._bundle(verdict="clean")
         self.assertEqual(eval_score.read_verdict(self.root), "CLEAN")
 
-    def test_traced_fraction_all_resolve(self):
+    def test_verbatim_fraction_all_lines_from_the_exemplar(self):
         self._bundle()
-        n_ok, n_lines, frac = eval_score.traced_fraction(self.root)
-        self.assertEqual((n_ok, n_lines), (2, 2))
+        n_ok, n_lines, frac = eval_score.verbatim_fraction(self.root)
+        self.assertEqual((n_ok, n_lines), (2, 2))   # headings are not content lines
         self.assertEqual(frac, 1.0)
 
-    def test_traced_fraction_flags_dangling(self):
-        self._bundle()
-        self.write("cv_trace.md", '- "x" → skills.md#nope\n')  # bad anchor
-        n_ok, n_lines, frac = eval_score.traced_fraction(self.root)
+    def test_verbatim_fraction_flags_a_reworded_line(self):
+        self._bundle(cv=CV.replace("Senior Backend Developer", "Lead Backend Developer"))
+        _, _, frac = eval_score.verbatim_fraction(self.root)
         self.assertLess(frac, 1.0)
 
+    def test_declared_one_off_is_not_a_fault(self):
+        self._bundle(cv=CV + "- **Testing:** RSpec.\n")
+        self.write("plan.json", json.dumps(
+            {"order": [], "one_off": [{"id": "oneoff-testing", "section": "Skills",
+                                       "text": "- **Testing:** RSpec."}]}))
+        n_ok, n_lines, frac = eval_score.verbatim_fraction(self.root)
+        self.assertEqual((n_ok, n_lines, frac), (3, 3, 1.0))
+
+    def test_alias_spelling_counts_as_verbatim(self):
+        # The build applies the posting's spellings AFTER proving the document
+        # verbatim (ADR-0008), so a swapped line is not a rewording.
+        self._bundle(cv=CV.replace("Rails", "Ruby on Rails"))
+        self.write("jd.md", "## ATS keywords\nRuby on Rails, PostgreSQL\n")
+        _, _, frac = eval_score.verbatim_fraction(self.root)
+        self.assertEqual(frac, 1.0)
+
     def test_score_bundle_end_to_end(self):
-        ref = dict(REF, claims_expected=2)
-        card = eval_score.score_bundle(self._bundle(), ref)
+        card = eval_score.score_bundle(self._bundle(), REF)
         self.assertTrue(card.ok)
 
 
@@ -151,9 +180,8 @@ class TestBundleReaders(TmpMixin):
 # --------------------------------------------------------------------------
 class TestSummaryConsumption(TmpMixin):
     def _bundle(self, block_verdict="CLEAN", block_total=2):
-        self.write("knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
-        self.write("cv_trace.md", '- "wrote Python" → skills.md#languages\n')      # 1
-        self.write("cover_trace.md", '- "Python focus" → skills.md#languages\n')   # 1  -> n_lines=2
+        self.write("master_cv.md", EXEMPLAR)
+        self.write("cv.md", CV)                                                    # -> n_lines=2
         self.write("verdict.txt", "CLEAN\n")                                       # fallback source
         self.write("report.md",
                    "# R\n\n## Machine Summary\n\n"
@@ -162,7 +190,7 @@ class TestSummaryConsumption(TmpMixin):
         return self.root
 
     def ref(self):
-        return dict(REF, claims_expected=2)
+        return REF
 
     def test_block_verdict_overrides_verdict_txt(self):
         # verdict.txt says CLEAN but the block says FINDINGS -> block wins -> fail
@@ -180,10 +208,10 @@ class TestSummaryConsumption(TmpMixin):
         self.assertTrue(eval_score.score_bundle(self._bundle(block_total=2), self.ref()).ok)
 
     def test_no_report_falls_back_and_adds_no_consistency_signal(self):
-        self.write("knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
-        self.write("cv_trace.md", '- "x" → skills.md#languages\n')
+        self.write("master_cv.md", EXEMPLAR)
+        self.write("cv.md", CV)
         self.write("verdict.txt", "CLEAN\n")
-        card = eval_score.score_bundle(self.root, dict(REF, claims_expected=1))
+        card = eval_score.score_bundle(self.root, REF)
         self.assertTrue(next(s for s in card.signals if s.name == "verdict").passed)
         self.assertFalse(any(s.name == "summary_consistency" for s in card.signals))
 
@@ -194,11 +222,9 @@ class TestSummaryConsumption(TmpMixin):
 class TestMain(TmpMixin):
     def _case(self, verdict="CLEAN"):
         # golden/acme/reference.json + a recorded bundle beside it
-        ref = dict(REF, claims_expected=2)
-        self.write("golden/acme/reference.json", json.dumps(ref))
-        self.write("golden/acme/bundle/knowledge/skills.md", "# Skills\n\n## Languages\nPython.\n")
-        self.write("golden/acme/bundle/cv_trace.md", '- "wrote Python" → skills.md#languages\n')
-        self.write("golden/acme/bundle/cover_trace.md", '- "Python focus" → skills.md#languages\n')
+        self.write("golden/acme/reference.json", json.dumps(REF))
+        self.write("golden/acme/bundle/master_cv.md", EXEMPLAR)
+        self.write("golden/acme/bundle/cv.md", CV)
         self.write("golden/acme/bundle/verdict.txt", verdict + "\n")
 
     def run_main(self, argv):

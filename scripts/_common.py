@@ -12,11 +12,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-# The arrow used in trace files (core/tailoring_method.md). Accept the ASCII
-# fallback too so a hand-edited trace file still parses.
-TRACE_ARROWS = ("→", "->")
-
-
 def read_text(path: str | Path) -> str:
     """Read a UTF-8 text file, returning '' for a missing file."""
     p = Path(path)
