@@ -27,9 +27,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
+
+# A resumed agent reports through a task notification, not a tool result, so a
+# repair leaves no dispatch record. The harness writes each notification more
+# than once (queued, then attached), hence the de-duplication by task id.
+TASK_ID = re.compile(r"<task-id>([^<]+)</task-id>")
+NOTIFICATION_USAGE = re.compile(
+    r"<subagent_tokens>(\d+)</subagent_tokens>\s*"
+    r"<tool_uses>(\d+)</tool_uses>\s*"
+    r"<duration_ms>(\d+)</duration_ms>")
 
 TOKEN_FIELDS = [
     "input_tokens",
@@ -49,6 +59,7 @@ def analyze(path: Path) -> dict:
         "web_search": 0,
         "subagents": Counter(),
         "dispatches": [],
+        "repairs": [],
         "tokens": Counter(),
         "malformed": 0,
     }
@@ -66,6 +77,21 @@ def analyze(path: Path) -> dict:
             except json.JSONDecodeError:
                 stats["malformed"] += 1
                 continue
+            content = obj.get("content")
+            if isinstance(content, str) and "<task-notification>" in content:
+                usage_m = NOTIFICATION_USAGE.search(content)
+                task_m = TASK_ID.search(content)
+                if usage_m:
+                    task = task_m.group(1) if task_m else usage_m.group(1)
+                    if not any(r["task"] == task for r in stats["repairs"]):
+                        stats["repairs"].append({
+                            "task": task,
+                            "tokens": int(usage_m.group(1)),
+                            "tool_uses": int(usage_m.group(2)),
+                            "duration_ms": int(usage_m.group(3)),
+                        })
+                continue
+
             usage = obj.get("toolUseResult")
             if isinstance(usage, dict) and "agentType" in usage:
                 stats["dispatches"].append({
@@ -135,6 +161,13 @@ def report(path: Path, s: dict) -> None:
             flag = "" if d["status"] == "completed" else f"  [{d['status']}]"
             print(f"    {d['agent']}: {d['tokens']:,} tokens · {d['tool_uses']} tool uses"
                   f" · {secs:.0f}s · {d['model']}{flag}")
+    if s["repairs"]:
+        total = sum(r["tokens"] for r in s["repairs"])
+        print(f"  repair dispatches: {len(s['repairs'])}, {total:,} tokens"
+              " (resumed agents — not visible as dispatches)")
+        for r in s["repairs"]:
+            print(f"    repair {r['task']}: {r['tokens']:,} tokens · "
+                  f"{r['tool_uses']} tool uses · {r['duration_ms'] / 1000:.0f}s")
     t = s["tokens"]
     if any(t.values()):
         processed = t["input_tokens"] + t["output_tokens"] + t["cache_creation_input_tokens"]

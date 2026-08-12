@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Write, Skill
 model: sonnet
 ---
 
-<!-- audit-ok: C7 — 2,024 against the 1,640 per-agent row. This is the only writing dispatch
+<!-- audit-ok: C7 — 2,122 against the 1,640 per-agent row. This is the only writing dispatch
 in the v4 pipeline, and it absorbed the CV contract that v3 spread across this agent (1,914
 tokens then), tailoring_method's edit-plan section, and the plan format itself. Read once
 per application in a pipeline that went from up to five dispatches to two, so the
@@ -103,6 +103,9 @@ changed, rewrite the affected file, and report again.
 - 4–6 lines: the lead evidence and why, what was dropped and reordered, the company reference
   used, the letter's word count, whether the anti-slop pass used `humanizer` or the fallback,
   and **any gap** — a must-have the exemplar cannot support.
+- One line: **what the self-check caught** before you wrote the files, or "self-check: clean".
+  Each catch is a repair dispatch nobody paid for, and repairs cost more than the write they
+  follow — so this line is what tells the maintainer whether the self-check earns its place.
 
 You never edit the exemplar, the bank, jd.md, the tracker, or anything outside your two output
 files. A posting needing something the exemplar can't back goes in your report, not into the
