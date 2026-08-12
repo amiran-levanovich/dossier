@@ -39,15 +39,16 @@ posting (URL or pasted text)
  jd.md ── requirement breakdown + ATS keyword list
    │
    ▼
+ ATS keyword check ── covered (usable now) / promotable (in the bank,
+   │                  your call) / gap (feeds the fit score) — alias-aware.
+   │                  Runs first: it costs no LLM call, and it is what the
+   ▼                  gate's coverage dimension cites
  FIT GATE ── liveness · constraints screen · evidence-cited score 1–5
    │         · legitimacy tier — verdict said out loud BEFORE anything
    │         is built; weak/fishy → user decides
    ▼
  company research ──▶ notes.md
    │
-   ▼
- ATS keyword check ── covered (usable now) / promotable (in the bank,
-   │                  your call) / gap (feeds the fit score) — alias-aware
    ▼
  slot map ── cv.py map: the writer's only view of the exemplar
    │

@@ -124,9 +124,10 @@ check would otherwise disappear at exit 0.
 |---|---|
 | `.claude/skills/*/SKILL.md` (each — thin routers) | 1,150 |
 | `.claude/agents/*.md` (each) | 1,640 |
-| `job_docs/core/tailoring_method.md` | 3,150 |
+| `job_docs/core/job_workflow.md` (the kernel — every session) | 3,500 |
+| `job_docs/core/tailoring_method.md` | 2,750 |
 | `job_docs/core/fit_check.md` | 3,050 |
-| `job_docs/standards/*` (each) | 2,830 |
+| `job_docs/standards/*` (each) | 2,750 |
 | `job_docs/core/quickref.md` (the compaction floor) | 1,150 |
 
 Docs read only occasionally (`lifecycle/*`, `interview_protocol.md`, README) are not
@@ -152,11 +153,15 @@ word budget and is at 99.8% of its token budget, `application-verifier.md` 99.9%
 Other files under a shared row necessarily moved, because one budget cannot track several
 files at once — that repricing is the point. No budget was raised as a convenience.
 
-**Raised since:** `tailoring_method.md` 2,950 → 3,150 in v3.2.0. The doc now documents two
-CV paths rather than one — the edit-plan path of ADR-0003 — and the row was calibrated when
-there was only one. This is a recalibration to a larger method, not headroom for prose: the
-+200 per run buys the removal of the writer's whole `cv.md` output, and ADR-0003 commits
-to measuring that with `session_metrics.py` before the saving is claimed.
+**Raised since:** `tailoring_method.md` 2,950 → 3,150 in v3.2.0, for the two CV paths of
+ADR-0003 — then **cut to 2,750 in v4.0.0**, because v4 leaves one path and the doc came in
+at 2,629. A row 500 above its fullest file is not a budget, it is permission; the audit
+only means something while the number is close enough to bite. `standards/*` came down the
+same way (2,830 → 2,750 against `dach_conventions.md`'s 2,681).
+
+**Added in v4.0.0:** `job_docs/core/job_workflow.md` at 3,500. The kernel is read at the
+start of every session in the job folder — the most-loaded doc in the repo — and it had no
+row at all, which is the one gap that made this table less than what it claims to be.
 
 Ported from the sibling `redgreen` repo, whose review of the same change found three
 things worth carrying: whitespace must be priced or padding is free; a group budget
