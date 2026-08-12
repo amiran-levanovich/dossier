@@ -330,6 +330,7 @@ Across the two live runs:
 |---|---|---|---|---|
 | Run 1 | 48,437 | 32,404 | **51,031** | merged attribution |
 | Run 2 | 63,038 | 35,254 | **66,470** | a bank fact in the letter |
+| Run 3 | 75,510 | 38,786 | **none** | gate returned CLEAN |
 
 **117,501 tokens of repair against 179,133 of dispatch — 40% of all agent spend on two
 applications.** Both repairs cost more than the write they followed, and both runs needed
@@ -340,16 +341,23 @@ The writer gained a self-check line targeting exactly this in v4.0.1 (#43), afte
 class (a fact taken from the bank rather than two CV facts merged), but one the same
 self-check item already covers: *every fact in the letter is in a slot you kept*.
 
-**Verdict: not enough data, and no evidence yet that it pays.** One run with the instruction
-and one defect through it is n=1 either way. Cutting it on that basis would be as unjustified
-as keeping it on faith, so it stays — and the writer's output contract now reports what its
-self-check caught, so the next runs produce the evidence directly instead of leaving it to be
-inferred from whether a repair happened.
+**Run 3 is the first datapoint from the instrument**, and the first run of three to need no
+repair. The writer reported: *"self-check: caught two things before writing — a duration
+overclaim ('three years' at Adler Web, when the exemplar's dates work out to ~2.3 years)
+that I cut rather than state, and a tense drift on the on-call ownership line"*. The first of
+those is a containment defect of exactly the class that caused both earlier repairs. The gate
+then returned CLEAN.
 
-**What would decide it:** three or more further runs with the line reporting. If the writer
-never reports a catch and repairs keep happening at this rate, the line is 50-odd tokens per
-dispatch buying nothing and should be cut. If it reports catches, each one is a repair
-avoided, and at these prices one catch pays for the instruction several hundred times over.
+**Verdict: still not enough data, but the first evidence points toward paying.** One run
+where the self-check reported catches is one run without a repair — suggestive, not
+conclusive, and the honest reading is that run 3 also had a stronger exemplar and a writer
+that had read a fuller brief. Two more clean runs with reported catches would settle it; a
+run that reports catches *and* still needs a repair would weaken it sharply.
+
+**What would still overturn it:** if the writer starts reporting "self-check: clean" on runs
+that then need repairs, the line is 50-odd tokens per dispatch buying nothing and should be
+cut. At current prices one genuine catch pays for it several hundred times over, which is why
+the bar for cutting is evidence rather than tidiness.
 
 ## 8. Known open levers (not yet implemented)
 
