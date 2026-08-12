@@ -8,10 +8,10 @@ Read `job_docs/core/tailoring_method.md` and follow it end to end. Locate it as 
 The pipeline this skill orchestrates — **two LLM dispatches, everything else deterministic**:
 
 1. **Preconditions**: a signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` **in the current working directory** — one existence check, not a search. Signed off = `master_cv_signoff.md`'s last hash matches `sha256sum master_cv.md`; edited since signing counts as unsigned. Missing or unsigned: route to `job-intake` / `job-goals`. A deadline never justifies skipping the sign-off.
-2. **Capture** the posting (WebFetch or pasted text) → `applications/<company>/jd.md`.
-3. **The fit gate** (per `job_docs/core/fit_check.md`, same resolution): liveness, constraints screen, evidence-cited score with its band, legitimacy tier — said **before anything is built**. 2 WebSearch queries by default, 5 max when genuinely uncertain; a user override wins and is recorded.
-4. **ATS keyword check** via `scripts/ats_coverage.py`, before anything is built: COVERED is usable now, PROMOTABLE is the user's promotion decision, GAP feeds the fit score.
-5. **Company research** → `notes.md` — reuse the fit gate's findings first; WebSearch only for what's still missing.
+2. **Capture** the posting (WebFetch or paste) → `applications/<company>/jd.md`.
+3. **ATS keyword check** via `scripts/ats_coverage.py` — free, so it runs first and the gate cites it: COVERED usable now, PROMOTABLE the user's promotion decision, GAP feeds the fit score.
+4. **The fit gate** (`job_docs/core/fit_check.md`): liveness, constraints screen against the root search meta, score citing step 3's buckets, legitimacy tier — said **before anything is built**. 2 WebSearch queries by default, 5 max when uncertain; a user override wins and is recorded.
+5. **Company research** → `notes.md` — reuse the gate's findings; WebSearch only what's still missing.
 6. **Dispatch 1 — the writer.** Extract the slot map (`scripts/cv.py map`) and launch `application-writer` with it *instead of* the exemplar. It emits `plan.json` + `cover.md`, picking the lead evidence once so both argue from it. It cannot reword a slot and never proposes a one-off unprompted.
 7. **Assemble** (no dispatch): `scripts/cv.py build plan.json --exemplar master_cv.md --posting jd.md` renders kept slots byte-verbatim, proves it, then swaps in the posting's spellings. A faulty plan writes **nothing** — hand the diagnostic back to the *same* writer for one re-dispatch.
 8. **Dispatch 2 — the gate.** `application-verifier`, **one round, no cap**: the letter's fact containment against the CV, plus any one-off slot. Everything else inherits the exemplar's verdict. An invented fact is removed by the writer — removal introduces nothing, so no re-verify; a claim the bank supports but the exemplar lacks is the user's promotion decision. Never present with open BLOCKER/MAJOR findings.

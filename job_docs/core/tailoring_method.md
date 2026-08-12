@@ -33,17 +33,19 @@ Get the full text: WebFetch for a URL (ask for a paste if it's login-walled), or
 <filled by the fit gate — block template in core/fit_check.md>
 ```
 
-## Step 2 — The fit gate (before any research or writing)
+## Step 2 — ATS keyword check (deterministic, before the gate)
 
-Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen, the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain); whatever it finds feeds Step 4's notes.
+Per `standards/ats_rules.md`: `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, alias-aware, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls).
 
-## Step 3 — ATS keyword check (before writing anything)
-
-Per `standards/ats_rules.md`: `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, alias-aware, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls). Then:
+It runs **before** the gate because it costs no LLM call and no network, and the gate's coverage dimension is evidence-based only if it has this report to cite instead of an impression. The buckets:
 
 - **Covered** (`COVERED`) — the exemplar names it; trimming can use it. The report names the sections (achievement-backed vs a bare skills-list mention) and marks `(as "…")` when the exemplar's spelling differs — assembly swaps that in.
 - **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact into the exemplar as a slot and verify that slot, or leave it unclaimed.
 - **Real gap** (`GAP`) — neither has it → record in `jd.md`'s `## Fit` block. Feeds the fit score, never the documents.
+
+## Step 3 — The fit gate (before any research or writing)
+
+Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen against the search meta at the job-folder root (`constraints.md`, `lessons.md`), the evidence-cited fit score with its band — Step 2's report is what its coverage dimension cites — and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain); whatever it finds feeds Step 4's notes.
 
 ## Step 4 — Company research
 
@@ -53,7 +55,7 @@ Start from what the fit gate found — its findings usually cover this step, so 
 
 Extract the slot map first: `scripts/cv.py map master_cv.md --out slots.json`. The exemplar itself is **not** passed to the writer — the slot map is its whole view of it, which is what makes rewording unavailable rather than merely forbidden.
 
-Launch **`application-writer`** with: `slots.json`, the `jd.md` path, `notes.md`, `story_bank.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the coverage report from Step 3, and the output paths for `plan.json` and `cover.md`.
+Launch **`application-writer`** with: `slots.json`, the `jd.md` path, `notes.md`, `story_bank.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the coverage report from Step 2, and the output paths for `plan.json` and `cover.md`.
 
 One agent produces both, so the **lead evidence** is picked once: the slot answering the posting's hardest requirement leads the CV, and the letter argues from that same slot. The bank is there for the letter's framing and motivation only — never for a fact, because the letter may assert nothing the assembled CV doesn't (ADR-0007). The writer reports gaps; it never proposes a one-off unprompted.
 
