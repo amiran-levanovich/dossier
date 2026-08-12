@@ -207,6 +207,55 @@ class TestAtsCoverage(TmpMixin):
         _, out = self.coverage(["MySQL"])
         self.assertIn("[GAP]        MySQL", out)
 
+    # ----- one-letter keywords: a language, not an initial ---------------------
+
+    def test_a_one_letter_keyword_does_not_match_an_initial(self):
+        """The defect from the first open posting: `R` was reported COVERED
+        against an exemplar header reading `# R. Vogel`. A false COVERED is the
+        worse direction — it inflates the fit score and tells the writer a
+        keyword is available that the CV cannot support."""
+        _, out = self.coverage(["R"], exemplar="# R. Vogel\nSenior Backend Developer\n\n"
+                                              "## Skills\n- Ruby, Rails.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[GAP]        R", out)
+
+    def test_a_one_letter_keyword_matches_where_it_is_genuinely_named(self):
+        _, out = self.coverage(["R"], exemplar="# Jane Smith\n\n## Skills\n- R, Python, SQL.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[COVERED]    R", out)
+
+    def test_a_one_letter_keyword_matches_in_prose(self):
+        _, out = self.coverage(["R"], exemplar="# Jane Smith\n\n## Experience\n"
+                                               "- Built forecasting models in R.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[COVERED]    R", out)
+
+    def test_a_one_letter_keyword_is_case_sensitive(self):
+        """Single letters appear everywhere in prose; for a one-letter keyword
+        only the language's own spelling counts."""
+        _, out = self.coverage(["R"], exemplar="# Jane Smith\n\n## Experience\n"
+                                               "- Built models in r and other tools.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[GAP]        R", out)
+
+    def test_c_does_not_match_c_plus_plus(self):
+        """Different languages. Decided this way deliberately: a CV naming C++
+        has not claimed C, and the reverse reading would inflate coverage."""
+        _, out = self.coverage(["C"], exemplar="# Jane Smith\n\n## Skills\n- C++, Rust.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[GAP]        C", out)
+
+    def test_c_matches_a_bare_c(self):
+        _, out = self.coverage(["C"], exemplar="# Jane Smith\n\n## Skills\n- C, C++, Rust.\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[COVERED]    C", out)
+
+    def test_a_multi_letter_keyword_still_matches_a_header(self):
+        """The header is a real locator — a headline naming a technology counts."""
+        _, out = self.coverage(["Ruby"], exemplar="# Jane Smith\nSenior Ruby Developer\n",
+                               bank="Nothing relevant.\n")
+        self.assertIn("[COVERED]    Ruby — (header)", out)
+
     # ----- inflection: the posting's plural against the candidate's singular ---
 
     def test_a_plural_keyword_matches_the_singular_the_bank_uses(self):

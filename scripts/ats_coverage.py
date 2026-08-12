@@ -25,6 +25,7 @@ Output is line-stable so `eval_run.py` can hold it as a fixture snapshot.
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import NamedTuple
@@ -147,6 +148,28 @@ def variant_sets(keyword: str, groups: list[list[str]]) -> tuple[list[str], list
     return [keyword] + inflections(keyword, groups), []
 
 
+def _literal_match(variant: str, line: str) -> bool:
+    """Whether this line names the keyword, under the rule its length earns.
+
+    A one-letter keyword is a language name (`R`, `C`) sharing its spelling with
+    an initial, a list marker and a sentence's worth of ordinary letters. Matched
+    like any other keyword it reports COVERED against a header reading
+    `# R. Vogel` — a false COVERED, which is the worse direction: it inflates the
+    gate's coverage dimension and tells the writer a keyword is available that no
+    slot supports. So it must match its own case, and must not be an initial —
+    a letter, a full stop, then a capitalised word.
+
+    `C` against `C++` is deliberately *not* a match. They are different
+    languages; a CV naming C++ has not claimed C. The reverse reading would
+    inflate coverage, which is the direction this whole rule exists to avoid.
+    """
+    if len(variant) > 1:
+        return bool(_common.keyword_pattern(variant).search(line))
+    pattern = re.compile(
+        r"(?<![\w+#.])" + re.escape(variant) + r"(?![\w+#]|\.\s*[A-Z])")
+    return bool(pattern.search(line))
+
+
 def _matched(literals: list[str], alias_variants: list[str], line: str) -> str | None:
     """Which spelling this line uses, if any.
 
@@ -157,7 +180,7 @@ def _matched(literals: list[str], alias_variants: list[str], line: str) -> str |
     since they are ordinary words rather than names.
     """
     for variant in literals:
-        if _common.keyword_pattern(variant).search(line):
+        if _literal_match(variant, line):
             return variant
     for variant in alias_variants:
         if aliases.first_position(variant, line) is not None:

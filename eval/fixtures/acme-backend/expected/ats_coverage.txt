@@ -1,6 +1,6 @@
 exit 0
 ATS-COVERAGE  jd=jd.md  exemplar=master_cv.md  bank=story_bank.md
-  keywords: 9   covered: 5   promotable: 2   gap: 2
+  keywords: 10   covered: 5   promotable: 2   gap: 3
   [COVERED]    Ruby — Summary, Skills
   [COVERED]    RoR — Experience, Skills  (as "Rails")
   [COVERED]    Postgres — Skills  (as "PostgreSQL")
@@ -10,3 +10,4 @@ ATS-COVERAGE  jd=jd.md  exemplar=master_cv.md  bank=story_bank.md
   [PROMOTABLE] migrations — story_bank.md:16, story_bank.md:17  (as "migration")  (in the bank, not the exemplar — promote it to use it)
   [GAP]        Kubernetes — in neither (feeds the fit score, not the writing)
   [GAP]        settlement — in neither (feeds the fit score, not the writing)
+  [GAP]        R — in neither (feeds the fit score, not the writing)
