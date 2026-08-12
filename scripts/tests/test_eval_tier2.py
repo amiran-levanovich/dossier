@@ -4,8 +4,8 @@
 Run: python3 -m unittest discover scripts/tests
 
 Scoring a recorded bundle needs no model, so this runs in CI: it guards the
-scorer and the internal consistency of each golden case (edit a bundle's traces
-without updating reference.json and this fails). Scoring a *fresh* live run is
+scorer and the internal consistency of each golden case (edit a bundle's cv.md
+or exemplar without updating reference.json and this fails). Scoring a *fresh* live run is
 the on-demand step — see eval/golden/README.md.
 """
 

@@ -1,8 +1,8 @@
 {
   "expected_verdict": "CLEAN",
-  "claims_expected": 3,
-  "claims_tolerance": 1,
-  "traced_fraction_min": 1.0,
+  "cv_lines_expected": 12,
+  "cv_lines_tolerance": 2,
+  "verbatim_fraction_min": 1.0,
   "metric_ceilings": {
     "web_fetch": 2,
     "web_search": 5,

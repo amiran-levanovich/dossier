@@ -155,8 +155,8 @@ files at once — that repricing is the point. No budget was raised as a conveni
 **Raised since:** `tailoring_method.md` 2,950 → 3,150 in v3.2.0. The doc now documents two
 CV paths rather than one — the edit-plan path of ADR-0003 — and the row was calibrated when
 there was only one. This is a recalibration to a larger method, not headroom for prose: the
-+200 per run buys the removal of the writer's whole `cv.md` and `cv_trace.md` output, and
-ADR-0003 commits to measuring that with `session_metrics.py` before the saving is claimed.
++200 per run buys the removal of the writer's whole `cv.md` output, and ADR-0003 commits
+to measuring that with `session_metrics.py` before the saving is claimed.
 
 Ported from the sibling `redgreen` repo, whose review of the same change found three
 things worth carrying: whitespace must be priced or padding is free; a group budget
@@ -241,34 +241,24 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   Grep-and-reason step; now one script call returning COVERED/PROMOTABLE/GAP buckets, so
   the promotion decision arrives already separated from the real gaps. (kills the inline
   work behind C2/C5.)
-- **Trace-map pre-check** (`trace_check.py`) — confirms every trace target resolves to a
-  real file and `#anchor` before `application-verifier` runs, so the verifier spends its
-  budget on claim-strength judgment, not bookkeeping. (shrinks the verifier's per-round
-  work — C2/C6.)
 - **Tracker writes** (`tracker.py`) — column order, quoting, and header migration for
   `tracker.csv`, so the orchestrator never reads the whole CSV back to re-emit it.
 - **Session metrics** (`session_metrics.py`) — the §2 measurement harness itself.
-- **Verified-claim ledger** (`claim_ledger.py`, v2.4.0) — `record` memoizes (claim
-  text, source path + anchor, source content hash) on every CLEAN verdict; `check`
-  marks byte-identical repeats PRE-VERIFIED before the verifier runs, so it judges only
-  new/changed claims. Any drift in claim wording, cited anchor, or source content
-  auto-invalidates; app-local sources are never carried over. (shrinks the verifier's
-  judgment set across applications — C2/C6.)
-- **Master-CV subset check** (`master_diff.py` + ledger `--document` records, v2.5.0) —
-  with the exemplar (`lifecycle/exemplar.md`: one verified master CV, built once
-  at intake close), `application-writer` subtracts/edits instead of regenerating and this
-  script proves which cv.md lines are verbatim from a hash-VERIFIED master; only CHANGED
-  lines get judged. Turns per-application generation and judgment into a delta against a
-  one-time investment. (C5 for the writer's inputs, C6 for the verifier's judgment set.)
-- **Exemplar slot model** (`master_slots.py`, v3.2.0) — the subset check above still had
-  the writer *retype* every verbatim line and then discovered, after the fact, that it was
-  verbatim. `extract` decomposes the exemplar into addressable slots, the writer emits an
-  **edit plan** (slot order, patched text, new slots, drops) instead of `cv.md`, and
-  `assemble` writes `cv.md` + `cv_trace.md` — copying kept slots byte-for-byte and
-  inheriting their trace lines by slot id. The writer's CV output drops to the changed
-  wording alone, and its inputs lose `master_cv.md` and `master_cv_trace.md` entirely.
-  (C5 for the writer's inputs, C4 for its output; ADR-0003.) **Projected, not yet
-  measured** — see §5's raised-budget note.
+- **Exemplar slot model** (`cv.py`) — `map` decomposes the exemplar into addressable
+  slots, the writer emits an **edit plan** (slot order, drops, any declared one-off)
+  instead of `cv.md`, and `build` renders it — copying kept slots byte-for-byte and
+  proving so before writing anything. The writer's CV output drops to a list of ids, and
+  its inputs lose `master_cv.md` entirely. (C5 for the writer's inputs, C4 for its
+  output; ADR-0003, ADR-0005.) **Projected, not yet measured** — see §5's raised-budget
+  note.
+
+  Three earlier savers on this same path were **deleted in v4.0.0**: a trace-map
+  pre-check, a verified-claim ledger memoizing per-claim CLEANs, and a standalone
+  master-CV subset diff. Each existed to avoid re-judging the same claim, which is an
+  admission that the per-application judgment was mostly redundant — v4 removes the
+  redundancy at the source instead of caching around it (ADR-0004), and the machinery
+  goes with it. The lesson stands: a saver whose whole job is to skip work that shouldn't
+  be happening is a signal to move the work, not to cache it.
 - **Alias groups** (`aliases.py`, v4) — matching the posting's surface spelling of a
   technology ("Postgres" for "PostgreSQL", "K8s" for "Kubernetes") used to be either a
   writer instruction or a verifier finding, both of which spend a dispatch on string

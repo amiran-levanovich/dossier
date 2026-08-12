@@ -1,0 +1,12 @@
+{
+  "_comment": "The edit plan the recorded run produced. Slot ids are content hashes of this bundle's master_cv.md — editing that file renames them and this plan must be regenerated.",
+  "order": [
+    { "id": "head-2b98b8" },
+    { "id": "sum-64bed2" },
+    { "id": "exp-02c050", "bullets": ["b-72562d", "b-045a31"] },
+    { "id": "exp-832826", "bullets": ["b-0593a5"] },
+    { "id": "edu-fb71c6" },
+    { "id": "skills-3c92b9" }
+  ],
+  "drop": ["skills-c0a850"]
+}
