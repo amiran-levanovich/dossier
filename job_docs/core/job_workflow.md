@@ -45,7 +45,7 @@ The plugin ships **zero personal data**. Everything about the candidate lives in
 
 Gather context silently before responding; never ask for what a file can answer. Everything below lives **in the current working directory** — that folder *is* the job folder, whatever its state.
 
-1. **One `ls` of the folder decides the state.** If `story_bank.md` is absent, the folder is fresh: there is nothing to gather — do **not** search parent directories, the home directory, or anywhere else for a bank, an exemplar, a tracker, or personal files. Skip the rest of this checklist and route per the table below (a fresh folder means `job-intake`).
+1. **One `ls` of the folder decides the state.** If `story_bank.md` is absent but `knowledge/` is present, this is a v3 folder — offer `lifecycle/migration.md` and stop the checklist here. If both are absent, the folder is fresh: there is nothing to gather — do **not** search parent directories, the home directory, or anywhere else for a bank, an exemplar, a tracker, or personal files. Skip the rest of this checklist and route per the table below (a fresh folder means `job-intake`).
 2. Read `goals.md` and `constraints.md` in full — they are small and always relevant — and `master_cv_signoff.md` to know whether the exemplar is signed and current. The bank and the exemplar are **not** read at session start; they are large, and each pipeline reads what it needs.
 3. Read `tracker.csv` — know every application's status and which `next_action` dates are due or overdue. In full while it's small; once it passes ~50 rows, read the header plus the non-terminal rows and this month's closures (Grep/filter), not the whole history — `lifecycle/analytics.md` has the recipe for whole-tracker questions. (Any of these files missing in a non-fresh folder: note it as a gap to fix, don't go looking for it elsewhere.)
 4. Cross-check `applications/` subfolders against the tracker. A folder with application documents but a stale tracker row (or vice versa) is drift — fix it or flag it immediately.
@@ -57,6 +57,7 @@ Gather context silently before responding; never ask for what a file can answer.
 
 | State / request                                                                                     | Route                                              |
 | :-------------------------------------------------------------------------------------------------- | :------------------------------------------------- |
+| A `knowledge/` directory and no `story_bank.md` — a v3 folder                                       | `lifecycle/migration.md`                           |
 | No `story_bank.md` yet, the interview is unfinished (`interview_progress.md` has open areas), or the exemplar is unbuilt or unsigned | `job-intake`                                       |
 | Bank and exemplar exist but `goals.md` is missing or stale; or the user wants to change targets      | `job-goals`                                        |
 | The user brings a job posting (URL or pasted text)                                                  | `job-apply`                                        |

@@ -149,7 +149,7 @@ The bank has **no schema** — no per-role files, no index, no anchors. That mac
 | `core/fit_check.md`                          | The pre-application gate: liveness, constraints kill-switch, evidence-cited fit score, comp-reliability weighting, legitimacy tier |
 | `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
 | `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |
-| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `exemplar` (build it once, sign it off, promote into it) |
+| `lifecycle/`                                 | `tracking` (tracker.csv) · `postmortem` (rejections) · `interview_prep` (per-stage) · `analytics` (funnel + patterns) · `offer` (contract read + negotiation prep) · `exemplar` (build it once, sign it off, promote into it) · `migration` (a v3 folder to the two-artifact model) |
 | `templates/cv_template.md`                   | The ATS-safe single-column skeleton                                                                                   |
 
 ## The scripts layer (`scripts/`)
