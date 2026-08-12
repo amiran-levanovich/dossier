@@ -207,6 +207,48 @@ class TestAtsCoverage(TmpMixin):
         _, out = self.coverage(["MySQL"])
         self.assertIn("[GAP]        MySQL", out)
 
+    # ----- inflection: the posting's plural against the candidate's singular ---
+
+    def test_a_plural_keyword_matches_the_singular_the_bank_uses(self):
+        """The defect from the first live run: the posting asked for
+        "migrations" against a bank telling a migration story, and the report
+        said GAP — a keyword the candidate demonstrably has, depressing the fit
+        score and hiding a promotion."""
+        _, out = self.coverage(["migrations"])
+        self.assertIn("[PROMOTABLE] migrations", out)
+        self.assertIn('as "migration"', out)
+
+    def test_a_singular_keyword_matches_the_plural_the_exemplar_uses(self):
+        _, out = self.coverage(["request"], exemplar=self.EXEMPLAR)
+        self.assertIn("[COVERED]    request", out)
+        self.assertIn('as "requests"', out)
+
+    def test_inflection_applies_to_the_last_word_of_a_phrase(self):
+        _, out = self.coverage(["Rails APIs"], exemplar=self.EXEMPLAR)
+        self.assertIn("[COVERED]    Rails APIs", out)
+
+    def test_a_word_absent_from_both_is_still_a_gap(self):
+        """The report must not start matching loosely: these are the run's own
+        genuinely-absent domain words, and they carry the fit score."""
+        for word in ("settlement", "settlements", "freight", "monolith"):
+            with self.subTest(word=word):
+                _, out = self.coverage([word])
+                self.assertIn("[GAP]", out)
+
+    def test_a_technology_name_is_never_inflected(self):
+        """`Rails` minus its s is `Rail`, which would fire on ordinary prose.
+        Names the alias table knows are spellings, not vocabulary — inflecting
+        them can only produce false matches."""
+        self.assertEqual(ats_coverage.inflections("Rails", [["Ruby on Rails", "Rails"]]), [])
+
+    def test_short_words_are_not_inflected(self):
+        self.assertEqual(ats_coverage.inflections("Go", []), [])
+
+    def test_es_and_y_plurals(self):
+        self.assertIn("index", ats_coverage.inflections("indexes", []))
+        self.assertIn("repositories", ats_coverage.inflections("repository", []))
+        self.assertIn("repository", ats_coverage.inflections("repositories", []))
+
     def test_an_alias_carrying_uppercase_does_not_fire_on_prose(self):
         """`Go` must not match "decided to go with", or the report would call a
         gap covered — the worse direction of the two."""

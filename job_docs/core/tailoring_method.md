@@ -35,7 +35,7 @@ Get the full text: WebFetch for a URL (ask for a paste if it's login-walled), or
 
 ## Step 2 — ATS keyword check (deterministic, before the gate)
 
-Per `standards/ats_rules.md`: `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, alias-aware, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls).
+Per `standards/ats_rules.md`: `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, alias- and plural-aware, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls).
 
 It runs **before** the gate because it costs no LLM call and no network, and the gate's coverage dimension is evidence-based only if it has this report to cite instead of an impression. The buckets:
 
