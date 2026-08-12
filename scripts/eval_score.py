@@ -96,17 +96,60 @@ def read_verdict(bundle_dir) -> str:
     return ""
 
 
-def verbatim_fraction(bundle_dir):
-    """Re-check the recorded cv.md against the recorded exemplar, independently.
+class MissingExemplar(FileNotFoundError):
+    """No exemplar to check the CV against — an input fault, not a bad run."""
+
+
+class MissingVerdict(FileNotFoundError):
+    """No recorded gate verdict — also an input fault, and worth saying so.
+
+    A live application folder has no report.md or verdict.txt: the gate returns
+    its call in the session, not as an artifact. Scoring one without a verdict
+    would fail the verdict gate as though the run had been judged and found
+    wanting, which is the same wrong-reason failure a missing exemplar caused.
+    """
+
+
+# `<job folder>/applications/<company>/` is two levels below the root, and a
+# recorded bundle keeps its own copy beside the documents. Searching further up
+# would start finding other people's job folders on a shared machine.
+EXEMPLAR_SEARCH_DEPTH = 2
+
+
+def resolve_exemplar(bundle_dir, explicit=None):
+    """The exemplar to check against: the given one, or the nearest above.
+
+    A recorded bundle carries its own `master_cv.md`; a *live* run does not —
+    the exemplar sits at the job-folder root while the documents sit in
+    `applications/<company>/`. Walking up is what lets an application folder be
+    scored where it lies, instead of being copied into bundle shape by hand.
+    """
+    if explicit is not None:
+        return Path(explicit)
+    here = Path(bundle_dir)
+    for candidate in [here, *list(here.parents)[:EXEMPLAR_SEARCH_DEPTH]]:
+        found = candidate / "master_cv.md"
+        if found.is_file():
+            return found
+    return None
+
+
+def verbatim_fraction(bundle_dir, exemplar=None):
+    """Re-check the recorded cv.md against the exemplar, independently.
 
     The run's own build already ran this self-test, which is exactly why the
     scorer runs it again from the artifacts rather than reading the run's word
     for it: a bundle whose cv.md drifted from its master_cv.md fails here.
     """
     bundle_dir = Path(bundle_dir)
-    doc, exemplar = bundle_dir / "cv.md", bundle_dir / "master_cv.md"
-    if not (doc.is_file() and exemplar.is_file()):
-        return 0, 0, 0.0
+    doc = bundle_dir / "cv.md"
+    exemplar = resolve_exemplar(bundle_dir, exemplar)
+    if exemplar is None or not exemplar.is_file():
+        raise MissingExemplar(
+            f"no master_cv.md beside {bundle_dir} or within "
+            f"{EXEMPLAR_SEARCH_DEPTH} directories above it — pass --exemplar")
+    if not doc.is_file():
+        raise MissingExemplar(f"no cv.md in {bundle_dir}")
 
     exempt = set()
     plan_path = bundle_dir / "plan.json"
@@ -173,7 +216,7 @@ def load_summary(bundle_dir):
     return machine_summary.parse(report.read_text(encoding="utf-8"))
 
 
-def score_bundle(bundle_dir, reference: dict) -> Scorecard:
+def score_bundle(bundle_dir, reference: dict, exemplar=None, verdict_override=None) -> Scorecard:
     bundle_dir = Path(bundle_dir)
     summary = load_summary(bundle_dir)
 
@@ -181,8 +224,16 @@ def score_bundle(bundle_dir, reference: dict) -> Scorecard:
     # recompute — so take it from the structured Machine Summary block when the
     # run recorded one, falling back to verdict.txt. Lines stay INDEPENDENTLY
     # counted below; the block's self-report is never trusted for those.
-    verdict = (summary.get("verdict", "").upper() if summary else "") or read_verdict(bundle_dir)
-    n_ok, n_lines, _ = verbatim_fraction(bundle_dir)
+    # The exemplar is checked first: without it there is nothing to score at all,
+    # so reporting a missing verdict ahead of it would send the operator after
+    # the smaller of two faults.
+    n_ok, n_lines, _ = verbatim_fraction(bundle_dir, exemplar)
+    verdict = (verdict_override or "").upper() or (
+        summary.get("verdict", "").upper() if summary else "") or read_verdict(bundle_dir)
+    if not verdict:
+        raise MissingVerdict(
+            f"no gate verdict for {bundle_dir}: no `## Machine Summary` block in report.md"
+            " and no verdict.txt — pass --verdict CLEAN|FINDINGS")
     metrics = compute_metrics(bundle_dir / "session.jsonl")
 
     card = score(reference, verdict, n_ok, n_lines, metrics)
@@ -217,7 +268,12 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--case", required=True, help="golden case id (a dir under --golden-root)")
     ap.add_argument("--golden-root", default="eval/golden", help="golden cases root")
-    ap.add_argument("--run", help="a fresh run bundle to score (default: the case's recorded bundle)")
+    ap.add_argument("--run", help="a run to score: a bundle, or an application folder in place"
+                                 " (default: the case's recorded bundle)")
+    ap.add_argument("--exemplar", help="path to master_cv.md, when it is not beside the"
+                                       " documents or at the job-folder root")
+    ap.add_argument("--verdict", choices=["CLEAN", "FINDINGS"],
+                    help="the gate's final call, for a run that recorded no report.md")
     ap.add_argument("--json", action="store_true", help="emit the scorecard as JSON")
     args = ap.parse_args(argv)
 
@@ -233,7 +289,11 @@ def main(argv=None) -> int:
         print(f"eval_score: no bundle at {bundle}", file=sys.stderr)
         return 2
 
-    card = score_bundle(bundle, reference)
+    try:
+        card = score_bundle(bundle, reference, args.exemplar, args.verdict)
+    except (MissingExemplar, MissingVerdict) as exc:
+        print(f"eval_score: {exc}", file=sys.stderr)
+        return 2
 
     if args.json:
         print(json.dumps(

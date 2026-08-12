@@ -49,14 +49,21 @@ live pipeline:
 
 1. Run a real `job-apply` on the case's posting (headless: `claude -p`), in a job
    folder whose `master_cv.md` and `story_bank.md` match this bundle's.
-2. Collect the outputs into a run dir: `master_cv.md`, `plan.json`, `cv.md`,
-   `cover.md`, `verdict.txt` (paste the gate's CLEAN/FINDINGS), and the session
-   `.jsonl` if you want cost metrics scored.
-3. Score it:
+2. Score the application folder **where it lies** — nothing to collect:
 
    ```bash
-   python3 scripts/eval_score.py --case acme-backend --run <run-dir>
+   python3 scripts/eval_score.py --case acme-backend \
+     --run <job folder>/applications/<company> --verdict CLEAN
    ```
+
+   The exemplar is found beside the documents or at the job-folder root above
+   them; `--exemplar` overrides that. `--verdict` supplies the gate's final call,
+   which a live run does not leave on disk — it is said in the session. A run that
+   wrote a `report.md` with a `## Machine Summary` block needs neither flag.
+
+   Missing either one is reported as an input fault and exits 2, rather than
+   scoring 0.0 and failing a gate as though the run were bad.
+3. To score cost metrics too, drop the session `.jsonl` in the run dir.
 
    Exit 0 = agreement; exit 1 = a gate failed or a band was exceeded (the
    scorecard names which). Run this before a release that touched an agent or a
