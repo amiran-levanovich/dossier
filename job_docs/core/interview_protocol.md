@@ -140,7 +140,9 @@ overhauled, this phase re-runs for it.
   dates, relevant coursework only if early-career.
 - **Languages:** each with an honest CEFR level; flag which are application-languages.
 - **Admin facts:** location, work permit / citizenship status, notice period, willingness to
-  relocate or travel. These appear on documents, so they belong in the bank.
+  relocate or travel. These appear on documents, so they belong in the bank — and the ones a
+  letter's logistics close states (permit, notice period) are promoted into the exemplar's
+  `## Availability` section at build, since the letter may assert nothing the CV lacks.
 - **Constraints:** anything generation must never do — title wording rules (a protected-title
   situation), industries or company types that are a hard no, facts the candidate does not
   want surfaced. These are **search meta, not career facts**: write them to `constraints.md`

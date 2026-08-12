@@ -29,7 +29,7 @@ The intake interview records the degree situation in `story_bank.md` and the tit
 
 - Still expected in most German applications — **no Anschreiben ≈ near-zero conversion** at traditional companies; only skip if the portal literally has no field for it.
 - One page maximum; the 6-part formula from `cover_letter_rules.md` applies, in German.
-- **The logistics close is not optional here:** work permit status (for non-EU citizens this is often the first filter), notice period (*Kündigungsfrist*) or earliest start date, and — if the posting asks, which is common — the salary expectation (*Gehaltsvorstellung*), given as a bracketed annual gross range anchored at the target from `goals.md`.
+- **The logistics close is not optional here**, which makes an `## Availability` section in the exemplar a build-time requirement for this market (`templates/cv_template.md`): work permit status (for non-EU citizens this is often the first filter), notice period (*Kündigungsfrist*) or earliest start date, and — if the posting asks, which is common — the salary expectation (*Gehaltsvorstellung*), given as a bracketed annual gross range anchored at the target from `goals.md`.
 
 ## Austria & Switzerland deltas
 

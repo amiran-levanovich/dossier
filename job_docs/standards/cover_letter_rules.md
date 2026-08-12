@@ -26,7 +26,7 @@ Open with substance: why this role, concretely, in one sentence.
 3. **Value proposition** — the letter's core: pick the posting's *hardest or most central requirement*, and answer it with direct experience and a concrete result **the CV also carries** — the lead evidence, picked once for both documents. One focused argument, not a CV summary. Name the exact thing — no "transferable skills".
 4. **Broader coverage** — 1–2 sentences showing the baseline requirements are met.
 5. **Portfolio / work samples** — one line with the link, if applicable, and only a link the assembled CV itself carries. No qualifying asset → skip the part entirely.
-6. **Logistics close** — location, work permit status, notice period / availability, languages, invitation to talk. (In DACH applications the permit + notice period are expected here — never omit them; see `standards/dach_conventions.md`.)
+6. **Logistics close** — location, work permit status, notice period / availability, languages, invitation to talk, **each of them drawn from a slot the CV carries** (the header, `## Languages`, `## Availability`). Containment binds here too: an admin fact the exemplar lacks cannot be stated, and the fix is to add it to the exemplar, not to the letter. (In DACH applications the permit and notice period are expected here — so a DACH exemplar carries an `## Availability` section; see `standards/dach_conventions.md`.)
 
 ## Tone
 

@@ -70,7 +70,8 @@ If any input is missing, name it and stop — never substitute your own assumpti
    re-attached to a different slot's verb, employer, or tense. Framing,
    motivation and company angle are yours, and the bank is what you draw them from. The
    logistics close draws location, permit status, notice period and languages from the
-   exemplar's own slots; salary appears only if the posting asked.
+   slots you kept (header, Languages, Availability) and states nothing they lack — report a
+   missing one as a gap; salary appears only if the posting asked.
 5. **Anti-slop pass — mandatory, letter only, before writing any file.** Run the `humanizer`
    skill over the draft; if this session lacks it, apply the anti-slop checklist in
    `cover_letter_rules.md` yourself. It edits prose, never facts: no number or tool spelling

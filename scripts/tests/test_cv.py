@@ -152,6 +152,54 @@ class TestMap(CvCase):
         self.assertEqual(rc, 2)
 
 
+class TestAvailabilitySection(CvCase):
+    """Admin facts — permit, notice period, earliest start — are exemplar
+    content, so the letter's logistics close can state them without breaking
+    fact containment (ADR-0007). Before this they lived only in the story bank,
+    which made the DACH close impossible to write compliantly.
+    """
+
+    WITH_AVAIL = EXEMPLAR + (
+        "\n## Availability\n"
+        "- EU citizen, no work permit required.\n"
+        "- Notice period: three months.\n"
+    )
+
+    def test_availability_entries_become_slots(self):
+        smap = self.slot_map(self.WITH_AVAIL)
+        kinds = [b["kind"] for b in smap["blocks"]]
+        self.assertIn("availability", kinds)
+        texts = [b["text"] for b in smap["blocks"] if b["kind"] == "availability"]
+        self.assertEqual(texts, ["EU citizen, no work permit required.",
+                                 "Notice period: three months."])
+
+    def test_availability_ids_carry_their_own_prefix(self):
+        smap = self.slot_map(self.WITH_AVAIL)
+        ids = [b["id"] for b in smap["blocks"] if b["kind"] == "availability"]
+        self.assertTrue(all(i.startswith("avail-") for i in ids), ids)
+
+    def test_an_availability_slot_renders_verbatim(self):
+        ex = self.write("master_cv.md", self.WITH_AVAIL)
+        smap = self.slot_map(self.WITH_AVAIL)
+        keep = next(b["id"] for b in smap["blocks"] if b["kind"] == "availability")
+        plan = self.write("plan.json", json.dumps({"order": [{"id": keep}], "drop": []}))
+        code = cv.main(["build", str(plan), "--exemplar", str(ex),
+                        "--out-dir", str(self.out_dir)])
+        self.assertEqual(code, 0)
+        out = (self.out_dir / "cv.md").read_text(encoding="utf-8")
+        self.assertIn("EU citizen, no work permit required.", out)
+
+    def test_an_unknown_section_is_reported_not_silently_dropped(self):
+        """The trap this feature walked into: a section cv.py does not know is
+        skipped without a word, so exemplar content can never reach a CV and
+        nothing says why."""
+        ex = self.write("master_cv.md", EXEMPLAR + "\n## Volunteering\n- Coach.\n")
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            cv.main(["map", str(ex), "--out", str(self.root / "slots.json")])
+        self.assertIn("Volunteering", buf.getvalue())
+
+
 class TestBuildHappyPath(CvCase):
     def test_keep_only_plan_is_fully_verbatim(self):
         smap = self.slot_map()

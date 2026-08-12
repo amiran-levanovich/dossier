@@ -77,6 +77,11 @@ written in one pass with the whole bank in view.
    guarantee that they can defend every line in a room, and a deadline is exactly when
    someone would waive it.
 
+**An exemplar built before `## Availability` existed** simply lacks it. Nothing breaks: the
+letter's logistics close states what the CV carries and no more. Add the section by ordinary
+promotion the first time a posting's market expects it — one slot, one containment re-check,
+one signature.
+
 ## Promotion — the one way content enters the exemplar
 
 Moving a fact from the bank into the exemplar as a new slot. **One mechanism, three

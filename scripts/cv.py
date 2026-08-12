@@ -66,6 +66,10 @@ SECTION_KINDS = {
     "certifications": "education",
     "skills": "skills",
     "languages": "languages",
+    # Admin facts the letter's logistics close needs — permit, notice period,
+    # earliest start. They live here rather than only in the bank so that
+    # stating them cannot break fact containment (ADR-0007).
+    "availability": "availability",
 }
 # Sections whose entries are `###` blocks carrying bullets.
 ENTRY_SECTIONS = {"experience", "projects"}
@@ -78,6 +82,7 @@ ID_PREFIX = {
     "education": "edu",
     "skills": "skills",
     "languages": "lang",
+    "availability": "avail",
     "bullet": "b",
 }
 # `### Senior Engineer — Acme, Berlin` → role, company, location.
@@ -161,6 +166,7 @@ def build_slot_map(source: str, text: str) -> dict:
     """Decompose an exemplar into its slot map."""
     blocks: list[dict] = []
     header: dict = {"name": "", "contact": ""}
+    unknown: list[str] = []
 
     for title, lines in _common.split_sections(text):
         if title is None:
@@ -182,6 +188,10 @@ def build_slot_map(source: str, text: str) -> dict:
 
         kind = SECTION_KINDS.get(title.strip().lower())
         if kind is None:
+            # Saying so matters: a section this parser does not know is content
+            # in the exemplar that no CV can ever carry, and silence makes that
+            # look like a plan bug later rather than a heading it skipped.
+            unknown.append(title.strip())
             continue
         if kind in ENTRY_SECTIONS:
             blocks.extend(_parse_entry_blocks(title, kind, lines))
@@ -207,7 +217,8 @@ def build_slot_map(source: str, text: str) -> dict:
                            "section": title, "text": text_,
                            "bulleted": line.startswith("- ")})
 
-    return {"source": source, "header": header, "blocks": blocks}
+    return {"source": source, "header": header, "blocks": blocks,
+            "unknown_sections": unknown}
 
 
 def has_slots(smap: dict) -> bool:
@@ -506,6 +517,9 @@ def cmd_map(args) -> int:
         print(f"SLOT-MAP {exemplar}\n  ERROR: {UNSUPPORTED}", file=sys.stderr)
         return 1
 
+    # Reported, not serialized: the slot map is the writer's whole view of the
+    # exemplar and every key in it is paid for on each dispatch.
+    unknown = smap.pop("unknown_sections", [])
     payload = json.dumps(smap, ensure_ascii=False, indent=2)
     if args.out:
         Path(args.out).write_text(payload + "\n", encoding="utf-8")
@@ -514,6 +528,9 @@ def cmd_map(args) -> int:
     n_bullets = sum(len(b.get("bullets", [])) for b in smap["blocks"])
     print(f"SLOT-MAP {exemplar}", file=sys.stderr)
     print(f"  blocks: {len(smap['blocks'])}   bullets: {n_bullets}", file=sys.stderr)
+    for title in unknown:
+        print(f"  skipped section '{title}' — not a section this parser knows, so"
+              " nothing in it can reach a CV", file=sys.stderr)
     return 0
 
 
