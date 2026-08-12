@@ -28,12 +28,18 @@ against this list first — most "slow run" reports are one of these wearing a n
 
 ## 2. Measurement — how to identify issues (before guessing)
 
-Token counts per sub-agent aren't directly exposed, so use these proxies. They are
-cheap, observable, and correlate tightly with burn. `scripts/session_metrics.py
-<session.jsonl>` computes most of them from a transcript in one call — tool-call counts
-(main vs subagent), WebFetch/WebSearch counts, subagent spawns, and the real per-turn
-`usage` token totals when the transcript records them. Point it at a real job-apply
-session to capture the baseline this doc keeps asking for.
+`scripts/session_metrics.py <session.jsonl>` computes these from a transcript in one
+call — tool-call counts (main vs subagent), WebFetch/WebSearch counts, subagent spawns,
+the real per-turn `usage` totals, and **per-dispatch subagent cost**. Point it at a real
+job-apply session to capture the baseline this doc keeps asking for.
+
+**Per-agent tokens are exposed after all.** A dispatched agent's turns are absent from the
+transcript, which is what made this doc call the proxies below a substitute for years —
+but the **Agent tool result** carries the agent's own totals (tokens, tool uses, duration,
+resolved model), and `session_metrics.py` now reports one line per dispatch. The proxies
+below remain useful because they are cheap to read live, mid-run, and because a *resumed*
+agent (SendMessage) reports through a task notification rather than a tool result, so its
+cost still has to be read off the notification by hand.
 
 1. **Tool-call count per agent.** The primary proxy. Count the calls in the transcript
    (`session_metrics.py` does this). Past ~20 calls for any dossier agent, something is
@@ -259,8 +265,7 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   instead of `cv.md`, and `build` renders it — copying kept slots byte-for-byte and
   proving so before writing anything. The writer's CV output drops to a list of ids, and
   its inputs lose `master_cv.md` entirely. (C5 for the writer's inputs, C4 for its
-  output; ADR-0003, ADR-0005.) **Projected, not yet measured** — see §5's raised-budget
-  note.
+  output; ADR-0003, ADR-0005.) **Measured in v4.0.0** — see §7c.
 
   Three earlier savers on this same path were **deleted in v4.0.0**: a trace-map
   pre-check, a verified-claim ledger memoizing per-claim CLEANs, and a standalone
@@ -279,6 +284,36 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
 The judgment in each of these steps stays with the orchestrator/agents; only the
 mechanical part moved. Scripts are a convenience the pipeline falls back from gracefully
 if absent — never a hard runtime dependency.
+
+## 7c. The measured dispatch cost (v4.0.0)
+
+ADR-0003 shipped the edit-plan path on a *projected* saving and committed to measuring it
+before keeping it. That measurement is below. It became possible when `session_metrics.py`
+learned to read the Agent tool result rather than looking for subagent turns that were
+never in the transcript.
+
+Three real runs, one application each, `claude-sonnet-5` throughout:
+
+| Run | Shape | Dispatch tokens | Agent tool uses |
+|---|---|---|---|
+| v2.x | `cv-tailor` + `cover-letter-writer` + `application-verifier` | 158,759 | 49 |
+| v3.x | `application-writer` + `application-verifier`, trace-based | 192,878 | 43 |
+| v4.0.0 | `application-writer` + `application-verifier`, trim-based | **80,841** | **17** |
+
+**−58% against v3 on a clean run.** The v4 run needed one repair dispatch (the letter's
+merged attribution, now issue #43's fix), which cost a further 51,031 — so the honest
+worst case for that run is 131,872, or **−32%**. A repair costing about what the initial
+write cost is the finding the projection missed: it makes the writer's *first-pass* quality
+the dominant cost term, not the size of its output.
+
+**What this comparison is not.** Three different postings, three different candidate
+profiles, and the v4 run used a 26-line fixture exemplar where the v3 runs read a real
+knowledge base. It is indicative, not controlled — the direction is large enough to act on,
+the exact percentage is not. A second live run against a real exemplar is what would tighten
+it.
+
+**Verdict on ADR-0003's revert clause:** the saving is not marginal, so the edit-plan path
+stays. The clause is answered, not quietly dropped.
 
 ## 8. Known open levers (not yet implemented)
 
