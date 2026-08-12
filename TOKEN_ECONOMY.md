@@ -299,18 +299,21 @@ Three real runs, one application each, `claude-sonnet-5` throughout:
 | v2.x | `cv-tailor` + `cover-letter-writer` + `application-verifier` | 158,759 | 49 |
 | v3.x | `application-writer` + `application-verifier`, trace-based | 192,878 | 43 |
 | v4.0.0 | `application-writer` + `application-verifier`, trim-based | **80,841** | **17** |
+| v4.0.0, run 2 | same, against a 12-block exemplar | 98,292 | 17 |
 
-**−58% against v3 on a clean run.** The v4 run needed one repair dispatch (the letter's
-merged attribution, now issue #43's fix), which cost a further 51,031 — so the honest
-worst case for that run is 131,872, or **−32%**. A repair costing about what the initial
-write cost is the finding the projection missed: it makes the writer's *first-pass* quality
-the dominant cost term, not the size of its output.
+**−58% against v3 on a clean run**, −49% on the second run's larger exemplar. Both v4 runs
+needed one repair dispatch, costing 51,031 and 66,470 — so their honest worst cases are
+131,872 and 164,762, or **−32%** and **−15%**. A repair costing *more* than the initial
+write, twice, is the finding the projection missed: it makes the writer's *first-pass*
+quality the dominant cost term, not the size of its output. Two runs, two repairs — the
+repair is the common path so far, not an edge case (#53).
 
-**What this comparison is not.** Three different postings, three different candidate
-profiles, and the v4 run used a 26-line fixture exemplar where the v3 runs read a real
+**What this comparison is not.** Four different postings, four different candidate profiles,
+and both v4 runs used synthetic exemplars (26 and 12 blocks) where the v3 runs read a real
 knowledge base. It is indicative, not controlled — the direction is large enough to act on,
-the exact percentage is not. A second live run against a real exemplar is what would tighten
-it.
+the exact percentage is not. The writer scales with slot count, so a real exemplar will land
+above both v4 figures; what stays comparable is the *shape* — one writer, one verifier, and
+whatever the repairs cost.
 
 **Verdict on ADR-0003's revert clause:** the saving is not marginal, so the edit-plan path
 stays. The clause is answered, not quietly dropped.
