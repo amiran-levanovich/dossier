@@ -1,0 +1,19 @@
+{
+  "_comment": "Recorded edit plan. The one-off is content the candidate directed into this application; the exemplar does not carry it, and the gate judges it at full rigor against story_bank.md.",
+  "order": [
+    { "id": "head-386ffe" },
+    { "id": "sum-d2ceeb" },
+    { "id": "exp-7b65e0", "bullets": ["b-a36bbd", "b-a33050"] },
+    { "id": "edu-bd88bd" },
+    { "id": "skills-2c9587" },
+    { "id": "oneoff-observability" }
+  ],
+  "drop": [],
+  "one_off": [
+    {
+      "id": "oneoff-observability",
+      "section": "Skills",
+      "text": "**Observability:** Grafana, Prometheus."
+    }
+  ]
+}

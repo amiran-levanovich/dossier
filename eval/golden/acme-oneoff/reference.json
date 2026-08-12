@@ -1,0 +1,11 @@
+{
+  "expected_verdict": "CLEAN",
+  "cv_lines_expected": 10,
+  "cv_lines_tolerance": 1,
+  "verbatim_fraction_min": 1.0,
+  "metric_ceilings": {
+    "web_fetch": 2,
+    "web_search": 5,
+    "subagent_spawns": 8
+  }
+}
