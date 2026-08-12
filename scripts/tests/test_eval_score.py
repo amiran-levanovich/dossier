@@ -243,6 +243,64 @@ class TestScoringALiveRun(TmpMixin):
         self.assertIn("master_cv.md", err.getvalue())
 
 
+class TestScoringWithoutACase(TmpMixin):
+    """Two of the signals check a run against *itself*; two check it against
+    expectations someone recorded for a different application. Scoring a live
+    run with a golden case's reference made the second kind lie."""
+
+    def run_dir(self, cv=CV):
+        self.write("master_cv.md", EXEMPLAR)
+        self.write("cv.md", cv)
+        return self.root
+
+    def test_self_consistent_signals_are_scored_without_a_reference(self):
+        card = eval_score.score_bundle(self.run_dir(), None, verdict_override="CLEAN")
+        names = [s.name for s in card.signals if not s.skipped]
+        self.assertIn("verbatim_fraction", names)
+        self.assertTrue(card.ok)
+
+    def test_reference_dependent_signals_are_marked_not_failed(self):
+        card = eval_score.score_bundle(self.run_dir(), None, verdict_override="FINDINGS")
+        for name in ("verdict", "cv_lines"):
+            sig = next(s for s in card.signals if s.name == name)
+            self.assertTrue(sig.skipped, f"{name} should be skipped without a reference")
+            self.assertIn("reference", sig.reason)
+
+    def test_a_findings_verdict_alone_does_not_fail_an_unreferenced_run(self):
+        """The live-run case: the run had findings, which is a fact about that
+        application, not a regression against anything."""
+        card = eval_score.score_bundle(self.run_dir(), None, verdict_override="FINDINGS")
+        self.assertTrue(card.ok)
+
+    def test_a_real_drift_still_fails_without_a_reference(self):
+        card = eval_score.score_bundle(
+            self.run_dir(cv=CV.replace("Senior Backend Developer", "Lead Developer")),
+            None, verdict_override="CLEAN")
+        self.assertFalse(card.ok)
+
+    def test_a_reference_still_gates_when_given(self):
+        card = eval_score.score_bundle(self.run_dir(), REF, verdict_override="FINDINGS")
+        self.assertFalse(card.ok)
+
+    def test_main_scores_a_run_with_no_case(self):
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        run = self.run_dir()
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = eval_score.main(["--run", str(run), "--verdict", "FINDINGS"])
+        self.assertEqual(code, 0)
+        self.assertIn("PASS", err.getvalue())
+
+    def test_main_needs_a_case_or_a_run(self):
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = eval_score.main([])
+        self.assertEqual(code, 2)
+
+
 class TestSummaryConsumption(TmpMixin):
     def _bundle(self, block_verdict="CLEAN", block_total=2):
         self.write("master_cv.md", EXEMPLAR)
