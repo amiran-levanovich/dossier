@@ -11,7 +11,7 @@ Re-read this when context is tight, after a compaction, or whenever unsure. It i
 7. **The CV is trimmed, never written:** every line comes byte-verbatim from the signed-off `master_cv.md`, and assembly proves it. A claim it lacks is a one-off slot or a promotion — never a reworded slot.
 8. **The gate is the door, and runs once:** it judges the letter's fact containment against the assembled CV and any one-off slot; everything else inherits the exemplar's verdict. An invented fact gets removed; a promotion candidate is the user's call. Never present with open BLOCKER/MAJOR findings.
 9. **Never fabricate unprompted.** The writer proposes no one-off of its own. If the *user* directs an unsupported claim: warn once, confirm, get details, then declare it as a one-off slot the gate judges at full rigor.
-10. **Close the loop:** tracker current with dated `next_action`s, application folder complete, new facts written back to the KB — before the session ends.
+10. **Close the loop:** tracker current with dated `next_action`s, application folder complete, new facts written back to `story_bank.md` (a lesson line too, if a post-mortem or debrief ran) — before the session ends.
 
 ## When lost
 

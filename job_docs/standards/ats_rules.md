@@ -17,15 +17,15 @@ Name the exact tool, credential, or phrase the posting uses. **Equivalency langu
 
 - Genuinely has it, differently deep: name it, contextualize in parentheses — `pytest (RSpec background — same TDD discipline)` → ATS finds pytest ✓
 - Currently learning: `Kafka — actively ramping` → visible, honest, no overclaim.
-- Doesn't have it: **omit it.** The gap is recorded in `jd.md`'s `## Fit` block and, if the user insists, handled through the override protocol (`core/tailoring_method.md`) — never through fuzzy wording.
+- Doesn't have it: **omit it.** The gap is recorded in `jd.md`'s `## Fit` block and, if the user insists on claiming it, handled as a declared one-off slot (`core/tailoring_method.md`) — never through fuzzy wording.
 
-Use the posting's exact spelling ("PostgreSQL" if they wrote PostgreSQL, "Postgres" if they wrote Postgres); mirror recurring phrases from the posting where they're natural ("payment reconciliation", "stakeholder management") — naturally, not stuffed.
+Use the posting's exact spelling ("PostgreSQL" if they wrote PostgreSQL, "Postgres" if they wrote Postgres). On the CV this is not a writing decision: the exemplar is written in canonical spellings and assembly swaps in the posting's spelling for any **alias group** afterwards, logging every swap (ADR-0008). Recurring domain phrases from the posting ("payment reconciliation", "stakeholder management") belong in the exemplar where they are natural — never stuffed, and never invented at application time.
 
 ## The keyword check procedure (before writing anything)
 
 1. Extract from the posting every named: language, framework, library, database, platform, tool, certification, degree requirement, spoken-language requirement — plus recurring domain phrases. Write them into `jd.md` under **ATS keywords**.
-2. Cross-check each against the exemplar and the story bank. Bucket: **covered** (the exemplar names it) / **promotable** (the bank has it, the exemplar doesn't — promote it into the exemplar or don't claim it) / **real gap** (neither has it).
-3. Only then draft. The `application-verifier` re-runs this check on the finished documents.
+2. Cross-check each against the exemplar and the story bank with `scripts/ats_coverage.py` — literal whole-token matching, alias-aware. Bucket: **covered** (the exemplar names it) / **promotable** (the bank has it, the exemplar doesn't — promote it into the exemplar or don't claim it) / **real gap** (neither has it).
+3. Only then gate and draft. The report is what the fit gate's coverage dimension cites (`core/fit_check.md`) and what the writer works from; it costs no LLM call, so it runs first.
 
 ## Format constraints (the parser pass)
 
@@ -40,4 +40,4 @@ Markdown output (the default — see `standards/rendering.md`) trivially satisfi
 
 ## Honesty note
 
-ATS optimization here means *making true things machine-visible* — never adding untrue things. The boundary is the traceability contract: every keyword added must trace to a verified KB entry or an explicit user-directed override.
+ATS optimization here means *making true things machine-visible* — never adding untrue things. The boundary is the superset invariant: a keyword reaches a CV only because the signed exemplar already carries it, or because the candidate promoted it there deliberately. A `GAP` keyword is recorded, never written in.

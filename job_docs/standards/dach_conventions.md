@@ -11,25 +11,25 @@ European application norms differ from US/international ones, and the German-spe
 ## Lebenslauf (CV) specifics
 
 - **Tabular, reverse-chronological** is the expected shape. Two pages is normal for senior profiles (the one-page US convention does not bind here); over two is still too much.
-- **Photo, birth date, nationality, marital status:** legally no longer required (AGG — the German anti-discrimination act) but a professional photo is still *common and often expected in practice*, especially at traditional companies. This is the **user's choice**, recorded once in `knowledge/profile.md` — ask during intake, don't re-ask per application. Never include marital status; birth date and nationality only if the user opted in.
+- **Photo, birth date, nationality, marital status:** legally no longer required (AGG — the German anti-discrimination act) but a professional photo is still *common and often expected in practice*, especially at traditional companies. This is the **user's choice**, recorded once in `story_bank.md` — ask during intake, don't re-ask per application. Never include marital status; birth date and nationality only if the user opted in.
 - **Signature and date** at the bottom of the Lebenslauf are a traditional touch still appreciated by conservative employers — user's choice.
-- **No employment gaps left silent.** German recruiters read for gaps; anything over ~2–3 months should be named honestly (sabbatical, job search, further training, care work). Gaps are in the KB from intake; handling is a per-application judgment surfaced to the user.
-- **Zeugnisse culture:** German applications traditionally attach *Arbeitszeugnisse* (employer reference letters) and degree certificates. If the user has them, note their existence in `knowledge/profile.md`; when a portal asks for "vollständige Bewerbungsunterlagen", that means CV + Anschreiben + Zeugnisse.
+- **No employment gaps left silent.** German recruiters read for gaps; anything over ~2–3 months should be named honestly (sabbatical, job search, further training, care work). Gaps are in the bank from intake, and how a gap reads on the CV is settled at the exemplar build; anything left open is surfaced to the user.
+- **Zeugnisse culture:** German applications traditionally attach *Arbeitszeugnisse* (employer reference letters) and degree certificates. If the user has them, note their existence in `story_bank.md`; when a portal asks for "vollständige Bewerbungsunterlagen", that means CV + Anschreiben + Zeugnisse.
 
 ## Protected titles — hard rule
 
 Some titles are legally protected in the region and **must never be applied to a person who doesn't hold the qualification**, regardless of ATS keyword benefit:
 
-- **"Ingenieur/in"** (and compounds) — protected in Germany and Austria; requires an accredited engineering degree. A software developer without one is a *Softwareentwickler/in* or *Developer* — never *Engineer* in German-language documents. (An English-language CV using the industry-standard "Software Engineer" for a developer role is a gray zone many use — but if the user's KB `constraints.md` says the distinction matters to them or the degree situation is checkable, respect the stricter reading.)
+- **"Ingenieur/in"** (and compounds) — protected in Germany and Austria; requires an accredited engineering degree. A software developer without one is a *Softwareentwickler/in* or *Developer* — never *Engineer* in German-language documents. (An English-language CV using the industry-standard "Software Engineer" for a developer role is a gray zone many use — but if the user's `constraints.md` says the distinction matters to them or the degree situation is checkable, respect the stricter reading.)
 - **"Doktor/Dr."**, state-certified titles (*staatlich geprüft*), and similar credentials — only with the actual credential.
 
-The intake interview records the user's degree situation and title rules in `knowledge/constraints.md`; the verifier treats a violation as a BLOCKER.
+The intake interview records the degree situation in `story_bank.md` and the title rules in `constraints.md` at the job-folder root; both bind the exemplar build, and the gate treats a violation in a one-off slot as a BLOCKER.
 
 ## Anschreiben specifics
 
 - Still expected in most German applications — **no Anschreiben ≈ near-zero conversion** at traditional companies; only skip if the portal literally has no field for it.
 - One page maximum; the 6-part formula from `cover_letter_rules.md` applies, in German.
-- **The logistics close is not optional here:** work permit status (for non-EU citizens this is often the first filter), notice period (*Kündigungsfrist*) or earliest start date, and — if the posting asks, which is common — the salary expectation (*Gehaltsvorstellung*), given as a bracketed annual gross range anchored at the target from `knowledge/goals.md`.
+- **The logistics close is not optional here:** work permit status (for non-EU citizens this is often the first filter), notice period (*Kündigungsfrist*) or earliest start date, and — if the posting asks, which is common — the salary expectation (*Gehaltsvorstellung*), given as a bracketed annual gross range anchored at the target from `goals.md`.
 
 ## Austria & Switzerland deltas
 

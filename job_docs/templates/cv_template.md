@@ -1,16 +1,17 @@
 # CV Template — ATS-safe single-column skeleton
 
-The default shape for every generated `cv.md`. It satisfies `standards/ats_rules.md` by construction; section wording/order adapt per `standards/cv_rules.md` and, for German-language documents, `standards/dach_conventions.md` (which may add photo, extended personal data, and signature per the user's recorded choices).
+The shape of `master_cv.md`, and therefore of every `cv.md` trimmed from it. It satisfies `standards/ats_rules.md` by construction; section wording/order adapt per `standards/cv_rules.md` and, for German-language documents, `standards/dach_conventions.md` (which may add photo, extended personal data, and signature per the user's recorded choices).
 
 ```markdown
 # <Full Name>
-<Headline — the role identity, tailored to the posting's framing, constraints-checked>
+<Headline — the role identity, constraints-checked; one slot, never reworded per posting>
 
 <City, Country> · <email> · <phone> · <LinkedIn> · <GitHub/portfolio if applicable>
 
 ## Summary
-<2–3 lines: seniority + core strength + the specific angle this posting cares about.
-Career-change applications: this is the bridge.>
+<2–3 lines: seniority + core strength + the angle one target role family cares about.
+The exemplar may carry several summary blocks — the trim keeps the closest one.
+Career-change applications: one variant is the bridge.>
 
 ## Experience
 
@@ -18,8 +19,8 @@ Career-change applications: this is the bridge.>
 <MM/YYYY> – <MM/YYYY or "present">
 *<one-line company descriptor: type + domain + scale — e.g. "B2B SaaS for hotel operations, ~80 people">*
 
-- <outcome bullet: verb + what + metric — most relevant to this posting first>
-- <3–5 bullets for recent/relevant roles; 1–2 for old or less relevant ones>
+- <outcome bullet: verb + what + metric — every bullet worth ever using>
+- <the trim keeps 3–5 for recent/relevant roles, 1–2 for old ones, and drops the rest>
 
 ### <Title> — <Company>, <City>
 <MM/YYYY> – <MM/YYYY>
@@ -27,7 +28,7 @@ Career-change applications: this is the bridge.>
 
 - <...>
 
-## Projects            <!-- only if they earn their space for THIS posting -->
+## Projects            <!-- the trim keeps only those earning their space for THIS posting -->
 
 ### <Project name> — <one-line what/for whom> <link>
 - <outcome or scope bullet>
@@ -55,6 +56,7 @@ Rules baked into the shape:
   **Context** line) — recruiters rarely know the employer, and domain terms
   (SaaS, ecommerce, fintech…) double as ATS keywords.
 - The header's GitHub/portfolio link and every Projects entry point only at assets
-  the portfolio register (`knowledge/portfolio.md`) marks `showcase` for this kind
-  of posting.
-- Every bullet that asserts experience or an outcome has a line in `cv_trace.md`.
+  the bank's portfolio verdicts mark worth showing.
+- The parser in `scripts/cv.py` decomposes exactly this shape into slots — `# Name`,
+  the headline line, `## Section`, `### <Title> — <Company>`, and the bullets under
+  each. An exemplar that departs from it cannot be trimmed.

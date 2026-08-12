@@ -19,7 +19,7 @@ Verification = JSON validates (`python3 -c 'import json…'`), markdown links re
 ├── skills/                  # thin routers: job-intake · job-goals · job-apply
 └── agents/                  # application-writer · application-verifier · interview-briefer
 job_docs/
-├── core/                    # job_workflow.md (kernel) · kb_schema.md · interview_protocol.md · tailoring_method.md · override_protocol.md · fit_check.md · orchestration.md · quickref.md
+├── core/                    # job_workflow.md (kernel) · interview_protocol.md · tailoring_method.md · fit_check.md · orchestration.md · quickref.md
 ├── standards/               # cv_rules · ats_rules · cover_letter_rules · dach_conventions · rendering
 ├── lifecycle/               # tracking · postmortem · interview_prep · analytics · offer · exemplar
 └── templates/               # cv_template.md
@@ -34,7 +34,7 @@ CONTEXT.md                   # the glossary — the vocabulary docs/skills/agent
 ```
 
 ## Maintenance conventions
-- **No hook, no fixer agents — by design.** Application quality is a judgment; enforcement is the `application-verifier` gate + the claim→KB traceability contract. Don't add a commit hook.
+- **No hook, no fixer agents — by design.** Application quality is a judgment; enforcement is the `application-verifier` gate + the superset invariant (every CV line verbatim from the signed exemplar). Don't add a commit hook.
 - **Never commit personal data** (names, employers, salaries, application material). The docs are generic method; anything candidate-specific belongs in the user's job folder, not the plugin. Sweep before committing.
 - **Skills are thin pointers**, not content: a skill's `SKILL.md` detects context and routes to the authoritative `job_docs/` file. Put substance in the docs, not the skill. Path resolution: project-root copy first, else `../../../job_docs/…` relative to the skill dir.
 - **Versioning**: bump `version` in `plugin.json` on a meaningful change (breaking → major; currently 2.x). Bump with a targeted line edit — a JSON load/dump round-trip reformats the manifest. After the bump's PR merges, tag `main` as `v<version>` and publish a GitHub release; notes end with the consumer update commands (`/plugin marketplace update dossier`, `/plugin update dossier@dossier`). Pre-split history carries `v1.x` tags migrated from `job-workflow-v1.x`.

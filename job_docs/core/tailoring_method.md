@@ -59,6 +59,15 @@ Launch **`application-writer`** with: `slots.json`, the `jd.md` path, `notes.md`
 
 One agent produces both, so the **lead evidence** is picked once: the slot answering the posting's hardest requirement leads the CV, and the letter argues from that same slot. The bank is there for the letter's framing and motivation only — never for a fact, because the letter may assert nothing the assembled CV doesn't (ADR-0007). The writer reports gaps; it never proposes a one-off unprompted.
 
+### When the user directs a claim the exemplar lacks
+
+The no-fabrication rule binds **the agents, not the user**. If the user asks for something the exemplar cannot back ("just add Kafka to this one"), don't fight them:
+
+1. **Warn once, concretely** — one short paragraph: what an interviewer or a background check could probe, and the honest alternative (`"Kafka — actively ramping"`). No moralizing, no second warning later.
+2. **Confirm** via AskUserQuestion — proceed / use the honest alternative / drop it.
+3. **Get the details** — role, depth, wording — so the claim is coherent and defensible live.
+4. **Record it as a one-off slot** in `plan.json`, never as a reworded exemplar slot. It is scoped to this application, the gate judges it at full rigor (Step 7), and it reaches `master_cv.md` only through a deliberate promotion afterwards (`lifecycle/exemplar.md`).
+
 ## Step 6 — Assemble (deterministic, no dispatch)
 
 `scripts/cv.py build plan.json --exemplar master_cv.md --out-dir <app folder> --posting jd.md`

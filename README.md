@@ -95,7 +95,7 @@ A letter that reads as machine-written is a defect, so `application-writer` runs
 ```
 
 - **Interview booked** → `lifecycle/interview_prep.md`: a capped research refresh, then the **interview-briefer** agent builds a stage-specific `prep.md` with fresh eyes — prepped against what was *actually claimed* to that company (overrides included), with rusty-risk topics and gaps flagged honestly.
-- **Offer arrives** → `lifecycle/offer.md`, two parts in strict order. First the **contract-reading companion**: describe-don't-judge — a clause-by-clause walk with neutral tags against the DACH clause taxonomy, promises-vs-paper reconciliation, and two strictly separated question lists (clarifications for the employer; everything legal for a lawyer — the companion never states law or judges enforceability). Then **negotiation prep**: the offer positioned against `goals.md` and the fit gate's own comp research, arguments anchored in KB-traced achievements, replies drafted but never sent. **Contract text never leaves the main session** — no sub-agent, no web query, no artifact. *(The companion adapts ideas from career-ops' offer-prep skill, itself building on Anthropic's claude-for-legal — credit to both.)*
+- **Offer arrives** → `lifecycle/offer.md`, two parts in strict order. First the **contract-reading companion**: describe-don't-judge — a clause-by-clause walk with neutral tags against the DACH clause taxonomy, promises-vs-paper reconciliation, and two strictly separated question lists (clarifications for the employer; everything legal for a lawyer — the companion never states law or judges enforceability). Then **negotiation prep**: the offer positioned against `goals.md` and the fit gate's own comp research, arguments anchored in achievements the bank records, replies drafted but never sent. **Contract text never leaves the main session** — no sub-agent, no web query, no artifact. *(The companion adapts ideas from career-ops' offer-prep skill, itself building on Anthropic's claude-for-legal — credit to both.)*
 - **Rejection** → `lifecycle/postmortem.md`: classify where it died (machine / human screen / post-interview), work the cause checklist against the actual submitted documents, state one plain diagnosis with one concrete fix.
 - **Across applications** → `lifecycle/analytics.md` reads the whole tracker by recipe — funnel, where applications die, pace — and turns a rejection *pattern* into one strategy adjustment instead of another per-application fix. Fit scores land in the tracker, so analytics can also tell whether the gate's own scoring is calibrated.
 - **The loop closes** through `lessons.md`: every post-mortem and interview debrief lands exactly one lesson line, and the fit gate reads them back before the next application is built — a diagnosis made once is never made from scratch again.
@@ -135,7 +135,7 @@ The bank has **no schema** — no per-role files, no index, no anchors. That mac
 
 | Agent                  | Role                                                                     |
 | :--------------------- | :----------------------------------------------------------------------- |
-| `application-writer`   | The whole package from selected KB files: ATS-safe `cv.md` + a 6-part, <300-word `cover.md`, both traced, both leading with the same evidence |
+| `application-writer`   | The whole package from the slot map and the bank: an edit plan trimming the exemplar + a 6-part, <300-word `cover.md`, both leading with the same evidence |
 | `application-verifier` | The gate: traceability, ATS, standards — CLEAN or findings; never edits  |
 | `interview-briefer`    | Stage-specific interview `prep.md` — claims-aware, gaps flagged honestly |
 
@@ -144,10 +144,8 @@ The bank has **no schema** — no per-role files, no index, no anchors. That mac
 | Doc                                          | What it holds                                                                                                         |
 | :------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
 | `core/job_workflow.md`                       | The kernel: folder contract, session start/close, routing, quality model                                              |
-| `core/kb_schema.md`                          | Knowledge base layout, INDEX contract, verification markers                                                           |
 | `core/interview_protocol.md`                 | The extensive interview: phases, verification gauntlet, ecosystem expansion                                           |
-| `core/tailoring_method.md`                   | The per-application pipeline, agent dispatch, verifier loop                                                           |
-| `core/override_protocol.md`                  | User-directed overrides: warn once → confirm → record in `overrides.md`, never in the KB                              |
+| `core/tailoring_method.md`                   | The per-application pipeline: two dispatches, the deterministic steps between them, the single gate                   |
 | `core/fit_check.md`                          | The pre-application gate: liveness, constraints kill-switch, evidence-cited fit score, comp-reliability weighting, legitimacy tier |
 | `core/orchestration.md` · `core/quickref.md` | Advised skills + availability check · the 10-rule floor                                                               |
 | `standards/`                                 | `cv_rules` · `ats_rules` · `cover_letter_rules` · `dach_conventions` · `rendering`                                    |

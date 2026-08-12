@@ -98,12 +98,12 @@ rule kills one taxonomy class at the design stage:
 - [ ] **Continue, don't respawn** — every loop instruction names SendMessage
       continuation as the default and respawn as the exception (continuation failed, or
       the input selection changed). (C4)
-- [ ] **Targeted context only** — agents receive a selected file list (via
-      `knowledge/INDEX.md`), never a directory; conditional standards
+- [ ] **Targeted context only** — agents receive a named file list (the slot map, not
+      `master_cv.md`; the bank, not a directory); conditional standards
       (`dach_conventions.md`) are passed only when their condition holds. (C5)
-- [ ] **Writers pre-empt the loop** — writer instructions encode the verifier's
+- [ ] **Writers pre-empt the gate** — writer instructions encode the gate's
       cheapest-to-avoid findings (exact keyword spelling, no equivalency language,
-      trace every claim) so round 1 is usually CLEAN. (C6)
+      the letter asserting no fact the CV lacks) so the single round is usually CLEAN. (C6)
 - [ ] **Token budget respected** — the edit keeps the doc inside its §5 budget; if new
       substance needs room, cut old substance or split the doc so runs load less. A doc
       that is deliberately over budget may carry an `audit-ok: C7` marker instead, with
