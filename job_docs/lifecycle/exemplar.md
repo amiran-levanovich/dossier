@@ -84,7 +84,8 @@ situations**, all identical in procedure:
 
 - a posting exposed a gap the bank can cover (`ats_coverage` bucketed it PROMOTABLE);
 - a one-off slot the candidate directed into an application and wants to keep;
-- a fact carried over by the migration sweep from a v3 job folder.
+- a fact carried over by the superset sweep when migrating a v3 job folder
+  (`lifecycle/migration.md`).
 
 The procedure:
 
