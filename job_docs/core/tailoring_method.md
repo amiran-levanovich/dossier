@@ -83,5 +83,5 @@ Never present with an open BLOCKER or MAJOR. MINOR findings may go in a short li
 
 Present `cv.md` and `cover.md` with a 3-line summary: the lead evidence surfaced, gaps and how handled, the verifier result. Then:
 
-- Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 2 gate, and a dated `--next-action` (default two weeks out).
+- Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 3 gate, and a dated `--next-action` (default two weeks out).
 - Offer rendering **only if the user wants a file format** — `standards/rendering.md`. Markdown is the deliverable by default.

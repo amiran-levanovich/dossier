@@ -28,6 +28,10 @@ _Avoid_: completeness, full coverage
 Moving a fact from the story bank into the exemplar as a new slot, making it usable in documents. One mechanism serving three situations: a posting exposing a gap, a one-off slot kept after the fact, and the migration sweep.
 _Avoid_: adding, syncing, merging
 
+**Search meta**:
+`goals.md`, `constraints.md`, `lessons.md` at the job-folder root — what the candidate *wants* and what the search has learned, as opposed to what they have *done*. The fit gate reads only these; no document ever draws a claim from them.
+_Avoid_: preferences, settings, profile
+
 ## The production layer
 
 **Application package**:

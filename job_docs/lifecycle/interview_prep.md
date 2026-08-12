@@ -1,35 +1,37 @@
 # Interview Prep — per-stage preparation
 
-Run when an interview gets booked. The briefing itself is built by the `interview-briefer` agent with fresh eyes — the main session orchestrates: it gathers what the agent needs, dispatches it, and reviews the result with the user. The knowledge base is the raw material — stories, metrics, and stack details come from `knowledge/`, tailored to what this company will probe.
+Run when an interview gets booked. The briefing itself is built by the `interview-briefer` agent with fresh eyes — the main session orchestrates: it gathers what the agent needs, dispatches it, and reviews the result with the user. The raw material is `story_bank.md` — stories, metrics, and stack details, tailored to what this company will probe.
+
+**Prep may use bank facts the exemplar lacks.** The bank is wider than `master_cv.md` by design (ADR-0006), and here that asymmetry is deliberate: the candidate speaks for themselves in an interview and no parser reads them there, so a story that never earned a CV slot is still theirs to tell. Documents get no such licence — this widening stops at `prep.md`.
 
 ## Procedure (main session)
 
 1. **Update the tracker** (`lifecycle/tracking.md`): status, stage, date, a dated `next_action`.
 2. **Ask which stage** — and who's in the room and the format, if the user didn't volunteer it. The brief is stage-specific; "an interview" is not enough.
 3. **Fresh research pass** (WebSearch): the interviewer if named (LinkedIn, company page — shared context, their team's work), plus a company-news refresh since the application went out. **Budget: at most 4 queries** — read `notes.md` first and never re-search what it already answers (same economy as the fit gate). Append findings to `notes.md` — research is durable there, not in the brief.
-4. **Select KB files** via `knowledge/INDEX.md`: the roles/projects and skills this posting draws on, plus `profile.md`, `constraints.md`, `goals.md`.
-5. **Dispatch `interview-briefer`** with resolved absolute paths: the stage (+ room/format), `jd.md`, `notes.md`, `cv.md` + `cv_trace.md`, `cover.md`, `overrides.md` if it exists, the selected KB files, this file as the briefing standards (plus `standards/dach_conventions.md` when the market applies), and the output path `applications/<company>/prep.md`.
-6. **Review with the user**: relay every flag the agent reports — rusty-risk topics, skipped `[unverified]` entries, override claims the user must sustain. A flagged gap the user can close on the spot (a metric recalled, a story verified) goes into the KB now; then **continue the same briefer** (SendMessage with what changed — it already holds the package and KB) for an updated brief; dispatch fresh only if the continuation fails.
+4. **Gather the inputs** from the job-folder root: `story_bank.md`, plus the search meta — `goals.md` (the salary anchor) and `constraints.md`. No selection step — the bank is one file.
+5. **Dispatch `interview-briefer`** with resolved absolute paths: the stage (+ room/format), `jd.md`, `notes.md`, `cv.md`, `cover.md`, `plan.json` (it names any one-off slot), `story_bank.md`, `goals.md`, `constraints.md`, this file as the briefing standards (plus `standards/dach_conventions.md` when the market applies), and the output path `applications/<company>/prep.md`.
+6. **Review with the user**: relay every flag the agent reports — rusty-risk topics, thin material, one-off claims the user must sustain. A flagged gap the user can close on the spot (a metric recalled, a story told) goes into the bank now; then **continue the same briefer** (SendMessage with what changed — it already holds the package and the bank) for an updated brief; dispatch fresh only if the continuation fails.
 
 ## Briefing standards (what the agent builds against, per stage)
 
 ### Recruiter / initial screen
 
-- **2-sentence pitch**: who the person is, what they do, why this company — built from the KB summary and the company research notes. Rehearsable, under 30 seconds.
+- **2-sentence pitch**: who the person is, what they do, why this company — built from the bank and the company research notes. Rehearsable, under 30 seconds.
 - **Salary answer**: a range, never a point; anchored slightly above the target in `goals.md`. For DACH: annual gross, and have permit/notice-period answers ready — they will be asked (`standards/dach_conventions.md`).
 - **Questions to ask**: team structure, what success looks like in 90 days, why the role is open.
 
 ### Hiring manager / technical
 
-- From `jd.md`, list the 3–5 topics most likely probed; for each, pull the matching KB material: which role file covers it, which story demonstrates it, which metrics to have ready.
+- From `jd.md`, list the 3–5 topics most likely probed; for each, pull the matching material from the bank: which story demonstrates it, which metrics to have ready.
 - Work the interviewer research from `notes.md` into the prep — shared context, their team's work.
-- For coding/technical screens: identify the stack and problem domain from the posting; list the specific concepts to refresh. **Flag honestly** anything the CV names that the user is rusty on — better surfaced in prep than discovered live. If the application carries `overrides.md` claims, prep those explicitly: the user chose to make them and must be able to sustain them.
+- For coding/technical screens: identify the stack and problem domain from the posting; list the specific concepts to refresh. **Flag honestly** anything the CV names that the user is rusty on — better surfaced in prep than discovered live. If the CV carries a one-off slot, prep it explicitly: the user chose to make that claim and must be able to sustain it.
 
 ### Behavioural — STAR
 
 Format, per story: **S**ituation (1 sentence), **T**ask (1 sentence — what was needed from *you*), **A**ction (2–3 sentences, first person, specific), **R**esult (metric or concrete outcome). Under 90 seconds spoken; practice cutting, not expanding.
 
-The 5 core stories were harvested at intake (`core/interview_protocol.md` Phase 4): leadership/initiative, conflict, failure and recovery, decision under uncertainty, cross-functional collaboration. Pull them from the role files, adapt the emphasis to this company's values (visible in the posting and research notes).
+The 5 core stories were harvested at intake (`core/interview_protocol.md` Phase 4): leadership/initiative, conflict, failure and recovery, decision under uncertainty, cross-functional collaboration. Pull them from the bank, adapt the emphasis to this company's values (visible in the posting and research notes).
 
 ### Panel / assessment / system design
 
@@ -45,4 +47,4 @@ The 5 core stories were harvested at intake (`core/interview_protocol.md` Phase 
 
 ## After every interview
 
-Debrief while it's fresh: what was asked, what landed, what wobbled. Write durable findings back — a new story or corrected metric into the KB; company-specific signals into `notes.md`; the next stage into the tracker with a dated `next_action`. And the transferable learning — the wobble that will recur, the question every screen asks — lands as one `[interview]` lesson line in `knowledge/lessons.md` (format in `core/kb_schema.md`), where the next prep and post-mortem will actually reread it.
+Debrief while it's fresh: what was asked, what landed, what wobbled. Write durable findings back — a new story or corrected metric into `story_bank.md`; company-specific signals into `notes.md`; the next stage into the tracker with a dated `next_action`. And the transferable learning — the wobble that will recur, the question every screen asks — lands as one `[interview]` lesson line in `lessons.md` (format in `lifecycle/postmortem.md`), where the next prep and post-mortem will actually reread it.

@@ -139,12 +139,15 @@ overhauled, this phase re-runs for it.
   titles and ATS degree filters, see `standards/dach_conventions.md`), certifications with
   dates, relevant coursework only if early-career.
 - **Languages:** each with an honest CEFR level; flag which are application-languages.
-- **Admin facts:** location, work permit / citizenship status, notice period, salary floor,
-  willingness to relocate or travel.
+- **Admin facts:** location, work permit / citizenship status, notice period, willingness to
+  relocate or travel. These appear on documents, so they belong in the bank.
 - **Constraints:** anything generation must never do — title wording rules (a protected-title
   situation), industries or company types that are a hard no, facts the candidate does not
-  want surfaced. These bind the exemplar build and every application after it, so record them
-  in the bank plainly and prominently.
+  want surfaced. These are **search meta, not career facts**: write them to `constraints.md`
+  at the job-folder root, where the fit gate reads them (`core/fit_check.md`). They bind the
+  exemplar build and every application after it, so state them plainly there.
+- **Salary floor:** ask for it here while the admin facts are open, but it is a search target
+  — it lands in `goals.md`, written by `job-goals` (Phase 5), and never in the bank.
 
 ## Phase 4 — Story harvest
 
@@ -170,6 +173,33 @@ and it triggers no rebuild of anything (ADR-0006) — putting it on a CV is a se
 deliberate promotion (`lifecycle/exemplar.md`).
 
 ---
+
+## `interview_progress.md` — the save-game file
+
+The interview is deliberately too large for one session. This file makes it resumable, and it
+carries the seeded agenda from Phase 1:
+
+```markdown
+# Intake interview — progress
+
+| Area | Status | Notes |
+| :--- | :--- | :--- |
+| Seeding from CV | done | cv from 2026-05, 14 claims seeded |
+| Role: <company A> | done | |
+| Role: <company B> | in progress | achievements verified; stories pending |
+| Portfolio review | done | GitHub + site assessed; 1 repo marked fix-first |
+| Skills inventory | not started | |
+| Education & certifications | done | |
+| Admin facts (permit, notice, languages) | done | |
+| Story harvest (5 core stories) | not started | |
+
+## Open follow-ups
+- <specific missing detail, e.g. "get the p95 number for the caching story">
+```
+
+Statuses are `not started | in progress | done` (plus `done — none` for an area that doesn't
+apply). It is progress and agenda only — no career facts live here; those go in the bank as
+each area closes.
 
 ## Question mechanics
 

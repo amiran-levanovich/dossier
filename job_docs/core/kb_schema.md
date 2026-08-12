@@ -96,50 +96,12 @@ Rules:
 - **Verdicts drive links.** Generated documents may only link assets marked `showcase` (see `standards/cv_rules.md`); the `application-verifier` enforces this.
 - Re-assess after any meaningful change to an asset — a stale verdict misleads exactly like a stale index.
 
-## `lessons.md` — the learning log
+## `lessons.md` and `interview_progress.md` — moved
 
-What the *search* has taught, one line per lesson, newest first — so a diagnosis made once is never made from scratch again:
-
-```markdown
-# Lessons — cross-application learning log
-
-- 2026-07-08 [hard-filter] betacorp: strict CS-degree ATS filter → goals.md targeting now avoids degree-gated postings (applied)
-- 2026-07-05 [interview] acme: wobbled on DB indexing depth in the tech round → refresh before every Rails tech screen; story sharpened in roles/oldco.md (applied)
-- 2026-07-02 [keyword-gap] gammasoft: posting named "Sidekiq", KB only had "background jobs" → added to skills.md (applied)
-```
-
-Format: `- <date> [<category>] <company>: <what was learned> → <action taken> (applied | open)`. Categories: `keyword-gap | hard-filter | seniority | volume | format | screen-fit | interview | process`.
-
-Rules:
-- **Writers**: the post-mortem (`lifecycle/postmortem.md` Step 3) and the interview debrief (`lifecycle/interview_prep.md`) — every rejection and every debrief lands exactly one line.
-- **Readers**: the next post-mortem before diagnosing (a repeated diagnosis escalates instead of re-fixing), the `job-apply` fit gate (`core/fit_check.md` — known-fatal patterns kill the application before anything is built), and `lifecycle/analytics.md` (lessons corroborate the numbers).
-- `(open)` = the action wasn't applied on the spot — that is a debt; analytics and the next post-mortem surface open lessons until they're applied or consciously dropped.
-- Lessons record judgments about the **search**, not facts about the candidate — candidate facts go into the role/skills files as always; a lesson may point at the KB edit it caused.
-- **Orchestrator context only**: `lessons.md` is never passed to the writer agents — every CV/letter claim still traces to verified KB entries.
-
-## `interview_progress.md` — the save-game file
-
-The intake interview is deliberately too large for one session. This file makes it resumable:
-
-```markdown
-# Intake interview — progress
-
-| Area | Status | Notes |
-| :--- | :--- | :--- |
-| Seeding from CV | done | cv from 2026-05, 14 claims seeded |
-| Role: <company A> | done | |
-| Role: <company B> | in progress | achievements verified; stories pending |
-| Portfolio review | done | GitHub + site assessed; 1 repo marked fix-first |
-| Skills inventory | not started | |
-| Education & certifications | done | |
-| Admin facts (permit, notice, languages) | done | |
-| Story harvest (5 core stories) | not started | |
-
-## Open follow-ups
-- <specific missing detail, e.g. "get the p95 number for the caching story">
-```
-
-`job-intake` reads this file first on every run and continues from the first non-done area — it never re-asks what is already recorded. When every area is `done` and no follow-ups remain, the interview is complete and the file says so on its first line.
+Both specs left this file with v4.0.0, to sit with the doc that writes them: the
+lesson-line format is in `lifecycle/postmortem.md`, and the interview's save-game
+table is in `core/interview_protocol.md`. Both files live at the job-folder root,
+outside any knowledge directory.
 
 ## Hygiene
 

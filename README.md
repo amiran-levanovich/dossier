@@ -104,14 +104,15 @@ What it builds in *your* job folder (the plugin ships zero personal data):
 
 ```
 story_bank.md              # your career in prose: context, numbers, failures, motivations,
-                           #   portfolio verdicts, constraints — wider than any CV, on purpose
+                           #   portfolio verdicts — wider than any CV, on purpose
 master_cv.md               # the exemplar: the subset cleared for documents, built once
 master_cv_signoff.md       # what you have read and stood behind, with the exemplar's hash
 goals.md                   # search targets
+constraints.md             # hard rules and red lines the fit gate screens against
 interview_progress.md      # the interview's save-game, and its seeded agenda
 lessons.md                 # learning log: every post-mortem lands one lesson, reread before applying
 tracker.csv                # one row per application
-applications/<company>/    # jd.md · notes.md · plan.json · cv.md · cover.md · alias_log.md
+applications/<company>/    # jd.md · notes.md · plan.json · cv.md · cover.md · alias_log.md · prep.md
 ```
 
 The bank has **no schema** — no per-role files, no index, no anchors. That machinery existed to serve per-claim trace targets, and with the exemplar verified as a whole there is nothing left for it to serve; what a story is worth is its context, which a schema's job would be to strip.
