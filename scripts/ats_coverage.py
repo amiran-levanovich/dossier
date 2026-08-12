@@ -65,6 +65,59 @@ def read_bank(bank: Path) -> list[tuple[str, int, str]]:
             for lineno, line in enumerate(_common.read_text(path).splitlines(), start=1)]
 
 
+# Below this length a plural rule does more harm than good: "Go" would generate
+# "Gos", and stripping an "s" starts hitting real names.
+MIN_INFLECTABLE = 4
+# Stems that take "-es" rather than a bare "-s".
+ES_STEMS = ("s", "x", "z", "ch", "sh")
+
+
+def inflections(keyword: str, groups: list[list[str]]) -> list[str]:
+    """Singular/plural forms of the keyword's last word, and nothing else.
+
+    A posting writes "migrations against large tables" where the bank tells a
+    story about "a migration"; matching only the literal keyword reports a gap
+    for a fact the candidate demonstrably has, which both depresses the fit
+    score and hides a promotion. This is the narrowest rule that fixes it.
+
+    Deliberately *not* a stemmer. Verb and gerund forms are excluded because
+    without a lexicon they produce false matches — "query planning" would fire
+    on "we plan to", and a wrongly-COVERED keyword is the worse direction of the
+    two. Only the final word inflects, so "reporting pipelines" reaches
+    "reporting pipeline" and leaves the qualifier alone.
+
+    A keyword the alias table knows is a *name*, not vocabulary: "Rails" minus
+    its s is "Rail", which fires on ordinary prose. Those never inflect.
+    """
+    head, _, last = keyword.rpartition(" ")
+    fold = last.casefold()
+    if len(last) < MIN_INFLECTABLE or not last.isalpha():
+        return []
+    if any(m.casefold() == keyword.casefold() for group in groups for m in group):
+        return []
+
+    forms: list[str] = []
+    if fold.endswith("ies"):
+        forms.append(last[:-3] + "y")
+    elif fold.endswith("es") and fold[:-2].endswith(ES_STEMS):
+        forms.append(last[:-2])
+    elif fold.endswith("s"):
+        forms.append(last[:-1])
+    elif fold.endswith("y"):
+        forms.append(last[:-1] + "ies")
+    elif fold.endswith(ES_STEMS):
+        forms.append(last + "es")
+    else:
+        forms.append(last + "s")
+
+    out = [f"{head} {form}".strip() if head else form for form in forms]
+    # The guard runs on what was *generated*, not only on what was asked for:
+    # "Rail" is not in the table, but its plural is, and inflecting an ordinary
+    # word into a technology name is the same false match from the other side.
+    known = {m.casefold() for group in groups for m in group}
+    return [] if any(form.casefold() in known for form in out) else out
+
+
 def keyword_variants(keyword: str, groups: list[list[str]]) -> list[str]:
     """The keyword, then the alias spellings interchangeable with it.
 
@@ -81,18 +134,33 @@ def keyword_variants(keyword: str, groups: list[list[str]]) -> list[str]:
     return [keyword]
 
 
-def _matched(keyword: str, variants: list[str], line: str) -> str | None:
+def variant_sets(keyword: str, groups: list[list[str]]) -> tuple[list[str], list[str]]:
+    """The spellings matched literally, and those matched by the alias rule.
+
+    The two are matched differently — see `_matched` — so they are separated
+    once here rather than rediscovered per line. A keyword the alias table
+    knows takes its alias spellings and no inflections: it is a name.
+    """
+    alias_variants = [v for v in keyword_variants(keyword, groups) if v != keyword]
+    if alias_variants:
+        return [keyword], alias_variants
+    return [keyword] + inflections(keyword, groups), []
+
+
+def _matched(literals: list[str], alias_variants: list[str], line: str) -> str | None:
     """Which spelling this line uses, if any.
 
-    The keyword is matched case-insensitively, as an ATS would. Alias variants
-    carry the alias table's own casing rule instead, which is what keeps `Go`
-    from matching "decided to go with" and calling a gap covered.
+    The keyword and its inflections are matched case-insensitively and
+    whole-token, as an ATS would. Alias variants carry the alias table's own
+    casing rule instead, which is what keeps `Go` from matching "decided to go
+    with" and calling a gap covered — a distinction inflections don't need,
+    since they are ordinary words rather than names.
     """
-    for variant in variants:
-        if variant == keyword:
-            if _common.keyword_pattern(variant).search(line):
-                return variant
-        elif aliases.first_position(variant, line) is not None:
+    for variant in literals:
+        if _common.keyword_pattern(variant).search(line):
+            return variant
+    for variant in alias_variants:
+        if aliases.first_position(variant, line) is not None:
             return variant
     return None
 
@@ -106,13 +174,13 @@ def exemplar_sections(keyword: str, exemplar_text: str,
     its own. The preamble — name, headline, contact row — belongs to no section
     and is labelled as the header, so a headline keyword still counts as found.
     """
-    variants = keyword_variants(keyword, list(groups))
+    literals, alias_variants = variant_sets(keyword, list(groups))
     found: list[str] = []
     via: list[str] = []
     for title, lines in _common.split_sections(exemplar_text):
         label = title or PREAMBLE_LABEL
         for line in lines:
-            hit = _matched(keyword, variants, line)
+            hit = _matched(literals, alias_variants, line)
             if hit is None:
                 continue
             if label not in found:
@@ -125,11 +193,11 @@ def exemplar_sections(keyword: str, exemplar_text: str,
 def bank_locators(keyword: str, bank: list[tuple[str, int, str]],
                   groups: list[list[str]] = ()) -> tuple[list[str], list[str]]:
     """`file:line` for each mention in the bank, so a promotion can be judged."""
-    variants = keyword_variants(keyword, list(groups))
+    literals, alias_variants = variant_sets(keyword, list(groups))
     hits: list[str] = []
     via: list[str] = []
     for name, lineno, line in bank:
-        hit = _matched(keyword, variants, line)
+        hit = _matched(literals, alias_variants, line)
         if hit is None:
             continue
         hits.append(f"{name}:{lineno}")
