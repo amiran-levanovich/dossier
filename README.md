@@ -62,7 +62,8 @@ posting (URL or pasted text)
    │  writes NOTHING → one repair back to the same writer
    ▼
  DISPATCH 2 · application-verifier ── one round, no cap: the letter's
-   │  facts must be in the CV; any one-off slot judged against the bank.
+   │  facts must be in the CV *and* keep its attribution; any one-off
+   │  slot judged against the bank.
    │  Everything else inherits the exemplar's verdict
    ▼
  present + tracker.csv row (fit score recorded)

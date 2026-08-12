@@ -5,7 +5,7 @@ tools: Read, Grep, Glob, Write, Skill
 model: sonnet
 ---
 
-<!-- audit-ok: C7 — 1,931 against the 1,640 per-agent row. This is the only writing dispatch
+<!-- audit-ok: C7 — 2,024 against the 1,640 per-agent row. This is the only writing dispatch
 in the v4 pipeline, and it absorbed the CV contract that v3 spread across this agent (1,914
 tokens then), tailoring_method's edit-plan section, and the plan format itself. Read once
 per application in a pipeline that went from up to five dispatches to two, so the
@@ -66,7 +66,8 @@ If any input is missing, name it and stop — never substitute your own assumpti
    least one specific, real company reference from notes.md; tone matched to the employer.
    The value proposition is step 2's lead evidence.
    **Fact containment (ADR-0007):** the letter may assert no fact the trimmed CV doesn't —
-   no number, technology, outcome, or credential absent from a slot you kept. Framing,
+   no number, technology, outcome, or credential absent from a slot you kept, and none
+   re-attached to a different slot's verb, employer, or tense. Framing,
    motivation and company angle are yours, and the bank is what you draw them from. The
    logistics close draws location, permit status, notice period and languages from the
    exemplar's own slots; salary appears only if the posting asked.
@@ -81,7 +82,10 @@ If any input is missing, name it and stop — never substitute your own assumpti
 1. Every id exists in the slot map, appears once, and every bullet sits under its own block.
 2. No `patch`, no `new`, no `one_off` the user didn't direct.
 3. CV and letter lead with the **same** evidence and contradict each other nowhere.
-4. Every fact in the letter is in a slot you kept — read your own `order` back and check.
+4. Every fact in the letter is in a slot you kept — read your own `order` back and check —
+   **and each one keeps that slot's verb, employer and tense.** Two contained facts merged
+   into one sentence ("built" + another bullet's on-call becoming "I own X, including its
+   on-call") is the gate's commonest finding. One slot per clause is the safe shape.
 5. Letter: under 300 words, 6 parts in order, no banned opener, a real company reference
    from notes.md, correct language and register, DACH logistics close complete.
 6. The anti-slop pass ran, and every URL comes from a slot you kept.

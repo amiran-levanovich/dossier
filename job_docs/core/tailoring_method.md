@@ -6,7 +6,7 @@ The quality bar is not re-earned per application. The exemplar (`master_cv.md`) 
 
 **Helper scripts.** The mechanical steps run dependency-free Python in `scripts/`, resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
 
-**Preconditions.** A signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` exist **in the current working directory**. One existence check, not a search. Signed off means `master_cv_signoff.md` exists and its last recorded hash matches `sha256sum master_cv.md` — a hash that no longer matches means the exemplar was edited since signing, so it counts as unsigned until re-signed (`lifecycle/exemplar.md`). Otherwise stop and route to `job-intake`; a deadline never justifies applying without the sign-off.
+**Preconditions.** A signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` **in the current working directory** — one existence check, not a search. Signed off means `master_cv_signoff.md`'s last recorded hash matches `sha256sum master_cv.md`; a hash that no longer matches means the exemplar was edited after signing, so it counts as unsigned (`lifecycle/exemplar.md`). Otherwise stop and route to `job-intake` — a deadline never justifies applying without the sign-off.
 
 ---
 
@@ -45,7 +45,7 @@ It runs **before** the gate because it costs no LLM call and no network, and the
 
 ## Step 3 — The fit gate (before any research or writing)
 
-Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen against the search meta at the job-folder root (`constraints.md`, `lessons.md`), the evidence-cited fit score with its band — Step 2's report is what its coverage dimension cites — and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain); whatever it finds feeds Step 4's notes.
+Run `core/fit_check.md` end to end: liveness, the binary constraints screen against the search meta at the job-folder root, the evidence-cited score — Step 2's report is what its coverage dimension cites — and the legitimacy tier. It fills `jd.md`'s `## Fit` block, and the verdict is said **now**: proceeding is the user's call, recorded per that doc. Gate research defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain) and feeds Step 4's notes.
 
 ## Step 4 — Company research
 
@@ -57,34 +57,36 @@ Extract the slot map first: `scripts/cv.py map master_cv.md --out slots.json`. T
 
 Launch **`application-writer`** with: `slots.json`, the `jd.md` path, `notes.md`, `story_bank.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the coverage report from Step 2, and the output paths for `plan.json` and `cover.md`.
 
-One agent produces both, so the **lead evidence** is picked once: the slot answering the posting's hardest requirement leads the CV, and the letter argues from that same slot. The bank is there for the letter's framing and motivation only — never for a fact, because the letter may assert nothing the assembled CV doesn't (ADR-0007). The writer reports gaps; it never proposes a one-off unprompted.
+One agent produces both, so the **lead evidence** is picked once: the slot answering the posting's hardest requirement leads the CV, and the letter argues from that same slot. The bank supplies the letter's framing and motivation, never a fact (ADR-0007). The writer reports gaps; it never proposes a one-off unprompted.
 
 ### When the user directs a claim the exemplar lacks
 
 The no-fabrication rule binds **the agents, not the user**. If the user asks for something the exemplar cannot back ("just add Kafka to this one"), don't fight them:
 
-1. **Warn once, concretely** — one short paragraph: what an interviewer or a background check could probe, and the honest alternative (`"Kafka — actively ramping"`). No moralizing, no second warning later.
-2. **Confirm** via AskUserQuestion — proceed / use the honest alternative / drop it.
-3. **Get the details** — role, depth, wording — so the claim is coherent and defensible live.
-4. **Record it as a one-off slot** in `plan.json`, never as a reworded exemplar slot. It is scoped to this application, the gate judges it at full rigor (Step 7), and it reaches `master_cv.md` only through a deliberate promotion afterwards (`lifecycle/exemplar.md`).
+1. **Warn once, concretely** — what an interviewer or a background check could probe, and the honest alternative (`"Kafka — actively ramping"`). No moralizing, no second warning later.
+2. **Confirm** via AskUserQuestion — proceed / honest alternative / drop it — then **get the details** (role, depth, wording) so the claim is defensible live.
+3. **Record it as a one-off slot** in `plan.json`, never as a reworded slot. It is scoped to this application, the gate judges it at full rigor (Step 7), and it reaches `master_cv.md` only through a deliberate promotion (`lifecycle/exemplar.md`).
 
 ## Step 6 — Assemble (deterministic, no dispatch)
 
 `scripts/cv.py build plan.json --exemplar master_cv.md --out-dir <app folder> --posting jd.md`
 
-Kept slots are rendered byte-verbatim, proved by a verbatim self-test, and the alias pass then swaps in the posting's spellings and logs every swap to `alias_log.md` (ADR-0008). A faulty plan exits 1 and writes **nothing** — hand its diagnostic back to the *same* writer (SendMessage, findings only) for one re-dispatch. That is a repair, not a round: nothing was published.
+Kept slots are rendered byte-verbatim, proved by a verbatim self-test, then the alias pass swaps in the posting's spellings and logs each one to `alias_log.md` (ADR-0008). A faulty plan exits 1 and writes **nothing** — hand its diagnostic back to the *same* writer (SendMessage, findings only) for one re-dispatch: a repair, not a round, since nothing was published.
 
 ## Step 7 — The gate (dispatch 2 of 2)
 
 Launch **`application-verifier`** with `cv.md`, `cover.md`, `jd.md`, `story_bank.md`, the standards docs, and the `cv.py build` report pasted in. It runs **one round**. Two things are left to judge, and the inherited verdict covers everything else:
 
-- **Fact containment** — every fact the letter asserts (number, technology, outcome, credential) appears in the assembled `cv.md`. Framing, motivation and company angle are free.
+- **Fact containment** — every fact the letter asserts (number, technology, outcome, credential) appears in the assembled `cv.md`, **attached to what the CV attaches it to**. Framing, motivation and company angle are free.
 - **Any one-off slot** — the build report lists them. These are the only lines the exemplar's verdict does not cover, so they get full rigor against the bank.
 
-There is no round cap because there is no loop. A finding is one of two things:
+There is no round cap because there is no loop. A finding is one of three things:
 
 - **An invented fact** → the writer removes it (continue the same writer). Removal cannot introduce a claim, so it needs no re-verification.
+- **A merged attribution** → the facts are all in the CV, joined into a claim it doesn't make: one bullet's metric on another's verb, *built* widened to *owns*, a past role written as present. The facts are contained; the sentence isn't. Continue the same writer to **split it back apart**, each half keeping its own slot's attribution.
 - **A promotion candidate** → the user's decision, not a defect. If they promote it, add the slot to the exemplar, verify that slot, then re-run Steps 5–6; only the new slot needs judgment.
+
+A split is new phrasing, so unlike a removal it *could* introduce a claim. It is constrained rather than re-judged: the writer only redistributes facts across attributions the kept slots already carry, and the **main session** — which holds both files and the finding — reads the rewritten sentences against `cv.md` before presenting. No dispatch, so a repair rather than a round. A split that can't be made from kept slots alone becomes a removal.
 
 Never present with an open BLOCKER or MAJOR. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
 

@@ -41,7 +41,11 @@ off the rails. Do not read `master_cv.md` — its verdict is inherited, not re-d
    Framing, motivation, company angle and enthusiasm are free — they assert nothing about the
    candidate's record. A letter fact the CV doesn't carry is a BLOCKER, whether or not it is
    true, because the CV is the verified artifact and the letter is not. The two must also not
-   contradict each other on scope, dates, titles or ownership.
+   contradict each other on scope, dates, titles or ownership. **A merged attribution counts
+   as uncontained**: facts that are each in the CV but joined into a claim it doesn't make —
+   one bullet's metric on another's verb, "built" widened to "owns", a past role written as
+   present. Report it as a merge and name the two slots, so the fix is a split rather than a
+   guess.
 2. **One-off slots** — the build report lists them; these are the *only* CV lines the
    exemplar's verdict does not cover, so judge them at full rigor against `story_bank.md`:
    the bank must support the claim at the stated strength. An inflated metric or upgraded

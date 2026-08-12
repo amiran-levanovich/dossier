@@ -125,7 +125,7 @@ check would otherwise disappear at exit 0.
 | `.claude/skills/*/SKILL.md` (each — thin routers) | 1,150 |
 | `.claude/agents/*.md` (each) | 1,640 |
 | `job_docs/core/job_workflow.md` (the kernel — every session) | 3,500 |
-| `job_docs/core/tailoring_method.md` | 2,750 |
+| `job_docs/core/tailoring_method.md` | 2,800 |
 | `job_docs/core/fit_check.md` | 3,050 |
 | `job_docs/standards/*` (each) | 2,750 |
 | `job_docs/core/quickref.md` (the compaction floor) | 1,150 |
@@ -158,6 +158,11 @@ ADR-0003 — then **cut to 2,750 in v4.0.0**, because v4 leaves one path and the
 at 2,629. A row 500 above its fullest file is not a budget, it is permission; the audit
 only means something while the number is close enough to bite. `standards/*` came down the
 same way (2,830 → 2,750 against `dach_conventions.md`'s 2,681).
+
+Then **2,750 → 2,800**, for the third gate-finding class and its repair rule (the merged
+attribution). That is a defect class the method had no answer for and the pipeline hit on
+its first live run — new substance, not prose. The +50 was spent only after four rounds of
+compression elsewhere in the doc gave back 120; the row still bites at 99.3% fill.
 
 **Added in v4.0.0:** `job_docs/core/job_workflow.md` at 3,500. The kernel is read at the
 start of every session in the job folder — the most-loaded doc in the repo — and it had no
