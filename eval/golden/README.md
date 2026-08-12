@@ -32,6 +32,22 @@ claims. A line may also match a **declared** one-off in `plan.json`, or the
 posting's alias spelling — the build applies those after proving the document
 verbatim (ADR-0008), so they are differences with provenance, not rewordings.
 
+## Two kinds of signal
+
+**Self-checking** — computed from the run's own artifacts, and meaningful for any run:
+
+- `verbatim_fraction` — every `cv.md` line accounted for by the exemplar, an alias swap, or a declared one-off
+- `summary_consistency` — the report's self-reported line count against the independent one
+
+**Reference-dependent** — judged against expectations someone recorded for *this* case:
+
+- `verdict`, `cv_lines`, and the `metric_ceilings`
+
+Scoring a run with no case of its own (`--run` without `--case`) reports the first kind and
+marks the second `[n/a] — recorded, not judged`. That is the point of the split: a live run's
+verdict and length are facts about that application, and failing them against another
+application's bands produced a `FAIL` that meant nothing.
+
 `reference.json` fields:
 
 | field | meaning |

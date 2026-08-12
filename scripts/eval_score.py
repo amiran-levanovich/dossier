@@ -57,6 +57,7 @@ class Signal:
     target: str
     passed: bool
     skipped: bool = False
+    reason: str = ""   # why it was skipped: no transcript, no reference
 
 
 @dataclass
@@ -181,30 +182,51 @@ def verbatim_fraction(bundle_dir, exemplar=None):
     return n_ok, result.total, frac
 
 
-def score(reference: dict, verdict: str, n_ok: int, n_lines: int, metrics: dict) -> Scorecard:
+# Without a reference these have nothing to be judged against — a run's verdict
+# and length are facts about that application, not regressions. The other
+# signals check the run against *itself*, so they hold either way.
+NO_REFERENCE = "no reference — this run is not a golden case"
+
+
+def score(reference, verdict: str, n_ok: int, n_lines: int, metrics: dict) -> Scorecard:
     card = Scorecard()
+    ref = reference or {}
 
-    exp_verdict = reference["expected_verdict"].upper()
-    card.signals.append(Signal(
-        "verdict", "gate", verdict, f"== {exp_verdict}", verdict == exp_verdict))
+    if reference:
+        exp_verdict = ref["expected_verdict"].upper()
+        card.signals.append(Signal(
+            "verdict", "gate", verdict, f"== {exp_verdict}", verdict == exp_verdict))
+    else:
+        card.signals.append(Signal(
+            "verdict", "gate", verdict, "recorded", True,
+            skipped=True, reason=NO_REFERENCE))
 
+    # Self-consistent: computed from the run's own artifacts, so it means the
+    # same thing with or without a case to compare against.
     frac = (n_ok / n_lines) if n_lines else 0.0
-    frac_min = reference["verbatim_fraction_min"]
+    frac_min = ref.get("verbatim_fraction_min", 1.0)
     card.signals.append(Signal(
         "verbatim_fraction", "gate", round(frac, 3), f">= {frac_min}", frac >= frac_min))
 
-    expected = reference["cv_lines_expected"]
-    tol = reference["cv_lines_tolerance"]
-    card.signals.append(Signal(
-        "cv_lines", "band", n_lines, f"{expected} +/-{tol}", abs(n_lines - expected) <= tol))
+    if reference:
+        expected = ref["cv_lines_expected"]
+        tol = ref["cv_lines_tolerance"]
+        card.signals.append(Signal(
+            "cv_lines", "band", n_lines, f"{expected} +/-{tol}",
+            abs(n_lines - expected) <= tol))
+    else:
+        card.signals.append(Signal(
+            "cv_lines", "band", n_lines, "recorded", True,
+            skipped=True, reason=NO_REFERENCE))
 
-    for name, ceiling in reference.get("metric_ceilings", {}).items():
+    for name, ceiling in ref.get("metric_ceilings", {}).items():
         if name in metrics:
             card.signals.append(Signal(
                 name, "band", metrics[name], f"<= {ceiling}", metrics[name] <= ceiling))
         else:
             card.signals.append(Signal(
-                name, "band", None, f"<= {ceiling}", True, skipped=True))
+                name, "band", None, f"<= {ceiling}", True,
+                skipped=True, reason="no transcript"))
     return card
 
 
@@ -216,7 +238,7 @@ def load_summary(bundle_dir):
     return machine_summary.parse(report.read_text(encoding="utf-8"))
 
 
-def score_bundle(bundle_dir, reference: dict, exemplar=None, verdict_override=None) -> Scorecard:
+def score_bundle(bundle_dir, reference, exemplar=None, verdict_override=None) -> Scorecard:
     bundle_dir = Path(bundle_dir)
     summary = load_summary(bundle_dir)
 
@@ -256,17 +278,22 @@ def _render(card: Scorecard) -> str:
     lines = []
     for s in card.signals:
         if s.skipped:
-            mark = "SKIP"
+            mark = "n/a " if s.reason == NO_REFERENCE else "SKIP"
         else:
             mark = "ok  " if s.passed else "FAIL"
-        lines.append(f"  [{mark}] {s.kind:4} {s.name}: {s.actual} (want {s.target})")
+        if s.reason == NO_REFERENCE:
+            lines.append(f"  [{mark}] {s.kind:4} {s.name}: {s.actual} — recorded, not judged")
+            continue
+        note = f" — {s.reason}" if s.reason else ""
+        lines.append(f"  [{mark}] {s.kind:4} {s.name}: {s.actual} (want {s.target}){note}")
     lines.append(f"RESULT: {'PASS' if card.ok else 'FAIL'}")
     return "\n".join(lines)
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--case", required=True, help="golden case id (a dir under --golden-root)")
+    ap.add_argument("--case", help="golden case id (a dir under --golden-root); omit to score"
+                                   " a run against itself only")
     ap.add_argument("--golden-root", default="eval/golden", help="golden cases root")
     ap.add_argument("--run", help="a run to score: a bundle, or an application folder in place"
                                  " (default: the case's recorded bundle)")
@@ -277,14 +304,19 @@ def main(argv=None) -> int:
     ap.add_argument("--json", action="store_true", help="emit the scorecard as JSON")
     args = ap.parse_args(argv)
 
-    case_dir = Path(args.golden_root) / args.case
-    ref_path = case_dir / "reference.json"
-    if not ref_path.is_file():
-        print(f"eval_score: no reference at {ref_path}", file=sys.stderr)
+    if not args.case and not args.run:
+        print("eval_score: give --case, --run, or both", file=sys.stderr)
         return 2
 
-    reference = load_reference(ref_path)
-    bundle = Path(args.run) if args.run else case_dir / "bundle"
+    reference = None
+    if args.case:
+        ref_path = Path(args.golden_root) / args.case / "reference.json"
+        if not ref_path.is_file():
+            print(f"eval_score: no reference at {ref_path}", file=sys.stderr)
+            return 2
+        reference = load_reference(ref_path)
+
+    bundle = Path(args.run) if args.run else Path(args.golden_root) / args.case / "bundle"
     if not bundle.is_dir():
         print(f"eval_score: no bundle at {bundle}", file=sys.stderr)
         return 2
@@ -301,7 +333,8 @@ def main(argv=None) -> int:
               "target": s.target, "passed": s.passed, "skipped": s.skipped}
              for s in card.signals], indent=1))
 
-    print(f"EVAL-SCORE case={args.case} bundle={bundle}", file=sys.stderr)
+    label = f"case={args.case}" if args.case else "case=none (self-check only)"
+    print(f"EVAL-SCORE {label} bundle={bundle}", file=sys.stderr)
     print(_render(card), file=sys.stderr)
     return 0 if card.ok else 1
 
