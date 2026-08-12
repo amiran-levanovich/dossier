@@ -1,14 +1,14 @@
 {
   "name": "dossier",
-  "displayName": "Dossier (Job Search · Knowledge Base · Tailored Applications)",
-  "version": "3.2.1",
-  "description": "An opinionated job-search workflow for Claude Code. Builds a deep, distributed, verified knowledge base about the candidate through an extensive resumable interview, sets explicit search goals, then tailors every application: per job posting, sub-agents produce an ATS-safe CV and a company-specific cover letter, gated by a verifier agent that traces every claim back to the knowledge base. Ships European/DACH market conventions. No commit hook — enforcement is the verifier gate and the traceability contract. The plugin contains zero personal data; the knowledge base lives in the user's own job folder.",
+  "displayName": "Dossier (Job Search · Story Bank · Tailored Applications)",
+  "version": "4.0.0",
+  "description": "An opinionated job-search workflow for Claude Code. An extensive resumable interview records the candidate's career as a story bank and builds one superset CV — the exemplar — verified for containment against the bank and signed off by the candidate, once. Every application then trims that signed exemplar byte-verbatim and argues from the same evidence in a fresh cover letter, at two LLM dispatches per posting with deterministic scripts in between. Ships European/DACH market conventions. No commit hook — enforcement is the single verifier gate plus the superset invariant. The plugin contains zero personal data; both artifacts live in the user's own job folder.",
   "author": {
     "name": "Amiran Tsiklauri",
     "url": "https://github.com/amiran-levanovich"
   },
   "repository": "https://github.com/amiran-levanovich/dossier",
-  "keywords": ["job-search", "cv", "resume", "cover-letter", "ats", "dach", "applications", "interview-prep", "knowledge-base", "workflow"],
+  "keywords": ["job-search", "cv", "resume", "cover-letter", "ats", "dach", "applications", "interview-prep", "story-bank", "workflow"],
   "skills": "./.claude/skills/",
   "agents": ["./.claude/agents/application-writer.md", "./.claude/agents/application-verifier.md", "./.claude/agents/interview-briefer.md"]
 }
