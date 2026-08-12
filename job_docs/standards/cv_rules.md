@@ -1,14 +1,16 @@
-# CV Rules — writing standards for every generated CV
+# CV Rules — writing standards for the exemplar
 
-Read together with `standards/ats_rules.md` (machine pass) and, for the German-speaking market, `standards/dach_conventions.md`. The skeleton is `templates/cv_template.md`. These rules bind the `application-writer` agent and any manual CV edit; the `application-verifier` checks against them.
+Read together with `standards/ats_rules.md` (machine pass) and, for the German-speaking market, `standards/dach_conventions.md`. The skeleton is `templates/cv_template.md`.
+
+**These rules bind the exemplar build** (`lifecycle/exemplar.md`) — substance, voice, section shape and titles are settled once, there, with the whole story bank in view. Every application inherits that shape by trimming the signed exemplar byte-verbatim, so there is no per-application shape check: the writer selects and orders slots and has no mechanism to reword one (ADR-0005). The rules that still apply at application time are marked **[trim]** below; `application-verifier` checks those and nothing else about the CV.
 
 ## Substance
 
 - **Outcomes, not duties.** Every experience bullet states what changed because the person was there — "Reduced deploy time from 40 to 8 minutes", not "Responsible for CI/CD".
-- **Metrics wherever the KB has them; honesty where it doesn't.** Use the verified numbers from the knowledge base. If a KB entry has no number, a concrete qualifier is fine ("cut manual steps from 7 to 2"); an invented number is never fine.
-- **Attribution stays accurate.** The KB records the person's part vs the team's; the CV keeps that distinction ("Designed and built X" ≠ "Contributed to X").
-- **Every claim traces.** Each bullet maps to a KB entry (or a user-directed override) in the trace file — see `core/tailoring_method.md`.
-- **Each position gets a one-line company descriptor** — type, domain, rough scale ("B2B SaaS for logistics, ~200 people"), pulled from the role file's **Context** line. Readers rarely know the employer; without it the bullets float context-free. Emphasize the facet closest to the target company's own type, and note that domain terms (ecommerce, SaaS, fintech, marketplace) are ATS keywords in their own right.
+- **Metrics wherever the bank has them; honesty where it doesn't.** Use the numbers the interview established. Where the bank has none, a concrete qualifier is fine ("cut manual steps from 7 to 2"); an invented number is never fine.
+- **Attribution stays accurate.** The bank records the person's part vs the team's; the exemplar keeps that distinction ("Designed and built X" ≠ "Contributed to X").
+- **Everything the bank supports, at the strength it supports.** The exemplar is a superset — every bullet worth ever using belongs in it, because trimming can only remove. A claim left out here cannot reach any CV, so the build is not the place to be modest. The containment check is what holds the strength honest.
+- **Each position gets a one-line company descriptor** — type, domain, rough scale ("B2B SaaS for logistics, ~200 people"). Readers rarely know the employer; without it the bullets float context-free. Domain terms (ecommerce, SaaS, fintech, marketplace) are ATS keywords in their own right.
 
 ## Voice
 
@@ -18,12 +20,12 @@ Read together with `standards/ats_rules.md` (machine pass) and, for the German-s
 
 ## Structure
 
-- **Length:** one page under ~7 years of experience; two pages maximum for anyone.
-- **Order:** headline/summary (2–3 lines, tailored to the role's framing) → experience, reverse-chronological → projects (if they earn their space) → education → skills → languages. For technical/specialist roles a compact skills line may also appear near the top; the full skills section stays low — recruiters read experience first.
-- **Summary is tailored, not generic.** It mirrors the posting's framing of the role using the candidate's verified strengths. For a stretch or career-change application, it is the bridge — two sentences connecting background to this role.
-- **Cut what doesn't serve this application.** Tailoring is selection: reorder bullets so the most relevant experience leads, drop bullets that add length but no signal for *this* posting.
-- No objective statement (career-changers get the bridging summary instead), no references, no "References available on request".
-- **Links follow the portfolio register.** A header link or Projects entry may only point at an asset `knowledge/portfolio.md` marks `showcase`, and only where its **Cite when** guidance fits this posting — a link to a stale or weak asset costs more than no link.
+- **Order:** headline → summary → experience, reverse-chronological → projects → education → skills → languages. For technical/specialist roles a compact skills line may also appear in the headline area; the full skills section stays low — recruiters read experience first.
+- **Length [trim]:** the exemplar itself runs long by design. The *assembled* CV is one page under ~7 years of experience, two pages maximum for anyone — the trim is what enforces it, by dropping what adds length but no signal for this posting.
+- **Summary variants.** The exemplar may carry more than one summary block — one per role family the candidate targets, each 2–3 lines. The trim keeps the one closest to the posting's framing **[trim]** and drops the rest; it never rewrites one. For a career change, one variant is the bridge: two sentences connecting background to that kind of role.
+- **Cut what doesn't serve this application [trim].** Tailoring is selection: lead with the slot answering the posting's hardest requirement, drop the rest.
+- No objective statement (a bridging summary variant replaces it), no references, no "References available on request".
+- **Links follow the portfolio verdicts.** The exemplar carries a header link or a Projects entry only for an asset the bank marks worth showing, with the posting types it suits. The trim may drop a link, never add one — a link to a stale or weak asset costs more than no link.
 
 ## Emphasis by field
 
@@ -40,4 +42,4 @@ Read together with `standards/ats_rules.md` (machine pass) and, for the German-s
 
 ## Titles
 
-Use the job title the person actually held (as verified in the KB). Aligning a headline with the posting's phrasing is fine **only when factually safe** — check `knowledge/constraints.md` first: protected-title rules (e.g. "Ingenieur" in Germany, see `standards/dach_conventions.md`) and the person's own hard rules override any keyword benefit.
+Use the job title the person actually held, as the bank records it. A headline that borrows the market's phrasing is fine **only when factually safe** — check `constraints.md` at the job-folder root first: protected-title rules (e.g. "Ingenieur" in Germany, see `standards/dach_conventions.md`) and the person's own hard rules override any keyword benefit. This is a build-time decision: the headline is a single slot, and no application can reword it.

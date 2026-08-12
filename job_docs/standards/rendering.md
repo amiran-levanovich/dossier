@@ -13,7 +13,7 @@
 
 ## The transfer block (external-builder path)
 
-When the user chooses a builder, output the verified `cv.md` content restructured as a copy-paste block matching the builder's sections (basics / summary / experience / education / skills / languages), so the transfer is mechanical and nothing gets rewritten in transit. The trace file still governs the content — what goes into the builder is exactly what was verified.
+When the user chooses a builder, output the assembled `cv.md` content restructured as a copy-paste block matching the builder's sections (basics / summary / experience / education / skills / languages), so the transfer is mechanical and nothing gets rewritten in transit. What goes into the builder is exactly what was assembled — restructuring is not rewording.
 
 ## After any render
 

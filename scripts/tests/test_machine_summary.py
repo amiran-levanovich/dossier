@@ -28,13 +28,13 @@ Some prose about the application.
 ## Machine Summary
 
     verdict: CLEAN
-    verify_rounds: 1
-    claims_traced: 3
-    claims_total: 3
+    cv_lines: 24
+    verbatim_lines: 24
+    one_offs: 0
     ats_covered: 4
     ats_promotable: 1
     ats_gap: 1
-    ledger_preverified: 0
+    alias_swaps: 2
 
 ## Something After
 More prose that must not be parsed as summary fields.
@@ -45,16 +45,16 @@ class TestParse(unittest.TestCase):
     def test_parses_typed_fields(self):
         d = machine_summary.parse(VALID_BLOCK)
         self.assertEqual(d["verdict"], "CLEAN")
-        self.assertEqual(d["claims_traced"], 3)          # int
-        self.assertEqual(d["claims_total"], 3)
-        self.assertIsInstance(d["verify_rounds"], int)
+        self.assertEqual(d["cv_lines"], 24)              # int
+        self.assertEqual(d["verbatim_lines"], 24)
+        self.assertIsInstance(d["alias_swaps"], int)
 
     def test_stops_at_next_heading(self):
         d = machine_summary.parse(VALID_BLOCK)
         self.assertNotIn("more", d)  # "More prose..." after the next heading is ignored
         self.assertEqual(set(d), {
-            "verdict", "verify_rounds", "claims_traced", "claims_total",
-            "ats_covered", "ats_promotable", "ats_gap", "ledger_preverified"})
+            "verdict", "cv_lines", "verbatim_lines", "one_offs",
+            "ats_covered", "ats_promotable", "ats_gap", "alias_swaps"})
 
     def test_absent_block_returns_none(self):
         self.assertIsNone(machine_summary.parse("# Report\n\nNo summary here.\n"))
@@ -62,7 +62,7 @@ class TestParse(unittest.TestCase):
 
 class TestValidate(unittest.TestCase):
     def good(self):
-        return {"verdict": "CLEAN", "claims_traced": 3, "claims_total": 3}
+        return {"verdict": "CLEAN", "cv_lines": 24, "verbatim_lines": 24}
 
     def test_valid_has_no_errors(self):
         self.assertEqual(machine_summary.validate(self.good()), [])
@@ -75,12 +75,12 @@ class TestValidate(unittest.TestCase):
         d = self.good(); d["verdict"] = "MAYBE"
         self.assertTrue(machine_summary.validate(d))
 
-    def test_traced_exceeds_total(self):
-        d = self.good(); d["claims_traced"] = 4  # > total 3
-        self.assertTrue(any("claims_traced" in e for e in machine_summary.validate(d)))
+    def test_verbatim_exceeds_cv_lines(self):
+        d = self.good(); d["verbatim_lines"] = 25  # > cv_lines 24
+        self.assertTrue(any("verbatim_lines" in e for e in machine_summary.validate(d)))
 
     def test_negative_count(self):
-        d = self.good(); d["claims_total"] = -1
+        d = self.good(); d["cv_lines"] = -1
         self.assertTrue(machine_summary.validate(d))
 
     def test_findings_verdict_is_valid(self):
@@ -111,10 +111,10 @@ class TestMain(unittest.TestCase):
         self.assertEqual(code, 0)
 
     def test_invalid_block_check_fails(self):
-        p = self.write(VALID_BLOCK.replace("claims_traced: 3", "claims_traced: 9"))
+        p = self.write(VALID_BLOCK.replace("verbatim_lines: 24", "verbatim_lines: 99"))
         code, _, err = self.run_main([str(p), "--check"])
         self.assertEqual(code, 1)
-        self.assertIn("claims_traced", err)
+        self.assertIn("verbatim_lines", err)
 
     def test_absent_block_check_is_ok(self):
         p = self.write("# Report\n\nNo block.\n")
@@ -136,9 +136,9 @@ class TestRealGoldenReport(unittest.TestCase):
         summary = machine_summary.parse(report.read_text(encoding="utf-8"))
         self.assertIsNotNone(summary, "golden report should carry a Machine Summary")
         self.assertEqual(machine_summary.validate(summary), [])
-        # Consistent with the recorded bundle: CLEAN, 3 fully-traced claims.
+        # Consistent with the recorded bundle: CLEAN, every cv.md line verbatim.
         self.assertEqual(summary["verdict"], "CLEAN")
-        self.assertEqual(summary["claims_total"], 3)
+        self.assertEqual(summary["verbatim_lines"], summary["cv_lines"])
 
 
 if __name__ == "__main__":

@@ -1,11 +1,10 @@
 """Shared helpers for the dossier pipeline scripts.
 
 These scripts are the deterministic, no-LLM steps of the job-apply pipeline
-(ATS keyword coverage, tracker CSV writes, trace-map pre-check, session
-metrics). They parse the plugin's *own* file formats — jd.md, the trace file
-format from core/tailoring_method.md, the tracker schema from
-lifecycle/tracking.md, the KB schema from core/kb_schema.md — so they live
-with the method, not with any user's data.
+(ATS keyword coverage, tracker CSV writes, exemplar slot mapping and verbatim
+assembly, session metrics). They parse the plugin's *own* file formats — jd.md,
+the exemplar shape from templates/cv_template.md, the tracker schema from
+lifecycle/tracking.md — so they live with the method, not with any user's data.
 """
 
 from __future__ import annotations

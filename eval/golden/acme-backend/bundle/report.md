@@ -10,10 +10,10 @@ recorded, not claimed. Proceed.
 ## Machine Summary
 
     verdict: CLEAN
-    verify_rounds: 1
-    claims_traced: 3
-    claims_total: 3
+    cv_lines: 3
+    verbatim_lines: 3
+    one_offs: 0
     ats_covered: 4
     ats_promotable: 1
     ats_gap: 1
-    ledger_preverified: 0
+    alias_swaps: 0

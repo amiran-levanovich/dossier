@@ -15,7 +15,7 @@ This plugin assumes **nothing is installed**. The workflow runs end-to-end with 
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------ |
 | `WebFetch`        | Pull the full text of a job posting from its URL (Step 1 of `core/tailoring_method.md`)                                                     |
 | `WebSearch`       | Fit-gate research — comp, legitimacy signals (2 queries default, 5 max, `core/fit_check.md`); company research before writing (Step 4); market checks  |
-| `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), override confirmation, judgment calls                                                   |
+| `AskUserQuestion` | Interview mechanics (`core/interview_protocol.md`), one-off slot confirmation, judgment calls                                               |
 | Agent tool        | Dispatch `application-writer`, `application-verifier`, `interview-briefer`; `general-purpose` for multi-step company research |
 
 ## Advised skills
@@ -38,7 +38,7 @@ This plugin assumes **nothing is installed**. The workflow runs end-to-end with 
 
 ### Brain-dump intake — e.g. `capture`
 - **Adds:** converts an unstructured info dump (a pasted posting + commentary, scattered career notes) into structured input without losing items.
-- **Without it:** structure the dump into the KB/`jd.md` templates yourself.
+- **Without it:** structure the dump into `story_bank.md` / the `jd.md` template yourself.
 
 ### Follow-up reminders — `schedule`
 - **Adds:** automated reminders matching `next_action` dates in the tracker.

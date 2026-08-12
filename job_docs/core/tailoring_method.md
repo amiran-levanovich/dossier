@@ -1,10 +1,12 @@
 # Tailoring Method — the per-application pipeline
 
-The procedure behind the `job-apply` skill: job posting in, verified application package out. Its quality bar is held by **traceability** and the **verifier gate**, not trust in any single generation step.
+The procedure behind the `job-apply` skill: job posting in, application package out. **Two LLM dispatches per application** — one writer, one verifier — and everything between them is deterministic script.
 
-**Helper scripts.** The mechanical steps below run dependency-free Python in `scripts/`, resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
+The quality bar is not re-earned per application. The exemplar (`master_cv.md`) was verified once and signed off (ADR-0004), and an application CV is trustworthy exactly to the degree that it is *unchanged* from it: the writer selects and orders slots and has no mechanism to reword one (ADR-0005). What still needs judgment is the letter and any one-off slot — which is what the single verifier round spends its budget on.
 
-**Preconditions.** A knowledge base with verified content exists **in the current working directory**, and `knowledge/goals.md` is current. This is one existence check, not a search — if `knowledge/` isn't there, stop and route to `job-intake` / `job-goals`; never hunt for a KB elsewhere, and do not tailor from a thin one.
+**Helper scripts.** The mechanical steps run dependency-free Python in `scripts/`, resolved like `job_docs` (project-root `scripts/`, else `../../../scripts/` from the skill dir). Each returns a short report; you apply judgment. If a script errors or is absent, do the step by hand — never a hard dependency.
+
+**Preconditions.** A signed-off `master_cv.md`, a `story_bank.md`, and a current `goals.md` exist **in the current working directory**. One existence check, not a search. Signed off means `master_cv_signoff.md` exists and its last recorded hash matches `sha256sum master_cv.md` — a hash that no longer matches means the exemplar was edited since signing, so it counts as unsigned until re-signed (`lifecycle/exemplar.md`). Otherwise stop and route to `job-intake`; a deadline never justifies applying without the sign-off.
 
 ---
 
@@ -31,74 +33,64 @@ Get the full text: WebFetch for a URL (ask for a paste if it's login-walled), or
 <filled by the fit gate — block template in core/fit_check.md>
 ```
 
-## Step 2 — The fit gate (before any research or writing)
+## Step 2 — ATS keyword check (deterministic, before the gate)
 
-Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen (against `constraints.md` and `knowledge/lessons.md`), the evidence-cited fit score with its band, and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain — budget rules in `core/fit_check.md`); whatever it finds feeds Step 4's notes.
+Per `standards/ats_rules.md`: `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, alias-aware, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls).
 
-## Step 3 — ATS keyword check (before writing anything)
-
-Per `standards/ats_rules.md`: cross-check every ATS keyword against the exemplar and the bank. Run `scripts/ats_coverage.py jd.md --exemplar master_cv.md --bank story_bank.md` — literal whole-token matching, bucketed COVERED / PROMOTABLE / GAP, nothing read into the main session (fallback: batch-Grep both, ≤5 calls). Then:
+It runs **before** the gate because it costs no LLM call and no network, and the gate's coverage dimension is evidence-based only if it has this report to cite instead of an impression. The buckets:
 
 - **Covered** (`COVERED`) — the exemplar names it; trimming can use it. The report names the sections (achievement-backed vs a bare skills-list mention) and marks `(as "…")` when the exemplar's spelling differs — assembly swaps that in.
-- **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact as a slot and verify that slot, or leave it unclaimed.
+- **Promotable** (`PROMOTABLE`) — the bank has it, the exemplar doesn't. The bank is wider by design (ADR-0006), so this is a decision, not a defect: promote the fact into the exemplar as a slot and verify that slot, or leave it unclaimed.
 - **Real gap** (`GAP`) — neither has it → record in `jd.md`'s `## Fit` block. Feeds the fit score, never the documents.
+
+## Step 3 — The fit gate (before any research or writing)
+
+Run `core/fit_check.md` end to end: liveness and location sanity, the binary constraints screen against the search meta at the job-folder root (`constraints.md`, `lessons.md`), the evidence-cited fit score with its band — Step 2's report is what its coverage dimension cites — and the legitimacy tier. It fills the `## Fit` block in `jd.md` and the verdict is said **now** — whether to proceed is the user's call, recorded per that doc. Research inside the gate defaults to 2 WebSearch queries (5 max when the posting is genuinely uncertain); whatever it finds feeds Step 4's notes.
 
 ## Step 4 — Company research
 
 Start from what the fit gate found — its findings usually cover this step, so the default is **zero new searches**. WebSearch only for what's still missing (company, size, recent news, product, tone), never repeating a gate query. Write 5–8 lines into `applications/<company>/notes.md`; the cover letter must reference something real from this.
 
-## Step 5 — Select knowledge
+## Step 5 — Dispatch the writer (dispatch 1 of 2)
 
-Read `knowledge/INDEX.md` and pick the files relevant to *this* posting — typically 2–3 role files, `skills.md`, plus the always-read set (`profile.md`, `constraints.md`, `goals.md`). Never pass the whole KB — targeted context makes tailoring sharp.
+Extract the slot map first: `scripts/cv.py map master_cv.md --out slots.json`. The exemplar itself is **not** passed to the writer — the slot map is its whole view of it, which is what makes rewording unavailable rather than merely forbidden.
 
-If `knowledge/portfolio.md` exists, read it and apply its verdicts: only assets marked `showcase` whose **Cite when** guidance fits this posting may be linked. Include the register in the writer's KB selection when any asset qualifies; leave it out when none does.
+Launch **`application-writer`** with: `slots.json`, the `jd.md` path, `notes.md`, `story_bank.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the coverage report from Step 2, and the output paths for `plan.json` and `cover.md`.
 
-`knowledge/lessons.md` is orchestrator context for the fit and keyword checks — it is **never** passed to `application-writer`; its claims come from verified KB entries only.
+One agent produces both, so the **lead evidence** is picked once: the slot answering the posting's hardest requirement leads the CV, and the letter argues from that same slot. The bank is there for the letter's framing and motivation only — never for a fact, because the letter may assert nothing the assembled CV doesn't (ADR-0007). The writer reports gaps; it never proposes a one-off unprompted.
 
-**With a master CV** (`master_cv.md` at the job-folder root — built per `lifecycle/master_documents.md`): first run `scripts/claim_ledger.py check --document master_cv.md`. If it checks VERIFIED, the selection above is **replaced, not supplemented**: `application-writer` gets `constraints.md`, `profile.md`, `goals.md`, the files backing planned CV edits (named from the `## Fit` block — often none, since the master already encodes the roles) and the 1–2 files backing the value-proposition angle. The portfolio-register rule above still applies. Passing the full KB alongside a VERIFIED master is a C5 violation — the master trace already carries those sources. A CHANGED master is a source like any other draft: full judgment, the full Step-5 selection, flag it for re-verification.
+### When the user directs a claim the exemplar lacks
 
-## Step 6 — Dispatch the writer
+The no-fabrication rule binds **the agents, not the user**. If the user asks for something the exemplar cannot back ("just add Kafka to this one"), don't fight them:
 
-Launch **`application-writer`** with: the `jd.md` path, the selected KB file paths, `notes.md`, the standards docs (`standards/cv_rules.md`, `standards/ats_rules.md`, `templates/cv_template.md`, `standards/cover_letter_rules.md`, `standards/dach_conventions.md` when the market applies), the four output paths, and `overrides.md` if it exists. One agent writes both documents **plus a trace file each**, so CV and letter lead with the same evidence. Before writing, it runs the **mandatory anti-slop pass** over the letter draft — the `humanizer` skill when the session has it, else the checklist in `standards/cover_letter_rules.md` — so the traces quote final text.
+1. **Warn once, concretely** — one short paragraph: what an interviewer or a background check could probe, and the honest alternative (`"Kafka — actively ramping"`). No moralizing, no second warning later.
+2. **Confirm** via AskUserQuestion — proceed / use the honest alternative / drop it.
+3. **Get the details** — role, depth, wording — so the claim is coherent and defensible live.
+4. **Record it as a one-off slot** in `plan.json`, never as a reworded exemplar slot. It is scoped to this application, the gate judges it at full rigor (Step 7), and it reaches `master_cv.md` only through a deliberate promotion afterwards (`lifecycle/exemplar.md`).
 
-**With a VERIFIED master the CV half runs as an edit plan** (ADR-0003): extract the slot map — `scripts/master_slots.py extract master_cv.md --trace master_cv_trace.md --out slots.json` — and pass `slots.json` *instead of* the master and its trace. The writer emits `plan.json` rather than `cv.md`; assemble with `scripts/master_slots.py assemble plan.json --master master_cv.md --trace master_cv_trace.md --out-dir <app folder>`. A bad plan exits 1 writing **nothing** — hand the diagnostic back to the writer and re-assemble. The letter is unaffected.
+## Step 6 — Assemble (deterministic, no dispatch)
 
-## Step 7 — The verifier gate (loop until CLEAN)
+`scripts/cv.py build plan.json --exemplar master_cv.md --out-dir <app folder> --posting jd.md`
 
-First run the **trace pre-check** — `scripts/trace_check.py cv_trace.md cover_trace.md --kb-dir knowledge/` — which fails (exit 1) on any trace target that doesn't resolve to a real file + `#anchor`; fix dangling traces now. Then the **ledger pre-check** — `scripts/claim_ledger.py check` (same arguments) — which marks claims already judged in an earlier CLEAN round against unchanged KB sources PRE-VERIFIED.
+Kept slots are rendered byte-verbatim, proved by a verbatim self-test, and the alias pass then swaps in the posting's spellings and logs every swap to `alias_log.md` (ADR-0008). A faulty plan exits 1 and writes **nothing** — hand its diagnostic back to the *same* writer (SendMessage, findings only) for one re-dispatch. That is a repair, not a round: nothing was published.
 
-With a master CV, also run `scripts/master_diff.py cv.md --master master_cv.md` — VERBATIM lines from a VERIFIED master need no claim judgment; CHANGED lines are the tailoring and get judged in full. On an assembled CV it doubles as the assembler's self-test: a keep/drop/reorder-only plan must come back 100% verbatim.
+## Step 7 — The gate (dispatch 2 of 2)
 
-Then launch **`application-verifier`** with the same inputs plus both documents and trace files, **pasting the trace-check, ledger, master-diff, assembler and Step-3 coverage reports into its prompt** — it consumes them and spends its budget judging the NEW claims, returning CLEAN or severity-ordered findings.
+Launch **`application-verifier`** with `cv.md`, `cover.md`, `jd.md`, `story_bank.md`, the standards docs, and the `cv.py build` report pasted in. It runs **one round**. Two things are left to judge, and the inherited verdict covers everything else:
 
-- Findings → fix them (edit directly for trivial ones; otherwise **continue the same writer** — SendMessage with just the findings) → **re-verify the whole package**. A fix can break something else; only a fully CLEAN round counts.
-- Re-verify rounds **continue the same verifier** (SendMessage: which files changed and how) — it re-reads only the changed files but re-runs every check on the whole package. For either agent, launch fresh only if the continuation fails or the KB selection changed.
-- **Three verifier rounds, maximum.** Findings still open after the third have a structural cause — a KB gap, a claim that needs an override, a standards conflict — not a draft another round fixes. Stop and present the open findings, what each round changed, and that diagnosis.
-- On CLEAN, run `scripts/claim_ledger.py record` (same arguments) — verified claims skip re-judgment in the next application.
-- Never present documents while BLOCKER or MAJOR findings are open; at the cap, sending anyway is the user's explicit call. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
+- **Fact containment** — every fact the letter asserts (number, technology, outcome, credential) appears in the assembled `cv.md`. Framing, motivation and company angle are free.
+- **Any one-off slot** — the build report lists them. These are the only lines the exemplar's verdict does not cover, so they get full rigor against the bank.
+
+There is no round cap because there is no loop. A finding is one of two things:
+
+- **An invented fact** → the writer removes it (continue the same writer). Removal cannot introduce a claim, so it needs no re-verification.
+- **A promotion candidate** → the user's decision, not a defect. If they promote it, add the slot to the exemplar, verify that slot, then re-run Steps 5–6; only the new slot needs judgment.
+
+Never present with an open BLOCKER or MAJOR. MINOR findings may go in a short list alongside the documents if the user is in a hurry — their call.
 
 ## Step 8 — Present and close
 
-Present `cv.md` and `cover.md` with a 3-line summary: strongest matches surfaced, gaps and how handled, verifier result (including the override INFO line if any). Then:
+Present `cv.md` and `cover.md` with a 3-line summary: the lead evidence surfaced, gaps and how handled, the verifier result. Then:
 
-- Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 2 gate, a dated `--next-action` (default two weeks out), and an override note in `--notes` if the user went against the verdict.
+- Update `tracker.csv` per `lifecycle/tracking.md` via `scripts/tracker.py --file tracker.csv add …` (handles column order, quoting, migration); you supply the judgment values — `--status`, `--fit-score` from the Step 3 gate, and a dated `--next-action` (default two weeks out).
 - Offer rendering **only if the user wants a file format** — `standards/rendering.md`. Markdown is the deliverable by default.
-
----
-
-## User-directed overrides
-
-When the user explicitly asks to include something the KB can't back, follow `core/override_protocol.md` exactly. Trace lines may then cite `overrides.md`; the verifier reports override-sourced claims as one INFO line, never as findings.
-
----
-
-## Trace file format
-
-`cv_trace.md` / `cover_trace.md`, one line per claim-bearing element:
-
-```markdown
-- "<the bullet / sentence, abbreviated>" → roles/acme.md#achievements
-- "<...>" → overrides.md (user-directed, 2026-07-07)
-```
-
-`#anchor` is a **lowercase GitHub slug** of the heading (`## Data & infra` → `#data--infra`); one canonical target per line. KB paths resolve against `knowledge/` (leading `knowledge/` prefix fine); `overrides.md`/`notes.md`/`jd.md` resolve against the application folder — `overrides.md` existence-only, the rest anchor-checked. Never cite `cv.md`/`cover.md`: a document can't source its own claims. Structural/neutral text needs no trace line; anything asserting experience, a skill, an outcome, or a credential does.

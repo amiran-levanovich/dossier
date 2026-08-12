@@ -12,6 +12,14 @@ _Avoid_: knowledge base, profile, corpus, candidate data
 `master_cv.md` — the superset CV, built once from the story bank, verified at full rigor, and the sole content source for every application. The cover letter has no exemplar (ADR-0001).
 _Avoid_: master document, template, boilerplate
 
+**Containment check**:
+The machine half of exemplar verification: a fresh dispatch reads the bank and the exemplar whole and reports any exemplar claim the bank does not support at the same strength. Fresh because the session that ran the interview cannot tell a recorded fact from a remembered one.
+_Avoid_: audit, validation, cross-check
+
+**Sign-off**:
+The candidate reading the exemplar and stating they stand behind every line, recorded in `master_cv_signoff.md` with the exemplar's hash. Blocking: no application proceeds without a current one, and an edit since signing makes it stale (ADR-0004).
+_Avoid_: approval, review, confirmation
+
 **Superset invariant**:
 The exemplar holds every claim any application may ever make. Trimming only removes, so a claim absent from the exemplar cannot appear on any CV.
 _Avoid_: completeness, full coverage
@@ -19,6 +27,10 @@ _Avoid_: completeness, full coverage
 **Promotion**:
 Moving a fact from the story bank into the exemplar as a new slot, making it usable in documents. One mechanism serving three situations: a posting exposing a gap, a one-off slot kept after the fact, and the migration sweep.
 _Avoid_: adding, syncing, merging
+
+**Search meta**:
+`goals.md`, `constraints.md`, `lessons.md` at the job-folder root — what the candidate *wants* and what the search has learned, as opposed to what they have *done*. The fit gate reads only these; no document ever draws a claim from them.
+_Avoid_: preferences, settings, profile
 
 ## The production layer
 
@@ -74,8 +86,8 @@ _Avoid_: token limit, quota
 
 ## Retired terms
 
-**Knowledge base**, **verified entry**, **trace file**, **override**, **round cap** — *retired in v4.0.0*:
-The schema'd `knowledge/` directory, its per-claim `file#anchor` trace sidecars, the per-application override file, and the three-round verifier loop. Replaced by the story bank, the superset invariant, and one-time master verification (ADR-0004, ADR-0006). Do not reintroduce the concepts or the terms.
+**Knowledge base**, **verified entry**, **`[unverified]` marker**, **trace file**, **override**, **round cap** — *retired in v4.0.0*:
+The schema'd `knowledge/` directory, its per-claim `file#anchor` trace sidecars, the per-entry verification marker, the per-application override file, and the three-round verifier loop. Replaced by the story bank, the superset invariant, the containment check and sign-off, and the one-off slot (ADR-0004, ADR-0006). The marker's job is now structural: only interrogated material enters the bank, and the exemplar is built in one pass after the interview closes. Do not reintroduce the concepts or the terms.
 
 **Cover frame** — *retired in v3.0.0*:
 The removed cover-letter exemplar (`cover_frame.md`); see ADR-0001.

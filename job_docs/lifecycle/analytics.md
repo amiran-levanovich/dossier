@@ -88,21 +88,21 @@ Rules of thumb, **not market benchmarks** — they order the investigation, they
 
 | Pattern in the numbers                                       | Most likely problem              | Do this                                                                                                         |
 | :----------------------------------------------------------- | :------------------------------- | :-------------------------------------------------------------------------------------------------------------- |
-| Rejections mostly `DIED AT none` (auto-replies, closed fast) | The machine pass — ATS or volume | Run `postmortem.md` Step 2 across the folders: recurring keyword gaps → KB; hard filters → `goals.md` targeting |
+| Rejections mostly `DIED AT none` (auto-replies, closed fast) | The machine pass — ATS or volume | Run `postmortem.md` Step 2 across the folders: recurring keyword gaps → promote into the exemplar; hard filters → `goals.md` targeting |
 | Rejections cluster at `screen`                               | Fit signaling to a human reader  | Review summary framing, seniority band, salary answer, logistics against `goals.md` and recent screens          |
-| Rejections cluster at `tech`/`final`                         | Materials work; interviews don't | Debrief harder after each round (`lifecycle/interview_prep.md`); feed wobbles back into KB stories              |
+| Rejections cluster at `tech`/`final`                         | Materials work; interviews don't | Debrief harder after each round (`lifecycle/interview_prep.md`); feed wobbles back into the story bank              |
 | Funnel healthy but PACE low                                  | Volume, not quality              | More applications at current standards beats another materials pass                                             |
 | Everything stuck `applied`, little closure                   | Pipeline going cold              | Work the STALE list: follow up or close out; consider channels beyond portals (referrals, direct)               |
 | FIT averages barely differ between reached-a-human and died-at-machine | The fit gate's scores are inflated | Recalibrate against `core/fit_check.md`'s evidence rule: every dimension cites evidence or scores a flat 3      |
-| The `applied below 3.5` list grows and mostly dies at `none`  | Overrides are burning volume     | Read the override reasons in `notes` with the user — either that class of reason goes, or `goals.md` changes so the gate agrees |
+| The `applied below 3.5` list grows and mostly dies at `none`  | User overrides are burning volume | Read the override reasons in `notes` with the user — either that class of reason goes, or `goals.md` changes so the gate agrees |
 
-After the numbers, read `knowledge/lessons.md` (it is small — no recipe needed): recurring categories corroborate whichever pattern the table points at, and `(open)` lessons — or the same lesson logged twice without action — are the strongest escalation evidence there is: the search is re-learning instead of adjusting.
+After the numbers, read `lessons.md` at the job-folder root (it is small — no recipe needed): recurring categories corroborate whichever pattern the table points at, and `(open)` lessons — or the same lesson logged twice without action — are the strongest escalation evidence there is: the search is re-learning instead of adjusting.
 
 **3+ rejections at the same stage** is the formal escalation trigger (from `postmortem.md` Step 3): stop per-application fixes and have the strategy conversation — targets, seniority band, market, or the materials as a whole.
 
 ## Step 3 — Diagnose and act
 
-Same contract as the post-mortem: one paragraph — the dominant pattern, the evidence, **one specific strategy adjustment** — stated plainly; a comforting wrong diagnosis costs future applications. Then apply it where it belongs: targeting changes in `goals.md`, missing-but-true keywords into the KB, prep focus for the next interview. The report itself is presented in chat and not saved — the learning, not the report, carries forward.
+Same contract as the post-mortem: one paragraph — the dominant pattern, the evidence, **one specific strategy adjustment** — stated plainly; a comforting wrong diagnosis costs future applications. Then apply it where it belongs: targeting changes in `goals.md`, missing-but-true keywords promoted into the exemplar (`lifecycle/exemplar.md`), prep focus for the next interview. The report itself is presented in chat and not saved — the learning, not the report, carries forward.
 
 ## The Machine Summary block (per-report artifact)
 
@@ -116,15 +116,17 @@ block must be well-formed. Validate with `scripts/machine_summary.py <report.md>
 ```
 ## Machine Summary
 
-    verdict: CLEAN            # CLEAN | FINDINGS (the verifier's final call)
-    verify_rounds: 1          # rounds the verifier ran
-    claims_traced: 3          # claim-bearing lines with a resolving trace
-    claims_total: 3           # claim-bearing lines total (traced <= total)
+    verdict: CLEAN            # CLEAN | FINDINGS (the gate's final call)
+    cv_lines: 24              # lines in the assembled cv.md
+    verbatim_lines: 24        # of those, lines byte-verbatim from the exemplar
+    one_offs: 0               # one-off slots the gate had to judge at full rigor
     ats_covered: 4            # ATS keywords COVERED / PROMOTABLE / GAP
     ats_promotable: 1
     ats_gap: 1
-    ledger_preverified: 0     # claims skipped via the claim ledger
+    alias_swaps: 2            # alias-group spellings swapped in at assembly
 ```
 
-Fields are non-negative integers except `verdict`. Add fields as new signals
-appear; keep the names stable so aggregation across reports stays simple.
+Fields are non-negative integers except `verdict`, and `verbatim_lines` never
+exceeds `cv_lines`. The counts come straight off the `cv.py build` report, so the
+block costs no judgment. Add fields as new signals appear; keep the names stable
+so aggregation across reports stays simple.

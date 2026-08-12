@@ -146,7 +146,7 @@ class TestBundleReaders(TmpMixin):
 
 
 # --------------------------------------------------------------------------
-# Machine Summary consumption: block supplies the verdict; claims stay
+# Machine Summary consumption: block supplies the verdict; the line count stays
 # independently verified, with a consistency cross-check on the self-report.
 # --------------------------------------------------------------------------
 class TestSummaryConsumption(TmpMixin):
@@ -158,7 +158,7 @@ class TestSummaryConsumption(TmpMixin):
         self.write("report.md",
                    "# R\n\n## Machine Summary\n\n"
                    f"    verdict: {block_verdict}\n"
-                   f"    claims_traced: {block_total}\n    claims_total: {block_total}\n")
+                   f"    cv_lines: {block_total}\n    verbatim_lines: {block_total}\n")
         return self.root
 
     def ref(self):
@@ -170,7 +170,7 @@ class TestSummaryConsumption(TmpMixin):
         self.assertFalse(next(s for s in card.signals if s.name == "verdict").passed)
 
     def test_consistency_flags_self_report_mismatch(self):
-        # block claims 5 total, but only 2 trace lines exist independently
+        # block reports 5 lines, but only 2 exist independently
         card = eval_score.score_bundle(self._bundle(block_total=5), self.ref())
         sig = next(s for s in card.signals if s.name == "summary_consistency")
         self.assertFalse(sig.passed)

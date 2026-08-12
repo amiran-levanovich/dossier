@@ -98,12 +98,12 @@ rule kills one taxonomy class at the design stage:
 - [ ] **Continue, don't respawn** — every loop instruction names SendMessage
       continuation as the default and respawn as the exception (continuation failed, or
       the input selection changed). (C4)
-- [ ] **Targeted context only** — agents receive a selected file list (via
-      `knowledge/INDEX.md`), never a directory; conditional standards
+- [ ] **Targeted context only** — agents receive a named file list (the slot map, not
+      `master_cv.md`; the bank, not a directory); conditional standards
       (`dach_conventions.md`) are passed only when their condition holds. (C5)
-- [ ] **Writers pre-empt the loop** — writer instructions encode the verifier's
+- [ ] **Writers pre-empt the gate** — writer instructions encode the gate's
       cheapest-to-avoid findings (exact keyword spelling, no equivalency language,
-      trace every claim) so round 1 is usually CLEAN. (C6)
+      the letter asserting no fact the CV lacks) so the single round is usually CLEAN. (C6)
 - [ ] **Token budget respected** — the edit keeps the doc inside its §5 budget; if new
       substance needs room, cut old substance or split the doc so runs load less. A doc
       that is deliberately over budget may carry an `audit-ok: C7` marker instead, with
@@ -255,7 +255,7 @@ stdlib-only tests in `scripts/tests/`) instead of the main session or an agent:
   auto-invalidates; app-local sources are never carried over. (shrinks the verifier's
   judgment set across applications — C2/C6.)
 - **Master-CV subset check** (`master_diff.py` + ledger `--document` records, v2.5.0) —
-  with the exemplar (`lifecycle/master_documents.md`: one verified master CV, built once
+  with the exemplar (`lifecycle/exemplar.md`: one verified master CV, built once
   at intake close), `application-writer` subtracts/edits instead of regenerating and this
   script proves which cv.md lines are verbatim from a hash-VERIFIED master; only CHANGED
   lines get judged. Turns per-application generation and judgment into a delta against a

@@ -11,17 +11,17 @@ never re-read prose with a model" idea. The block is stdlib-parseable
     ## Machine Summary
 
         verdict: CLEAN
-        verify_rounds: 1
-        claims_traced: 3
-        claims_total: 3
+        cv_lines: 24
+        verbatim_lines: 24
+        one_offs: 0
         ats_covered: 4
         ats_promotable: 1
         ats_gap: 1
-        ledger_preverified: 0
+        alias_swaps: 2
 
 The block is optional: a report without one is fine. A report WITH one must be
 well-formed — `--check` enforces that (verdict in CLEAN/FINDINGS, counts
-non-negative, claims_traced <= claims_total). Format spec: lifecycle/analytics.md.
+non-negative, verbatim_lines <= cv_lines). Format spec: lifecycle/analytics.md.
 
 Usage:
   machine_summary.py <report.md>            print the parsed block (or note absence)
@@ -43,11 +43,11 @@ HEADING = re.compile(r"^##\s+Machine Summary\s*$", re.IGNORECASE)
 NEXT_HEADING = re.compile(r"^#{1,6}\s")
 FIELD = re.compile(r"^\s*([a-z_]+):\s*(.+?)\s*$")
 
-REQUIRED = ("verdict", "claims_traced", "claims_total")
+REQUIRED = ("verdict", "cv_lines", "verbatim_lines")
 VERDICTS = ("CLEAN", "FINDINGS")
 COUNT_FIELDS = (
-    "verify_rounds", "claims_traced", "claims_total",
-    "ats_covered", "ats_promotable", "ats_gap", "ledger_preverified",
+    "cv_lines", "verbatim_lines", "one_offs",
+    "ats_covered", "ats_promotable", "ats_gap", "alias_swaps",
 )
 
 
@@ -83,10 +83,10 @@ def validate(summary: dict) -> list[str]:
             v = summary[key]
             if not isinstance(v, int) or v < 0:
                 errors.append(f"{key} must be a non-negative integer, got {v!r}")
-    if isinstance(summary.get("claims_traced"), int) and isinstance(summary.get("claims_total"), int):
-        if summary["claims_traced"] > summary["claims_total"]:
+    if isinstance(summary.get("verbatim_lines"), int) and isinstance(summary.get("cv_lines"), int):
+        if summary["verbatim_lines"] > summary["cv_lines"]:
             errors.append(
-                f"claims_traced ({summary['claims_traced']}) exceeds claims_total ({summary['claims_total']})")
+                f"verbatim_lines ({summary['verbatim_lines']}) exceeds cv_lines ({summary['cv_lines']})")
     return errors
 
 

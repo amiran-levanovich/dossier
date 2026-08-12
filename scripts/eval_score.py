@@ -159,13 +159,13 @@ def score_bundle(bundle_dir, reference: dict) -> Scorecard:
 
     card = score(reference, verdict, n_ok, n_lines, metrics)
 
-    # Cross-check: if the run self-reported a claim count, it must match the
-    # independent trace count. Consuming the block makes the eval stronger — a
-    # run whose self-report disagrees with reality fails here.
-    if summary and isinstance(summary.get("claims_total"), int):
+    # Cross-check: if the run self-reported a line count, it must match the
+    # independent count. Consuming the block makes the eval stronger — a run
+    # whose self-report disagrees with reality fails here.
+    if summary and isinstance(summary.get("cv_lines"), int):
         card.signals.append(Signal(
-            "summary_consistency", "gate", summary["claims_total"],
-            f"== {n_lines} (independent count)", summary["claims_total"] == n_lines))
+            "summary_consistency", "gate", summary["cv_lines"],
+            f"== {n_lines} (independent count)", summary["cv_lines"] == n_lines))
     return card
 
 

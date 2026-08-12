@@ -7,7 +7,7 @@ These rules bind the `application-writer` agent; the `application-verifier` chec
 - **Under 300 words.** Recruiters skim; length is a cost, not a signal of effort.
 - **Specific to this company and role.** Every letter references something real about the company (from the Step 4 research notes — a product, a public decision, an initiative). A letter that would work with the company name swapped out is a defect.
 - **Language matches the posting** unless the user says otherwise; if applying in a second language, close with a natural note ("Ich führe das Gespräch gerne auf Deutsch weiter." / "Happy to continue the conversation in German.").
-- **Every factual claim traces** to a KB entry or a user-directed override — same contract as the CV (`core/tailoring_method.md`).
+- **Fact containment (ADR-0007).** The letter may assert no fact the assembled `cv.md` doesn't — no number, technology, outcome, or credential that isn't in a slot the trim kept. Framing, motivation, and the company angle are free, and the story bank is what they're drawn from; facts are not. This is the letter's half of the quality bar and the main thing the gate judges (`core/tailoring_method.md`).
 
 ## Banned openers (automatic rewrite)
 
@@ -22,9 +22,9 @@ Open with substance: why this role, concretely, in one sentence.
 
 1. **Why applying** — one sentence, real and direct, no flattery. *"The role maps closely to what I've been building for the last four years."*
 2. **Pitch** — 2–3 sentences: who the person is, what they do, with a concrete example matched to the company's type (B2B SaaS, fintech, agency, public sector…).
-3. **Value proposition** — the letter's core: pick the posting's *hardest or most central requirement*, and answer it with direct experience and a concrete result from the KB. One focused argument, not a CV summary. Name the exact thing — no "transferable skills".
+3. **Value proposition** — the letter's core: pick the posting's *hardest or most central requirement*, and answer it with direct experience and a concrete result **the CV also carries** — the lead evidence, picked once for both documents. One focused argument, not a CV summary. Name the exact thing — no "transferable skills".
 4. **Broader coverage** — 1–2 sentences showing the baseline requirements are met.
-5. **Portfolio / work samples** — one line with the link, if applicable; only an asset `knowledge/portfolio.md` marks `showcase` and whose **Cite when** guidance fits this posting. No qualifying asset → skip the part entirely.
+5. **Portfolio / work samples** — one line with the link, if applicable, and only a link the assembled CV itself carries. No qualifying asset → skip the part entirely.
 6. **Logistics close** — location, work permit status, notice period / availability, languages, invitation to talk. (In DACH applications the permit + notice period are expected here — never omit them; see `standards/dach_conventions.md`.)
 
 ## Tone
@@ -33,11 +33,11 @@ Match the employer, inferred from the posting and research notes: startup → di
 
 ## The anti-slop pass — mandatory before the letter is written
 
-A letter that reads as machine-written is a defect: the one document a human reads end to end is the one that must not sound generated. `application-writer` runs this pass over the letter draft **before** writing `cover.md` and `cover_trace.md`, so the traces quote the final text.
+A letter that reads as machine-written is a defect: the one document a human reads end to end is the one that must not sound generated. `application-writer` runs this pass over the letter draft **before** writing `cover.md`, so what the gate reads is the final text.
 
 **Preferred tool: the `humanizer` skill**, when the session has it. It is advised, never required (`core/orchestration.md`) — without it, the writer applies the checklist below by hand. Either way the pass **runs**; only the instrument is optional.
 
-**The pass edits prose, never claims.** No fact, metric, date, credential or named tool's spelling may change, and nothing may be added the KB doesn't back. A "humanized" letter that gained a claim is a traceability BLOCKER, not a style win. The CV is out of scope — its ATS exact-spelling and master-verbatim rules outrank prose polish.
+**The pass edits prose, never claims.** No fact, metric, date, credential or named tool's spelling may change, and nothing may be added that the assembled CV doesn't hold. A "humanized" letter that gained a fact is a containment BLOCKER, not a style win. The CV is out of scope entirely — it is trimmed verbatim from the exemplar and prose polish cannot touch it.
 
 ### Banned patterns (each hit is a MAJOR)
 
